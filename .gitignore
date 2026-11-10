@@ -1,0 +1,54 @@
+# Rust build output
+/target/
+**/target/
+
+# Python environments and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.coverage
+.coverage.*
+htmlcov/
+
+# Native build output
+build/
+cmake-build-*/
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.dylib
+*.dll
+*.exe
+
+# GPU/compiler intermediates
+*.spv
+*.metallib
+*.dxil
+*.pdb
+
+# Local environments, credentials, scratch
+.env
+.env.*
+!.env.example
+tmp/
+temp/
+scratch/
+*.log
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Editors and operating systems
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
