@@ -33,10 +33,7 @@ cmake-build-*/
 *.dxil
 *.pdb
 
-# Local environments, credentials, scratch
-.env
-.env.*
-!.env.example
+# Temporary work and logs
 tmp/
 temp/
 scratch/
