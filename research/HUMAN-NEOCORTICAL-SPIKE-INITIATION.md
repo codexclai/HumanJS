@@ -43,14 +43,74 @@ The recorded spikes used as fit targets had a large peak (38.6 ± 3.2 mV from a 
 
 **Critical anatomical limitation:** active conductances were included in soma and axon only. The authors explain that human dendritic recordings were lacking and that somatic recordings alone could not adequately constrain active dendritic parameters. The paper also identifies back-propagating APs and dendritic Ca2+-spike behavior as requiring further human data. The model is therefore not a fully measured distribution of active conductances across a human neuron.
 
-### Mechanism-source inspection and an unresolved mapping issue
+### Canonical Eyal supplementary Table S4: fitted parameter manifest
 
-The ModelDB record is the primary model citation and should be the starting point for any later reproduction. A separate public analysis repository, beaherrera/SEF_error-PCs_theta_ERN, contains an EyalEtAl2018 ActiveMechanisms directory with generated C files that embed NMODL source text. Its repository is GPL-3.0 and is not the canonical ModelDB package. It was inspected only to identify source references and mechanism families; no source code is copied into HumanJS, and its licensing/provenance does not establish permission to redistribute those mechanisms here.
+The original Eyal et al. supplementary PDF (bioRxiv version 267898, 11 pages) was retrieved and Table S4 was extracted. The main-text methods state that the somatic/axonal spiking fit uses 29 free parameters: nine maximum channel conductances, three NaTg kinetic parameters, and two intracellular calcium parameters per compartment (14 × 2), plus one shared leak reversal potential. Table S4 directly confirms that bookkeeping:
 
-The inspected registration list names these current mechanisms: NaTg, Nap_Et2, K_Tst, K_Pst, SKv3_1, SK_E2, Ca, Ca_HVA, Ca_LVAst, and Im, plus CaDynamics_E2 for intracellular calcium dynamics. The paper's methods, however, describe nine fitted ion-channel maximal conductances. The precise mapping between the registered mechanism list, the active mechanisms actually used in the six models, and Table S4 has not yet been reconciled against the original downloadable ModelDB package and supplement. Do not silently choose nine or ten, omit a current, or treat a registered mechanism as proof that it was active in every compartment.
+- **Nine maximum conductance densities per compartment:** NaTg, SK_E2, SKv3_1, Ca_LVAst, Ca, Nap_Et2, K_Pst, K_Tst, Im.
+- **Three NaTg kinetic parameters per compartment:** slopem, vshiftm, vshifth.
+- **Two intracellular calcium parameters per compartment:** gamma_CaDynamics_E2 and decay_CaDynamics_E2.
+- **One shared parameter:** e_pas, the leak reversal potential used across model compartments.
 
-The inspected mechanism comments identify non-human or transferred source literature for several kinetic forms: NaTg references Colbert and Pan (2002); Nap_Et2 refers to Magistretti and Alonso (1999) and describes an approximate activation-time relation; K_Tst and K_Pst cite young-rat neocortical K+ channel work by Korngreen and Sakmann (2000); SKv3_1 cites rat-brain channel work; SK_E2 cites Köhler et al. (1996); Ca_LVAst says its activation time constant was approximated from plots and cites Avery and Johnston (1996)/Randall (1997); and Im cites bullfrog sympathetic-neuron M-current work. Multiple mechanisms include a Q10 correction of 2.3 from 21°C toward a 34°C model temperature. These are source comments from a secondary compiled-code snapshot, not direct human channel measurements. They need verification against the original model files before use.
+Therefore, the apparent nine-versus-ten discrepancy is resolved at the parameter level: there are nine explicit maximal-conductance entries, and the intracellular CaDynamics_E2 mechanism contributes two additional fitted parameters. The Table S4 caption calls these “ten membrane ion channels and related parameters”; the actual parameter rows, together with the methods text, give the unambiguous 9+3+2 per compartment. This is (2(9+3+2)+1=29).
 
+#### Axonal parameter set
+
+All conductance values are the source-table units S/cm². Gate voltage shifts/slopes are mV. Calcium decay is ms. Model columns are the six original cells named in Table S4.
+
+| Axonal parameter | Unit | 060303 | 060308 | 060311 | 130303 | 130305 | 130306 |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| gNaTgbar_NaTg | S/cm² | 4.94 | 5.53 | 6.00 | 5.23 | 3.08 | 4.65 |
+| slopem_NaTg | mV | 15.0 | 4.43 | 8.61 | 6.11 | 4.01 | 5.70 |
+| vshiftm_NaTg | mV | 8.11 | 13.2 | 8.44 | 15.7 | 10.0 | 9.20 |
+| vshifth_NaTg | mV | 0.0102 | 11.9 | 12.0 | 9.87 | 0.0606 | 5.55 |
+| gSK_E2bar_SK_E2 | S/cm² | 0.0126 | 0.00640 | 0.000709 | 0.000734 | 0.0684 | 0.0000302 |
+| gSKv3_1bar_SKv3_1 | S/cm² | 1.83 | 1.98 | 1.72 | 1.75 | 2.00 | 1.99 |
+| gCa_LVAstbar_Ca_LVAst | S/cm² | 0.000999 | 0.0000767 | 0.000295 | 0.000805 | 0.000477 | 0.00000861 |
+| gCabar_Ca | S/cm² | 0.000985 | 0.000718 | 0.000784 | 0.000930 | 0.0000709 | 0.000500 |
+| gamma_CaDynamics_E2 | — | 0.0429 | 0.0106 | 0.0332 | 0.00876 | 0.000912 | 0.00163 |
+| decay_CaDynamics_E2 | ms | 466 | 300 | 587 | 209 | 99.0 | 20.1 |
+| gNap_Et2bar_Nap_Et2 | S/cm² | 0.0000671 | 0.000146 | 0.0499 | 0.0413 | 0.0205 | 0.0283 |
+| gK_Pstbar_K_Pst | S/cm² | 0.00197 | 0.00711 | 0.000123 | 0.00320 | 0.0991 | 0.00301 |
+| gK_Tstbar_K_Tst | S/cm² | 0.000561 | 0.00104 | 0.0953 | 0.0946 | 0.0997 | 0.0248 |
+| gImbar_Im | S/cm² | 0.000883 | 0.000805 | 0.0000144 | 0.00000511 | 0.000543 | 0.000855 |
+
+#### Somatic parameter set
+
+| Somatic parameter | Unit | 060303 | 060308 | 060311 | 130303 | 130305 | 130306 |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| gNaTgbar_NaTg | S/cm² | 0.174 | 0.330 | 0.169 | 0.639 | 0.298 | 0.383 |
+| slopem_NaTg | mV | 13.9 | 9.83 | 13.8 | 12.4 | 14.6 | 9.27 |
+| vshiftm_NaTg | mV | 8.00 | 7.67 | 16.0 | 16.0 | 16.0 | 8.00 |
+| vshifth_NaTg | mV | 11.0 | 11.9 | 11.9 | 0.0214 | 11.6 | 7.02 |
+| gSK_E2bar_SK_E2 | S/cm² | 0.0914 | 0.0311 | 0.0999 | 0.0115 | 0.0982 | 0.0966 |
+| gSKv3_1bar_SKv3_1 | S/cm² | 0.0929 | 0.132 | 0.0712 | 0.000720 | 0.0519 | 0.0502 |
+| gCa_LVAstbar_Ca_LVAst | S/cm² | 0.000997 | 0.000519 | 0.000929 | 0.000995 | 0.000660 | 0.00100 |
+| gCabar_Ca | S/cm² | 0.000703 | 0.0000522 | 0.000617 | 0.000000560 | 0.000000474 | 0.0000175 |
+| gamma_CaDynamics_E2 | — | 0.000763 | 0.00798 | 0.000528 | 0.0141 | 0.0146 | 0.00599 |
+| decay_CaDynamics_E2 | ms | 164 | 197 | 238 | 385 | 431 | 305 |
+| gNap_Et2bar_Nap_Et2 | S/cm² | 0.00000214 | 0.0000356 | 0.0000572 | 0.0000676 | 0.0000476 | 0.000226 |
+| gK_Pstbar_K_Pst | S/cm² | 0.000000366 | 0.000194 | 0.0000182 | 0.0000742 | 0.00118 | 0.0000837 |
+| gK_Tstbar_K_Tst | S/cm² | 0.0480 | 0.0910 | 0.0757 | 0.00159 | 0.0792 | 0.0899 |
+| gImbar_Im | S/cm² | 0.000263 | 0.0000110 | 0.000121 | 0.0000307 | 0.000983 | 0.000411 |
+
+#### Shared leak reversal potential
+
+| Parameter | 060303 | 060308 | 060311 | 130303 | 130305 | 130306 |
+|---|---:|---:|---:|---:|---:|---:|
+| e_pas (mV) | −81.2 | −83.8 | −83.1 | −80.1 | −85.8 | −81.9 |
+
+These values are fitted parameters from multi-objective optimization against the six cells' somatic firing features, not direct measurements of channel protein density or ion-channel abundance. The authors used 1,000 initial candidate models and 500 optimization generations. Active conductances were included in soma and the added 60 μm axonal segment only; they explicitly state that a lack of human dendritic recordings prevented them from constraining active dendritic parameters using soma recordings. Thus Table S4 does not constitute a directly measured human AIS channel map.
+
+The main article states that the gating kinetics were assumed similar to rodent channel kinetics, citing Channelpedia/Ranjan et al. (2011). The human fit therefore combines human AP targets and fitted soma/axon conductance/NaTg-shift parameters with transferred kinetic function forms. Keep those evidence classes separate.
+
+The Table S4 mechanism rows confirm nine fitted maximum-conductance variables. A separate secondary compiled-code registration snapshot lists Ca_HVA as a mechanism registration in addition to the Table S4 mechanisms, but Table S4 has no gCa_HVAbar parameter. Registration in that secondary code snapshot is not proof that Ca_HVA was an optimized active conductance in the six Table S4 models; its role in other model figures or helper simulations remains unresolved.
+
+#### Canonical ModelDB code package status
+
+The official ModelDB page is https://modeldb.science/238347. Its readme in the official ModelDBRepository/238347 GitHub repository states that the author's full 133 MB EyalEtAl2018.zip archive is hosted at the SenseLab ModelDB data URL. The canonical ModelDB GitHub repository itself currently contains only readme.html, not the model source tree. The archive endpoint returned HTTP 504 from the available research-browser network and no archive was downloaded. Thus Table S4 is now reconciled from the original supplementary PDF, but the original canonical .mod source bundle, compartment configuration and source-to-parameter mapping still require direct package inspection before a reproduction/port.
+
+The secondary beaherrera/SEF_error-PCs_theta_ERN repository (GPL-3.0) contains generated C files with embedded NMODL text and was used only to identify likely mechanism source comments. No code is copied into HumanJS, and this repository is not a substitute for the canonical ModelDB package. The mechanism comments cite non-human or transferred source literature: NaTg references Colbert and Pan (2002); Nap_Et2 refers to Magistretti and Alonso (1999) and calls its activation-time relation approximate; K_Tst and K_Pst cite young-rat neocortical K+ channel work by Korngreen and Sakmann (2000); SKv3_1 cites rat-brain channel work; SK_E2 cites Köhler et al. (1996); Ca_LVAst says its activation time constant was approximated from plots and cites Avery and Johnston (1996)/Randall (1997); and Im cites bullfrog sympathetic-neuron M-current work. The exact source-code/mechanism mapping remains provisional until the original package is inspected.
 ## 2. Wilbers et al. (2023): direct human somatic Na+/K+ measurements
 
 **Primary source:** “Human voltage-gated Na+ and K+ channel properties underlie sustained fast AP signaling,” *Science Advances* (2023).  

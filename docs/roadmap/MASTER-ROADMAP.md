@@ -29,7 +29,8 @@
 - [ ] Reproduce the original Wilbers mechanisms in compiled NEURON, test trap0 singularity handling on the actual lookup grid, and compare against published human voltage-clamp targets.
 - [ ] Reconcile the paper's 14-parameter methods count with 13 Na+/11 K+ visible fit/assignment parameters; explain the fit script's final K+ dictionary mismatch and the undeclared h12factor assignment.
 - [ ] Obtain or independently reproduce against raw voltage-clamp traces; the deposited per-cell workbooks are fit summaries and the NWB trace files were not in the 65-file public deposit listing examined.
-- [ ] Reconcile Eyal Table S4 with the canonical ModelDB package and distinguish its rodent-derived kinetics from its human-fitted conductances before any reproduction.
+- [x] Retrieve and transcribe the original Eyal et al. 2018 supplementary Table S4 for all six soma/axon model parameter sets, confirming the nine-conductance + three NaTg-gate + two Ca-dynamics values per compartment and shared leak reversal potential.
+- [ ] Retrieve the canonical 133 MB ModelDB source archive and map Table S4 parameters to the original .mod files and compartment assignments; the official SenseLab endpoint returned HTTP 504 and the official GitHub mirror currently exposes only its readme.
 - [ ] For each subsequent mechanism, gather relevant primary literature and authoritative technical references.
 - [ ] Add reproducible experiment protocols and results under experiments/ only when real experiments are designed.
 

@@ -2,14 +2,14 @@
 
 **Updated:** 2026-11-10  
 **Canonical repository:** `codexclai/HumanJS`, branch `main` only.  
-**Verified main HEAD before this evidence/documentation increment:** `574ffbd7c2ba403405bc63a6a2c0853f0e8920a1`.
+**Verified main HEAD before this evidence/documentation increment:** `a101a57a5946cd97ca216b69f3ad1264b63dc6e1`.
 
 ## Verified repository state
 
 - Public repository; default branch `main`.
 - Live branch listing contains exactly `main`.
 - No open issues or pull requests.
-- Latest completed full workflow on the documented head: run `42841773499`, success: https://github.com/codexclai/HumanJS/actions/runs/42841773499.
+- Latest completed full workflow on the documented head: run `42845287511`, success: https://github.com/codexclai/HumanJS/actions/runs/42845287511.
 - Previous integrated CPU code commit `d561df97ae0bbd1012d8cd3bb3b0e466e4f78304` passed full CI in run `42829179222`.
 
 ## Implemented CPU mechanisms
@@ -29,7 +29,7 @@ The latest full workflow passed formatting, Clippy, tests (10 unit + 9 integrati
 - Wilbers et al. (2023) directly measured somatic Na+/K+ currents in human nucleated patches. These measurements exclude the AIS. The single-compartment HH model and fitted AP conductances must not be confused with direct patch conductance densities.
 - Tian et al. (2014) provide human immunostaining evidence for proximal NaV1.2 and more distal NaV1.6 distribution at pyramidal-cell AISs. This is spatial molecular evidence, not functional conductance/gating measurement.
 
-### Additional original Wilbers source inspection — direct mechanism audit completed, reproduction pending
+### Original Wilbers and Eyal channel-source audit
 
 The original Wilbers supplement and author-deposited CC0-1.0 DataverseNL dataset were inspected. Dataset DOI: 10.34894/L5J0SD, version 3.0, released 2022-12-13.
 
@@ -48,12 +48,16 @@ The author per-cell summary workbooks were parsed directly:
 - data_fig4.xlsx (318667): 13 human K+ activation rows and 11 K+ inactivation rows, consistent with the paper's reported counts.
 These tables are per-cell fit summaries, not raw current traces. The original NWB trace files were not present in the 65-file Dataverse version-3.0 listing inspected.
 
-The source files have been inspected but not compiled/reproduced: NEURON/nrnivmodl was unavailable in the execution environment. No HumanJS spike/AP code has been added. A somatic nucleated-patch equivalent must remain distinct from anatomical soma/AIS modeling, and no AIS conductance can be inferred from immunostaining.
+The original Eyal et al. supplementary Table S4 was extracted from the bioRxiv PDF and transcribed in research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md. It provides all six cell-specific soma and axon parameter sets: nine maximum conductance densities, three NaTg kinetic parameters and two calcium-dynamics parameters per compartment, plus shared e_pas. This resolves the 29-parameter allocation in the paper's methods. These are model-fit values, not direct measurements; the article states that channel kinetic forms were assumed similar to rodent channels and that active dendritic parameters were not fitted because human dendritic recordings were unavailable.
+
+The official ModelDB record and GitHub readme point to the 133 MB canonical EyalEtAl2018.zip archive. The archive download from the SenseLab host returned HTTP 504 from the available research-browser network; the official ModelDB GitHub repository contains only its readme, not the package. The exact canonical mechanism files and Table S4-to-compartment source mapping remain pending. No secondary GPL-3.0 mechanism code was copied into HumanJS.
+
+Neither the Wilbers nor Eyal source mechanisms were compiled/executed in the available environment: NEURON/nrnivmodl was unavailable, and the Eyal archive could not be downloaded. No HumanJS spike/AP code has been added. A somatic nucleated-patch equivalent must remain distinct from anatomical soma/AIS modeling, and no AIS conductance can be inferred from immunostaining.
 
 ## Next concrete work
 
-Reproduce the original pure human Na+/K+ channel mechanisms in compiled NEURON or an equivalent verified runtime, including a controlled test of trap0 behavior on the published lookup grid. Reconcile the 14-parameter methods count, the K+ script's final dictionary, and its h12factor assignment. Compare mechanism output against published/per-cell human voltage-clamp summaries and current-clamp AP targets; the summary workbooks alone are not raw traces. Then separately reconcile Eyal Table S4 against the canonical ModelDB source before deciding whether any somatic-patch-equivalent implementation is sufficiently constrained.
+Reproduce the original pure human Wilbers Na+/K+ channel mechanisms in compiled NEURON or an equivalent verified runtime, including a controlled test of trap0 behavior on the published lookup grid. Reconcile the 14-parameter methods count, the K+ script's final dictionary, and its h12factor assignment. Compare mechanism output against published/per-cell human voltage-clamp summaries and current-clamp AP targets; the summary workbooks alone are not raw traces.
 
-Keep the Eyal soma/axon model separate from Wilbers' nucleated-somatic-patch model; its gating kinetics were assumed rodent-like. No spike implementation, threshold-only generator, generic rodent HH set, or AIS conductance derived from immunostaining is acceptable.
+Then retrieve the canonical Eyal ModelDB archive when the source host is reachable, map Table S4 parameters to original .mod files and soma/axon compartments, and check the actual parameter assignments/kinetics against the paper. Keep the Eyal soma/axon model separate from Wilbers' nucleated-somatic-patch model; its gating kinetics were assumed rodent-like. No spike implementation, threshold-only generator, generic rodent HH set, or AIS conductance derived from immunostaining is acceptable.
 
 Still not implemented: an intrinsic AP generator, configurable 10,000-unit spiking population, dendritic morphology/multicompartment integration, connected populations/networks, long-term plasticity/learning, checkpoints/save-restore, Rust-native concurrency, JSON model loading, Python, C ABI, C++ wrapper, and integrated WGSL GPU execution.

@@ -11,8 +11,8 @@
 - GitHub `main` is the sole authoritative source. ChatGPT Project Sources may remain empty.
 - The live branch listing returned exactly one branch, `main`; no non-main refs remained.
 - No open issues or open pull requests were returned by the latest live checks.
-- Latest verified pre-audit `main` HEAD: `574ffbd7c2ba403405bc63a6a2c0853f0e8920a1`.
-- Successful full workflow on that exact HEAD: run `42841773499`: https://github.com/codexclai/HumanJS/actions/runs/42841773499.
+- Latest verified pre-documentation `main` HEAD: `a101a57a5946cd97ca216b69f3ad1264b63dc6e1`.
+- Successful full workflow on that exact HEAD: run `42845287511`: https://github.com/codexclai/HumanJS/actions/runs/42845287511.
 - Integrated CPU code commit: `d561df97ae0bbd1012d8cd3bb3b0e466e4f78304`, separately passed in run `42829179222`.
 
 ## Implemented CPU mechanisms
@@ -75,14 +75,18 @@ A fresh local clone was attempted but this execution environment could not resol
 
 ## Human intrinsic spike-initiation evidence audit — no AP code added
 
-The direct-source review is recorded in research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md. The pure human Wilbers Na+ and K+ NEURON mechanisms have now been retrieved from the CC0 DataverseNL deposit and their equations, parameters, units, Q10 behavior and conductance expressions inspected. Rb is fixed equal to Ra in each file. The current-clamp hybrid copies are distinct variants with human/mouse conductance-fraction scaling.
+The direct-source review is recorded in research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md. The pure human Wilbers Na+ and K+ NEURON mechanisms were retrieved from the CC0 DataverseNL deposit and their equations, parameters, units, Q10 behavior and conductance expressions inspected. Rb is fixed equal to Ra in each file. The current-clamp hybrid copies are distinct variants with human/mouse conductance-fraction scaling.
 
-Several issues prevent a safe implementation:
-- The paper's 14-free-parameter methods description does not reconcile with the visible 13 Na+ and 11 K+ fit/assignment parameters.
+The original Eyal et al. 2018 supplementary Table S4 was retrieved and transcribed for all six somatic/axonal model parameter sets. It identifies nine maximal conductance variables per compartment (NaTg, SK_E2, SKv3_1, Ca_LVAst, Ca, Nap_Et2, K_Pst, K_Tst and Im), three NaTg kinetic variables, two CaDynamics_E2 variables, and one shared e_pas, matching the paper's 29 free-parameter count. Table S4 values are fitted model parameters, not direct channel-density measurements. The paper states that channel kinetics were assumed rodent-like and active dendritic parameters were omitted.
+
+The official 133 MB ModelDB source archive could not be retrieved: its SenseLab download endpoint returned HTTP 504; the official ModelDB GitHub mirror contains only readme.html. Exact .mod contents and mechanism/compartment mapping remain pending.
+
+Several issues still prevent a safe spike implementation:
+- The Wilbers paper's 14-free-parameter methods description does not reconcile with the visible 13 Na+ and 11 K+ fit/assignment parameters.
 - The pure K+ mechanism file matches Table S2 and the first optimizer result, but the fitting script's final printed six-parameter dictionary differs.
 - The K+ fitting script assigns h12factor_k_human, which is not declared in the inspected pure K+ mechanism; its runtime effect is unknown.
-- Both human mechanism files contain a trap0 branch test/fallback that does not obviously match the removable singularity in the rate equation. It must be examined under the original NEURON lookup-table/runtime behavior before translation.
-- The per-cell workbooks corroborate the reported human sample counts; they are summary tables, not raw current traces. The original NWB traces were not present in the 65-file deposit listing inspected.
+- Both human mechanisms contain a trap0 branch test/fallback that does not obviously match the removable singularity in the rate equation. It must be examined under the original NEURON lookup-table/runtime behavior.
+- The per-cell workbooks corroborate the reported human sample counts; they are summary tables, not raw current traces. The original NWB traces were not present in the 65-file Dataverse listing inspected.
 - No NEURON/nrnivmodl execution was possible in the available environment. Source inspection is complete; model reproduction is not.
 
 Accordingly, no AP-generating code, threshold event, or generic HH substitute has been added. The next code milestone remains blocked on source-model reproduction, not on documentation availability.
@@ -103,4 +107,4 @@ These remain requirements or future objectives, not current capabilities.
 
 ## Next implementation milestone
 
-Reproduce the pure human Wilbers Na+/K+ mechanisms in compiled NEURON, specifically test trap0 lookup-grid behavior, reconcile the fit-parameter count and K+ dictionary mismatch, and compare results with per-cell human summaries and published voltage-clamp targets. The deposit's per-cell summaries do not substitute for raw current traces. Do not implement an intrinsic AP mechanism until these numerical and provenance issues are resolved. In parallel, inspect Eyal Table S4 against the canonical ModelDB source and distinguish its rodent-derived gating kinetics from its human-fitted soma/axon conductances. Keep any future somatic-patch model distinct from anatomical soma/AIS modeling.
+Reproduce the pure human Wilbers Na+/K+ mechanisms in compiled NEURON, specifically test trap0 lookup-grid behavior, reconcile the fit-parameter count and K+ dictionary mismatch, and compare results with per-cell human summaries and published voltage-clamp targets. The deposit's per-cell summaries do not substitute for raw current traces. Then obtain the canonical Eyal ModelDB archive to map Table S4 to its original mechanisms and compartments. Do not implement an intrinsic AP mechanism until these numerical and provenance issues are resolved. Keep any future somatic-patch model distinct from anatomical soma/AIS modeling.
