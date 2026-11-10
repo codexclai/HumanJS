@@ -2,7 +2,7 @@
 
 **Reviewed:** 2026-11-10  
 **Scope:** somatic action-potential generation and axon-initial-segment (AIS) initiation in human neocortical pyramidal cells.  
-**Status:** evidence review complete enough to reject an unqualified generic model; exact model-source reconciliation remains open. No spike-generation code is implemented by this review.
+**Status:** canonical source audit and selected NEURON reproductions completed; a HumanJS spike implementation remains evidence-gated. No spike-generation code is implemented by this review.
 
 ## Decision summary
 
@@ -106,11 +106,25 @@ The main article states that the gating kinetics were assumed similar to rodent 
 
 The Table S4 mechanism rows confirm nine fitted maximum-conductance variables. A separate secondary compiled-code registration snapshot lists Ca_HVA as a mechanism registration in addition to the Table S4 mechanisms, but Table S4 has no gCa_HVAbar parameter. Registration in that secondary code snapshot is not proof that Ca_HVA was an optimized active conductance in the six Table S4 models; its role in other model figures or helper simulations remains unresolved.
 
-#### Canonical ModelDB code package status
+#### Canonical ModelDB source package and HOC mapping
 
-The official ModelDB page is https://modeldb.science/238347. Its readme in the official ModelDBRepository/238347 GitHub repository states that the author's full 133 MB EyalEtAl2018.zip archive is hosted at the SenseLab ModelDB data URL. The canonical ModelDB GitHub repository itself currently contains only readme.html, not the model source tree. The archive endpoint returned HTTP 504 from the available research-browser network and no archive was downloaded. Thus Table S4 is now reconciled from the original supplementary PDF, but the original canonical .mod source bundle, compartment configuration and source-to-parameter mapping still require direct package inspection before a reproduction/port.
+The official ModelDB archive for model 238347 was retrieved from https://modeldb.science/download/238347. The archive `238347-full.zip` was 139,316,573 bytes, passed `unzip -t`, and had SHA-256 `12dfd8b8fb38b28136d6904da69aaf5e200fa5fb64cd03d845a96d972057354b`. It is not copied into HumanJS. The official archive contains the original `ActiveModels/`, `ActiveMechanisms/`, `Morphs/`, and Figure 7A data.
 
-The secondary beaherrera/SEF_error-PCs_theta_ERN repository (GPL-3.0) contains generated C files with embedded NMODL text and was used only to identify likely mechanism source comments. No code is copied into HumanJS, and this repository is not a substitute for the canonical ModelDB package. The mechanism comments cite non-human or transferred source literature: NaTg references Colbert and Pan (2002); Nap_Et2 refers to Magistretti and Alonso (1999) and calls its activation-time relation approximate; K_Tst and K_Pst cite young-rat neocortical K+ channel work by Korngreen and Sakmann (2000); SKv3_1 cites rat-brain channel work; SK_E2 cites Köhler et al. (1996); Ca_LVAst says its activation time constant was approximated from plots and cites Avery and Johnston (1996)/Randall (1997); and Im cites bullfrog sympathetic-neuron M-current work. The exact source-code/mechanism mapping remains provisional until the original package is inspected.
+The six original fitted templates are `cell0603_03_model_476`, `cell0603_08_model_602`, `cell0603_11_model_937`, `cell1303_03_model_448`, `cell1303_05_model_643`, and `cell1303_06_model_263`. Their HOC `insertChannel()` functions insert exactly nine conductance mechanisms in soma and axon: `NaTg`, `Nap_Et2`, `K_Tst`, `K_Pst`, `SKv3_1`, `Ca`, `Ca_LVAst`, `SK_E2`, and `Im`. They also insert `CaDynamics_E2` for intracellular calcium state. `Ca_HVA.mod` exists in the archive but is not inserted or assigned by these six Figure 7A spike-model templates. `NMDA.mod` is a separate synaptic mechanism and is not an active conductance fitted in these six spike models.
+
+Direct comparison of the canonical HOC `biophys()` assignments with the original Table S4 confirms that the six parameter sets map to the six named model templates. Each compartment has nine maximal conductance densities, three NaTg kinetic values (`slopem`, `vshiftm`, `vshifth`), and two calcium-dynamics values (`gamma_CaDynamics_E2`, `decay_CaDynamics_E2`), plus one shared `e_pas`: `2 × (9 + 3 + 2) + 1 = 29`. Table S4 therefore reconciles with the original HOC assignments at the parameter and compartment level. The values are fitted model parameters, not direct channel-density measurements.
+
+The HOC templates set `celsius=37`, `CM=0.488 μF/cm²`, `RM=21,406 Ω·cm²`, and `RA=281.78 Ω·cm`. Apical and basal capacitance and passive leak are scaled by 1.9 beyond 60 μm. Figure 7A replaces the morphology's original axon with two 30 μm stub sections. Active conductances are inserted into soma and this replacement axon; dendrites remain passive. This reduced axon must not be equated with direct human AIS geometry or a fully active dendritic neuron.
+
+The canonical `ActiveMechanisms/README` attributes its channel models to the Blue Brain Project mechanism library. Eyal et al. explicitly describe the kinetic functions as similar to rodent channel kinetics. The resulting models therefore combine human AP recordings and fitted soma/axon conductance parameters with transferred kinetic forms. They are not fully human-measured channel models.
+
+#### Canonical Eyal Figure 7A reproduction
+
+The ten mechanisms actually inserted by the six HOC templates were compiled unchanged, serially, with `nrnivmodl` in NEURON 9.0.2. Compilation succeeded. A Python 3 reproduction then followed the original Figure7A construction, morphology, stub-axon, channel-insertion, temperature, time-step, initial-voltage, and current-clamp stimulus sequence for all six fitted cells. It compared first-spike metrics with the released repeated human traces, applying the same −16 mV junction-potential correction as Figure7A.py.
+
+The reproducible runner and results are recorded in `experiments/HUMAN-L23-SPIKE-MODEL-REPRODUCTION.md` and `experiments/reproduce_eyal_figure7a.py`. The first 0 mV crossing is only an alignment marker, not a claim of biological spike threshold. The comparison showed good correspondence for some cell features and visible timing/width/peak differences in several others. It is a selected-stimulus code/source reproduction, not an independent optimization, exact trace match, or biological validation.
+
+
 ## 2. Wilbers et al. (2023): direct human somatic Na+/K+ measurements
 
 **Primary source:** “Human voltage-gated Na+ and K+ channel properties underlie sustained fast AP signaling,” *Science Advances* (2023).  
@@ -268,7 +282,7 @@ The current-clamp helper `cc_tools.py` initializes a single 10 μm compartment w
 
 The separate conductance-density fitting helper adjusts human and mouse channel fractions and minimizes current-clamp AP waveform differences in amplitude, rise speed, and fall speed. The article describes fits to cross-species mean AP features (48.4 mV, 420 mV/ms, and 73.1 mV/ms), followed by a grid of channel-fraction combinations. The resulting AP-model conductance densities are therefore outputs of a particular optimization target; they are not direct patch measurements.
 
-These deposited scripts materially improve parameter provenance and resolve the intended name of the repeated inactivation steady-state label. They do **not** expose the underlying `na_human.mod` and `k_human.mod` equations through the text extraction path used here. Exact gate-rate equations, any fixed `Rb`, the table-versus-script K+ result discrepancy, and the 14-parameter bookkeeping remain open.
+The original pure `na_human.mod` and `k_human.mod` files were retrieved from the CC0 deposit, checksum-verified against the Dataverse metadata, compiled unchanged, and inspected in NEURON 9.0.2. Their complete rate equations, units, temperature rules, and explicit `Rb = Ra` assignments are recorded below. The K+ script's later final printed inactivation/recovery dictionary still differs from the pure K+ file and Table S2. The paper's 14-parameter methods count also remains unreconciled with the source fit stages; neither discrepancy is silently resolved here.
 
 ### Original human channel mechanisms: equations and parameter values
 
@@ -349,7 +363,7 @@ Both original human mechanism files contain this piecewise function (spacing nor
 
 The source comments out an earlier intended fallback a*q, but the active fallback omits the prefactor a. Its branch test uses v + th, whereas the main expression's removable singularity is at v = th. The analytic limit of the main expression at v = th is a*q. Thus the branch condition and active fallback are not an evident implementation of that limit. The comment says the earlier version trapped near zero voltage; that explanation does not establish that the replacement is mathematically or numerically correct.
 
-The mechanisms use a voltage lookup table from −120 to +100 mV with 199 subdivisions. Whether this branch is visited on the compiled NEURON lookup grid, whether it affects interpolated rates, and whether the published executable was built from the same source revision remain unverified. Do not silently substitute the mathematically expected limit and claim reproduction; first compile and compare the deposited mechanism under its published voltage protocols, then quantify the effect of any correction.
+The original pure files were compiled unchanged with `nrnivmodl` and probed in NEURON 9.0.2. Direct calls to the compiled `trap0` function at each stored singular voltage returned non-finite values. With `usetable_na_human=0`, direct Na+ rate evaluation at its three singular voltages also returned non-finite time constants. The Na+ source enables a lookup table from −120 to +100 mV with 199 subdivisions (200 nodes); scanning every compiled table node produced finite activation and inactivation time constants. The three Na+ singularities are off-grid; the nearest grid node to the `thi1` singularity is approximately 0.0022 mV away. The K+ table block is commented out, so its rates are evaluated directly; exact K+ gate singularities return non-finite time constants. At the opposite-sign branch triggers, the compiled K+ runtime produced negative `h1tau` values of approximately −0.728 ms and −0.133 ms for the inactivation and recovery cases. This identifies a real source/runtime edge case, but does not establish that all published model simulations fail: the Na+ default table avoids non-finite values at its grid nodes, while K+ evaluations need more careful voltage/protocol coverage. No correction was applied to the source files, and HumanJS must not silently patch them and claim exact source reproduction.
 
 #### What the deposited per-cell workbooks establish
 
@@ -359,7 +373,7 @@ The public deposit includes per-cell summary workbooks:
 
 The per-cell workbook summaries are not the raw whole-cell/nucleated-patch current traces. Their filename columns identify the source NWB recordings, but those original NWB trace files were not present among the 65 public files in the version-3.0 file listing examined here. Consequently, the original optimizer has not been independently rerun from raw trace data.
 
-The deposited analysis helpers specify voltage-clamp protocols and per-gate fitting methods, but the original NEURON model execution was not reproduced: the available browser VM did not have NEURON/nrnivmodl installed, and this runtime could not produce a clean local HumanJS clone. The source equations and file bytes have been inspected; they have not yet passed a model-level execution/reproduction check.
+The pure Wilbers mechanisms were compiled in the cloud VM using NEURON 9.0.2 and their direct rate-function and lookup-grid behavior was exercised. The full Wilbers voltage-clamp analysis workflow and current-clamp hybrid AP fit were not rerun; the public per-cell workbooks are summary fits, not raw current traces, and the original NWB traces were not present in the 65-file Dataverse v3.0 listing inspected. The NEURON runtime audit is therefore a compiled-source edge-case test, not a reproduction of the paper's channel-fitting experiments.
 
 The current-clamp helper uses a separate single-compartment model with 10 μm length/diameter, 200 Ω·cm axial resistivity, 1 μF/cm² capacitance, Rm=10,000 Ω·cm², g_pas=1/Rm, h.celsius=34, and E_K=-101+15 mV, E_Na=53+15 mV, E_pas=-85+15 mV. It applies −10 mV voltage shifts to the channels to account for the 15 mV current-clamp liquid-junction potential versus 5 mV during voltage clamp. The current-clamp helper fits conductance densities to AP features averaged 50/50 between human and mouse data; those resulting densities are model-fit quantities, not direct human channel-density measurements. The pure channel defaults gbar=40 pS/μm² must therefore not be substituted for final AP-fit conductance densities.
 
@@ -389,15 +403,15 @@ This preprint is useful as a state-of-field check, not as a direct source of hum
 Before writing an intrinsic spike model in HumanJS, close these specific questions:
 
 1. **Choose the represented preparation explicitly.** Decide whether the first increment is a somatic nucleated-patch equivalent or an intact soma/AIS model. State its anatomical and electrophysiological boundary in type names, documentation, and tests.
-2. **Verify exact human somatic gate equations.** Retrieve and cross-check the original Wilbers supplement and model implementation, including the m∞, h∞, activation-time, inactivation-time, and recovery functions; fit parameters; units; voltage sign conventions; and temperature corrections. Resolve ambiguous extracted table labels against the original source.
+2. **Resolve Wilbers source/runtime discrepancies before porting.** The pure human mechanisms have been compiled and their `trap0` edge cases tested in NEURON 9.0.2. Reconcile the K+ script's final dictionary and unused `h12factor_k_human` assignment with the source file and paper; reconcile the paper's 14-parameter methods count with the staged fit variables. Do not silently fix the source's branch logic and call it an exact reproduction.
 3. **Reconcile conductance density.** Keep the measured human somatic patch densities separate from the much larger fitted Na+ conductance used in the paper's single-compartment AP simulation. Do not convert one into the other without reproducing and documenting the authors' fitting assumptions.
 4. **Keep AIS evidence separate.** Human NaV1.2/NaV1.6 staining supplies spatial subtype evidence, but not absolute conductance or gating. Do not invent AIS channel densities, kinetics, or gradients from immunostaining.
-5. **Audit the Eyal model package.** Map every Table S4 parameter to the original ModelDB mechanisms and compartment assignments. Reconcile the paper's nine fitted channel conductances with the mechanism names in the available secondary code snapshot. Keep rodent-derived kinetic functions explicitly marked as transferred model assumptions.
+5. **Retain the canonical Eyal source audit.** Table S4 is mapped to the six original HOC soma/axon parameter sets. The nine inserted conductance mechanisms and separate CaDynamics_E2 module are identified; Ca_HVA and NMDA are not inserted by those six spike templates. The Figure 7A reproduction report records the executable test and its limitations. Keep rodent-derived kinetic functions explicitly marked as transferred model assumptions.
 6. **Add causal validation targets only after parameter provenance is closed.** Candidate targets include human somatic AP threshold/onset, waveform height and half-width, afterhyperpolarization, repetitive firing/adaptation, and availability/recovery behavior under matched voltage protocols. Passing software tests would still not constitute biological validation.
 
 A first somatic-patch-equivalent model may become defensible using the direct human channel recordings and the paper's fitted equations, but it must not claim to reproduce a full neuron, dendrites, AIS, or axonal propagation. An AIS-resolved model remains a separate evidence-gated increment.
 
-No AP-generating code, threshold-only spike event, or generic rodent HH parameter set has been added to HumanJS by this review.
+No AP-generating code, threshold-only spike event, or generic rodent HH parameter set has been added to HumanJS by this review. The canonical Eyal source audit and selected Figure 7A reproduction are recorded separately; neither is treated as biological validation.
 
 ## Sources and provenance
 

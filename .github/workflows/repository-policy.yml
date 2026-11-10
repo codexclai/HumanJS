@@ -33,5 +33,8 @@ jobs:
         run: cargo clippy --workspace --all-targets -- -D warnings
       - name: Run Rust tests
         run: cargo test --workspace --locked
+      - name: Check Python experiment runner syntax
+        run: |
+          python3 -c "import ast; from pathlib import Path; ast.parse(Path('experiments/reproduce_eyal_figure7a.py').read_text(encoding='utf-8'))"
       - name: Validate repository policy
         run: python3 .github/scripts/repository_policy.py
