@@ -1,18 +1,18 @@
 # HumanJS — current status
 
 **As of:** 2026-11-10  
-**Stage:** GitHub-first project foundation complete; ready to begin the first Rust CPU implementation slice. Owner-side GitHub hardening remains pending.
+**Stage:** GitHub-first project foundation complete; ready to begin the first Rust CPU implementation slice. Branch-deletion prevention is the remaining owner-side repository setting.
 
 ## Verified GitHub baseline
 
 - Repository: `codexclai/HumanJS`.
 - Visibility: public. Default branch: `main`.
-- Latest main commit at this update: `2e0078ccaa5df0f10d9f7efc56a8b0e940a8c13f`.
-- Repository policy workflow passed on the post-merge push for that commit: run `42810467386`.
-- Pull requests #1, #3, #4, #5, and #6 are merged. Dependabot PR #2 (the `actions/checkout` update to v7.0.1) was reviewed, passed its push and pull-request policy runs, and was squash-merged as commit `2e0078ccaa5df0f10d9f7efc56a8b0e940a8c13f`.
+- Latest main commit: `be2dc07d2503f590473757f67526f1024c3322a5`.
+- Repository-policy workflow passed on the post-merge push for that commit: run `42810969518`.
+- Preparation PR #7 and Dependabot PR #2 are merged. No open pull requests were reported in the latest check.
 - `.github/workflows/repository-policy.yml` runs on push, pull request, and manual dispatch. It grants read-only `contents` permission, pins `actions/checkout` by full commit SHA, and invokes the Python repository-policy validator.
 - `.github/dependabot.yml` checks GitHub Actions dependencies weekly.
-- The current recursive tree contains 41 entries; it has governance, documentation, owner-input provenance, and repository automation, but no active implementation tree.
+- The repository has documentation/governance, owner-input provenance, and repository automation; it does not yet contain the active simulation implementation.
 
 ## Completed preparation
 
@@ -44,11 +44,13 @@ The source-of-truth transition is complete: current owner intent and the accepte
 
 The former project contained additional historical research notes, architecture documents, experiment scripts, result JSON, and old runtime test records. These have not been bulk-copied into active paths. That is intentional: old software results are not biological validation, and every research item must be screened for source provenance, species/method, relevance, and redistribution rights before promotion. Migrate a specific record when it supports a current design or reproducible experiment; do not make wholesale historical copying a prerequisite to starting the new implementation.
 
-## Owner-side GitHub hardening — still pending
+## Owner-side GitHub setting — branch deletion prevention
 
-The latest repository check reported `main` as unprotected and returned an empty repository-rulesets list. The connected integration has no repository-settings/branch-protection write operation; the branch-protection read endpoint was denied to the integration. Account 2FA/passkey state and Code security and analysis settings could not be verified.
+The latest repository check reported `main` as unprotected and returned an empty repository-rulesets list. The connected integration cannot create repository rulesets. The owner's policy is to **never delete any branch**. Force pushes are permitted and should not be blocked by the ruleset.
 
-The owner must create and verify a ruleset for `main`, require PRs and the `policy` status check, block force-push and deletion, resolve review conversations, and enable applicable security features. Exact UI steps and safe solo-owner settings are in `docs/operations/GITHUB-SECURITY.md`. Until this is done, describe the repository as prepared but not fully hardened.
+The owner must create an active branch ruleset targeting all branches with deletion restriction enabled, and force-push restriction disabled. Leave GitHub's automatic deletion of merged head branches disabled. For `main`, require PRs and the `policy` status check if practical, without requiring a second approval that blocks the solo owner. Exact steps are in `docs/operations/GITHUB-SECURITY.md`.
+
+Code security and analysis features are not required by the owner's current preference. The repository must still never contain secrets, credentials, private data, or unlicensed third-party material. Account 2FA/passkey state remains unverified and should be maintained independently.
 
 ## Next implementation milestone
 
