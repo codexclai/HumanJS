@@ -2,7 +2,7 @@
 
 HumanJS is an open-source scientific-software project pursuing a comprehensive, scientifically defensible computational model of the human brain.
 
-**Current stage:** the repository contains the accepted project definition, architecture, scope specification, governance, and repository checks. The simulation implementation has not started. This repository must not be represented as a working or biologically validated brain.
+**Current stage:** the first CPU implementation slice is present: a typed, single-compartment passive membrane model with exact integration for constant injected current. This is a narrow subthreshold mechanism, not a complete neuron or working/validated brain.
 
 ## Scope
 
@@ -26,6 +26,18 @@ HumanJS models the brain, not the whole human body. It is not a chatbot, externa
 4. Check `docs/status/STATUS.md` for the verified implementation state.
 
 GitHub `main` is the sole source of truth. The ChatGPT Project Sources area may remain empty; no uploaded source or separately synchronized archive is needed.
+
+## First CPU mechanism
+
+The current mechanism is a single passive membrane patch. It accepts explicit SI-valued capacitance, leak conductance, equilibrium potential, initial voltage, injected current, and integer-nanosecond time steps. It does not yet implement active channels, synaptic receptors, dendrites, action potentials, neuron populations, or network connectivity.
+
+Run the native checks with:
+
+```sh
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets -- -D warnings
+cargo test --workspace --locked
+```
 
 ## Scientific and engineering standards
 

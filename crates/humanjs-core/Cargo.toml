@@ -1,0 +1,7 @@
+[package]
+name = "humanjs-core"
+version = "0.1.0"
+description = "CPU-first passive membrane dynamics for the HumanJS brain model"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true

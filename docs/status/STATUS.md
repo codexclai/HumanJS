@@ -1,45 +1,53 @@
 # HumanJS — current status
 
 **As of:** 2026-11-10  
-**Stage:** repository foundation clean-up and verification complete; ready to begin the first Rust CPU implementation slice.
+**Stage:** initial Rust CPU mechanism implemented; scientific and integration work continues.
 
 ## Canonical repository
 
 - Repository: `codexclai/HumanJS`.
 - Visibility: public. Default branch: `main`.
 - GitHub `main` is the sole authoritative source. ChatGPT Project Sources may remain empty.
-- No open pull requests or open issues were returned by the latest live check before this synchronization.
-- The current main-branch policy workflow passed on commit `fbae7a9d13fdf78085b2a5325d86514288d4b470` (run `42818365413`, success). That check validates repository policy only; it is not a code build, simulation test, or biological validation.
-- The repository policy workflow is restricted to pushes to `main` and manual dispatch, with read-only `contents` permission and an immutable checkout action SHA.
-- Branch-generating dependency update automation is not part of the accepted workflow.
+- The live branch listing returned exactly one branch, `main`; no non-main refs remained.
+- No open issues or open pull requests were returned by the latest live checks.
+- Before this implementation commit, the latest repository-policy workflow passed on commit `fccb71e43a66ebab09a54f54c06d7e8d4438d824` (run `42819045682`, success). That check validated repository policy only; it was not a code build, simulation test, or biological validation.
 
-## Completed preparation
+## Implemented CPU slice
 
-- Consolidated the active requirements, system architecture, brain-scope specification, decision record, roadmap, security guidance, repository hygiene, status, and session boot sequence.
-- Confirmed that the boot process retrieves live GitHub state and does not depend on ChatGPT Project Sources or local uploads.
-- Removed superseded historical input copies, archive/migration records, and duplicate project snapshots from the current tracked tree.
-- Removed branch-generating update automation and pull-request-specific scaffolding to align repository operations with the permanent main-only policy.
-- Kept the repository license, attribution notice, contribution guidance, security policy, ignore rules, text attributes, and repository-policy validator.
-- Verified the repository-policy workflow succeeded on the post-cleanup main commit (run `42818365413`).
+The new Rust workspace contains `humanjs-core` with:
 
-## Implementation status — not started
+- Validated physical-unit wrappers for voltage, current, capacitance, conductance, input resistance, and membrane time constant.
+- Integer-nanosecond simulation timestamps and positive step durations.
+- Separate passive membrane model parameters, initial conditions, and live runtime state.
+- A single-compartment passive RC membrane equation driven by piecewise-constant injected current, integrated using its analytic exponential solution.
+- A conversion from input resistance and membrane time constant to lumped leak conductance and capacitance (`G = 1/R`, `C = tau/R`).
+- Validation and failure behavior that avoids partially updating runtime state when a step fails.
+- Numerical and behavioral tests for the analytic response, relaxation, step partitioning, hyperpolarization, reset, unit conversion, and time overflow.
 
-The repository does not yet contain:
-- A Rust workspace or executable simulation mechanism.
-- A Python developer package or its tests.
-- A stable C ABI or C++ wrapper.
-- An integrated WGSL GPU execution backend.
-- Executable JSON brain/model/IR definitions.
-- Runtime save/restore, native worker execution, or simulation integration tests.
+The model is a deliberately limited subthreshold mechanism. It is not a complete neuron and contains no active ion channels, synaptic receptors, dendrites, action potentials, population/network connectivity, or biological parameter defaults. The tests establish software behavior for the declared equation only.
 
-The configurable default of 10,000 spiking neuron units, save/restore, Rust-native multi-threaded execution, and CPU execution remain requirements, not implemented capabilities. CPU is the first implementation target. GPU support is an objective and must not be claimed until implemented and measured on actual supported hardware.
+## Evidence and scientific boundary
 
-## Branch status and operational limitation
+`research/HUMAN-NEOCORTEX-PASSIVE-MEMBRANE.md` records human whole-cell patch-clamp evidence for layer-dependent passive membrane properties and notable within-layer heterogeneity. The initial model does not claim to reproduce the full distribution or the active sag behavior reported in those recordings. Its parameters must be supplied explicitly; no group mean is treated as a universal human neuron.
 
-The live branch check on 2026-11-10 found nine non-main refs in addition to `main`. Comparing each against `main` showed each has one unique commit and is 8–16 commits behind; none is to be used or updated. The connected GitHub operations available in this session can list, compare, and update refs but do not expose branch deletion. No authenticated GitHub browser session was available. These refs therefore remain physically present and must not be described as deleted. The intended steady state remains `main` only.
+## Not yet implemented
 
-No rulesets, branch protection, deletion-prevention settings, or automatic branch-generating updates are required. Force pushes remain exceptional and must be inspected and verified.
+- A configurable default of 10,000 spiking neuron units or any spiking neuron mechanism.
+- Synaptic transmission, receptor kinetics, vesicle release, plasticity, or active conductances.
+- Multicompartment morphology, population scheduling, or connected network dynamics.
+- Runtime save/restore/checkpointing or safe interruption/resumption.
+- Rust-native multi-threaded simulation execution.
+- JSON model-definition loading and schema validation.
+- Python developer package, stable C ABI, C++ wrapper, or integrated WGSL backend.
+
+These remain requirements or future objectives, not current capabilities.
+
+## Verification and environment
+
+The GitHub Actions workflow now runs Rust formatting, Clippy, workspace tests, and the repository policy validator on pushes to `main`. The result for this implementation commit must be checked before reporting these commands as passed.
+
+A fresh local clone was attempted but this execution environment could not resolve `github.com`; no local checkout or local Rust test run was produced. Repository updates were made through GitHub's Git data API and must be verified through the remote commit and workflow results.
 
 ## Next implementation milestone
 
-Start a minimal Rust workspace with one end-to-end, CPU-only simulation vertical slice. Choose module boundaries from actual ownership and data flow, not arbitrary brain-region crates. Define typed time/state/error/resource contracts, write numerical unit tests, and make the first integrated mechanism causally testable. Add persistence and Rust-native concurrency as explicit tested capabilities rather than placeholders. Gather only the scientific evidence needed for the selected first mechanism and record its provenance.
+Add conductance-based synaptic input with explicit receptor/transmitter kinetics and evidence records, then test causal current/voltage effects and interaction with the passive membrane. Keep parameters provenance-tagged and do not substitute a generic exponential conductance for receptor kinetics without documenting its abstraction boundary. Follow with an evidence-bounded spike-initiation mechanism, population integration, checkpointing, and Rust-native concurrency.

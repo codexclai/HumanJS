@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""Validate HumanJS repository hygiene and project policy without running project code."""
+"""Validate tracked and non-ignored HumanJS files against repository policy."""
 
 from __future__ import annotations
 
 import json
+import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -67,6 +69,21 @@ TEMP_SUFFIXES = (
 )
 
 
+def repository_files() -> list[Path]:
+    """Return tracked plus non-ignored working-tree files, excluding build caches."""
+    completed = subprocess.run(
+        ["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+    )
+    return [
+        ROOT / os.fsdecode(entry)
+        for entry in completed.stdout.split(b"\0")
+        if entry
+    ]
+
+
 def main() -> int:
     errors: list[str] = []
     for relative in REQUIRED_FILES:
@@ -91,13 +108,17 @@ def main() -> int:
         errors.append("NOTICE lacks the current owner attribution")
 
     json_count = 0
-    for path in ROOT.rglob("*"):
+    try:
+        paths = repository_files()
+    except (OSError, subprocess.CalledProcessError) as exc:
+        print(f"ERROR: could not enumerate repository files: {exc}", file=sys.stderr)
+        return 1
+
+    for path in paths:
         if not path.is_file():
             continue
         relative = path.relative_to(ROOT)
         parts = relative.parts
-        if ".git" in parts:
-            continue
 
         if any(part.lower() in FORBIDDEN_DIRS for part in parts[:-1]):
             errors.append(f"forbidden/generated directory is tracked: {relative}")

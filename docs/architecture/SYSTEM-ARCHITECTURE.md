@@ -1,9 +1,9 @@
 # HumanJS — target system architecture
 
-**Status:** accepted direction, not an implemented design.  
+**Status:** accepted direction, with one minimal CPU mechanism implemented.  
 **Updated:** 2026-11-10.
 
-This document defines architectural boundaries and responsibilities. The full biological and functional scope is enumerated separately in ../spec/BRAIN-SCOPE-AND-COMPLETENESS.md. Neither document claims that the listed mechanisms already exist or that a specific crate, GPU backend, Python binding framework, or on-disk schema has already been selected.
+This document defines architectural boundaries and responsibilities. The full biological and functional scope is enumerated separately in ../spec/BRAIN-SCOPE-AND-COMPLETENESS.md. The target architecture is not a claim that all listed mechanisms, interfaces, GPU paths, or persistence formats already exist.
 
 ## 1. High-level topology
 
@@ -71,7 +71,7 @@ Use Rust-native concurrency rather than Node worker APIs. Define ownership of mu
 
 ## 8. Repository implementation boundaries
 
-Future code may live under crates/ for Rust, python/ for the primary Python package, bindings/c/ and bindings/cpp/ for interoperability, gpu/ for WGSL, models/ for inspectable JSON model definitions, research/ for evidence, experiments/ for reproducible protocols and outputs, tests/ for cross-layer validation, and benchmarks/ for reproducible performance tests. Create directories only when real content is introduced. Avoid empty placeholder modules and arbitrary crate proliferation.
+Future code may live under `crates/` for Rust, `python/` for the primary Python package, `bindings/c/` and `bindings/cpp/` for interoperability, `gpu/` for WGSL, `models/` for inspectable JSON model definitions, `research/` for evidence, `experiments/` for reproducible protocols, `tests/` for cross-layer validation, and `benchmarks/` for reproducible performance tests. Create directories only when real content is introduced.
 
 ## 9. Architecture acceptance principles
 
@@ -82,3 +82,15 @@ Future code may live under crates/ for Rust, python/ for the primary Python pack
 - Concurrency tests verify correctness, ownership/synchronization, interruption, and restore behavior.
 - No legacy Node.js or JavaScript dependency exists in active source or workflows.
 - No test or document calls an unimplemented mechanism complete.
+
+## 10. Implemented CPU slice — passive membrane patch
+
+The active Rust workspace is currently `crates/humanjs-core`. It implements one lumped passive membrane patch with capacitance, leak conductance, an effective zero-current equilibrium potential, initial voltage, injected current, and an integer-nanosecond simulation clock.
+
+The update solves the passive RC equation analytically over each interval for a current held constant over that interval. This avoids Euler-step stability constraints for this linear subthreshold equation. Physical inputs use validated SI newtypes. Parameters, initial conditions, and live runtime state are separate types. A failed step leaves the previous state unchanged.
+
+The model can derive total capacitance and leak conductance from an input resistance and membrane time constant using the lumped RC relationship. This conversion is a modeling reduction; it does not recover dendritic morphology or identify a specific ion-channel reversal potential. No population parameter defaults are shipped.
+
+The evidence note `research/HUMAN-NEOCORTEX-PASSIVE-MEMBRANE.md` documents human surgical-tissue recordings that show layer-dependent means and substantial heterogeneity. The current code is not calibrated to a complete cell dataset and has only software-level numerical/behavioral tests.
+
+Explicit exclusions at this stage: active channels (including sag currents), synaptic transmission/receptor kinetics, dendritic cable structure, action-potential initiation, neuron populations, network connectivity, save/restore, native concurrency, Python/C/C++ interfaces, JSON model loading, and WGSL. These remain future work, not implicit capabilities.

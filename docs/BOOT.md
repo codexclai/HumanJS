@@ -36,11 +36,11 @@ Do not search for or request old uploads or copied source snapshots. If evidence
 - Keep model definitions, initial conditions, live state, learned state, and checkpoints distinct.
 - HumanJS has no requirement to store credentials, private user data, or secrets. Do not introduce authentication or generic secret/configuration infrastructure without an approved requirement.
 
-## Branch policy
+## Branch policy and verified branch state
 
 `main` is the only branch to use, permanently. Never create, check out, update, merge, or otherwise use another branch. Make authorized changes directly on `main`. Do not create branches, PRs, or automation that opens non-main update branches. No branch protection, rulesets, or deletion-prevention settings are required. Force pushes are permitted but exceptional and must be inspected and verified.
 
-The latest live inspection on 2026-11-10 found nine non-main refs in addition to `main`. All nine diverge from `main` and each has one unique commit, with `main` ahead by 8–16 commits. They are unused leftovers. The connected GitHub tools can list and compare refs but do not expose branch deletion; no authenticated browser session was available for that operation. Do not use or update those refs, and never claim they were deleted. Recheck the live branch list and deletion capability in a future session.
+The live branch listing on 2026-11-10 returned exactly one branch: `main`. No non-main refs remained. Recheck the live branch list at the start of every session; do not rely on this historical check.
 
 ## Session procedure
 
@@ -56,4 +56,8 @@ The latest live inspection on 2026-11-10 found nine non-main refs in addition to
 
 ## Current implementation starting point
 
-The repository is a documentation and governance foundation; no executable simulation implementation is established. The preparation baseline is ready for implementation. Start with a minimal Rust workspace and one integrated CPU-only simulation vertical slice. Choose modules from real ownership and data flow, define typed time/state/error/resource contracts, implement a causally testable mechanism, and add numerical and behavioral tests. Add save/restore and Rust-native concurrency as explicit tested capabilities, not placeholders. Research only the evidence needed for each mechanism and record provenance, species, methods, uncertainty, and validation limits.
+The repository now contains a minimal Rust workspace and a CPU-only passive-membrane vertical slice. It represents one lumped membrane compartment with capacitance, leak conductance, an effective zero-current equilibrium, initial voltage, and injected current. The membrane equation is solved analytically for a piecewise-constant current over each step. Simulation time is stored as integer nanoseconds; physical quantities use validated SI wrappers.
+
+A human-evidence note records layer-specific variability in passive properties measured from surgical human neocortical tissue. No human parameter set is installed as a universal default. The first mechanism is subthreshold-only and does not model active channels, synaptic transmission, spikes, multicompartment morphology, populations, or networks.
+
+Start the next implementation increment by adding a causal synaptic conductance mechanism with receptor-specific parameter provenance, then proceed toward spike generation, population interaction, checkpointing, and Rust-native concurrency. Do not claim those capabilities until implemented and tested.

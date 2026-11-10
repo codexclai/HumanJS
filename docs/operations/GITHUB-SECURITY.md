@@ -11,13 +11,12 @@
 - Never create, check out, update, merge, or otherwise use another repository branch, whether new or existing.
 - Commit authorized maintainer work directly to `main`; verify every resulting commit and remote HEAD.
 - Do not create project pull requests or enable automation that creates non-main update branches.
-- Existing non-main refs are unused leftovers. Inspect their unique commits before deletion; never use them for implementation.
 - Do not require or configure rulesets, branch-protection rules, deletion-prevention rules, or other branch governance settings.
 - Force pushes are permitted but exceptional. Inspect the exact target and impact, document the reason, use an expected-head/lease check, and verify the result.
 
-## Current branch cleanup limitation
+## Verified branch state
 
-The live inspection found nine non-main refs in addition to `main`. GitHub comparisons showed one unique commit on each non-main ref and that each ref is 8–16 commits behind `main`. They are not used. The GitHub tools available during this inspection expose branch search/comparison and ref updates, but not branch deletion; no authenticated browser session was available to delete them. Do not claim the repository physically contains only `main` until a fresh branch listing verifies that state. Recheck deletion capability in a future session.
+The live GitHub branch listing on 2026-11-10 returned exactly one branch: `main`. No non-main refs remained. Recheck the live branch list at the start of every session rather than relying on this historical observation.
 
 ## Repository and delivery
 

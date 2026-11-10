@@ -14,23 +14,24 @@
 - [x] Add read-only repository policy validation on pushes to `main` and manual dispatch.
 - [x] Remove duplicate, superseded, unreviewed, and temporary project material from the current working tree.
 - [x] Document repository hygiene, security reporting, current status, and session continuity.
-- [ ] Remove the remaining non-main Git references when a safe branch-deletion operation is available; do not use or update them.
+- [x] Verify that the live branch listing contains exactly `main` and no non-main refs.
 
 ## P1 — scientific evidence workflow
 
-- [ ] For each mechanism selected for implementation, gather relevant primary literature and authoritative technical references.
-- [ ] Record species, preparation, method, anatomical resolution, measurement limits, provenance, parameter source, uncertainty, disputes, and validation boundaries.
-- [ ] Add a research record only when it informs a concrete mechanism, parameter, or validation task.
+- [x] Review primary human evidence relevant to the first passive-membrane mechanism.
+- [x] Record species, preparation, method, anatomical resolution, measured values, heterogeneity, inference, and validation limits.
+- [ ] For each subsequent mechanism, gather relevant primary literature and authoritative technical references.
 - [ ] Add reproducible experiment protocols and results under `experiments/` only when real experiments are designed.
 
 ## P2 — native Rust simulation foundation
 
-- [ ] Establish a minimal Rust workspace based on real module and ownership boundaries.
-- [ ] Define core time, state, population, event, error, resource-budget, and checkpoint contracts.
-- [ ] Implement an integrated CPU-first simulation slice with numerical and behavioral tests.
-- [ ] Retain the configurable 10,000 spiking-neuron-unit default as an engineering configuration, not a biological claim.
-- [ ] Implement Rust-native concurrency with explicit ownership, synchronization, interruption, and recovery behavior.
+- [x] Establish a minimal Rust workspace based on the first real mechanism boundary.
+- [x] Define typed physical quantities, integer simulation time, model parameters, initial conditions, runtime state, and simulation errors.
+- [x] Implement an integrated CPU-first passive-membrane slice with numerical and behavioral tests.
+- [ ] Retain a configurable default of 10,000 spiking-neuron units as an engineering configuration, not a biological claim.
+- [ ] Implement evidence-bounded spike initiation and Rust-native concurrency with explicit ownership, synchronization, interruption, and recovery behavior.
 - [ ] Implement save/restore that preserves live and learned state and safely rejects corrupted or resource-exhausting input.
+- [ ] Define and validate inspectable JSON model definitions separately from runtime and learned state.
 
 ## P3 — Python-first developer interface and native interoperability
 

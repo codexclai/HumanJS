@@ -1,6 +1,6 @@
 # HumanJS — repository structure
 
-GitHub `main` is the authoritative project record. The current tree is intentionally small. Create implementation directories only when they have real maintained content; do not add empty scaffolding.
+GitHub `main` is the authoritative project record. Create implementation directories only when they have real maintained content; do not add empty scaffolding.
 
 ## Current layout
 
@@ -9,15 +9,16 @@ GitHub `main` is the authoritative project record. The current tree is intention
 | `README.md` | Public project introduction and boundaries | Active |
 | `LICENSE`, `NOTICE` | Apache-2.0 terms and attribution | Active |
 | `SECURITY.md`, `CONTRIBUTING.md` | Security reporting and contribution rules | Active |
+| `Cargo.toml`, `Cargo.lock` | Rust workspace definition and lockfile | Active |
+| `crates/humanjs-core/` | Typed passive membrane CPU mechanism and tests | Active |
 | `docs/` | Owner requirements, architecture, specifications, decisions, roadmap, operations, status | Active |
+| `research/` | Curated scientific evidence and parameter provenance | Active |
 | `.github/scripts/` | Maintainer repository-policy validation | Active |
-| `.github/workflows/` | Main-branch repository-policy automation | Active |
-| `crates/` | Rust workspace and native simulation crates | Planned |
+| `.github/workflows/` | Main-branch policy and Rust verification | Active |
 | `python/` | Primary Python package and tests | Planned |
 | `bindings/c/`, `bindings/cpp/` | C ABI headers, C++ wrappers and tests | Planned |
 | `gpu/` | WGSL compute kernels and GPU resources | Planned |
 | `models/` | Inspectable brain/model/IR definitions, JSON where appropriate | Planned |
-| `research/` | Curated scientific references, evidence records, parameter provenance | Planned |
 | `experiments/` | Reproducible protocols, stimuli, configurations and results | Planned |
 | `tests/` | Cross-layer integration and acceptance tests | Planned |
 | `benchmarks/` | Reproducible performance workloads and measurement records | Planned |
