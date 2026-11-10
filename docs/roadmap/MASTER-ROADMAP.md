@@ -22,6 +22,10 @@
 - [x] Record species, preparation, method, anatomical resolution, measured values, heterogeneity, inference, and validation limits.
 - [x] Review human adult L2/L3 pyramidal-to-pyramidal short-term synaptic dynamics and model-fitted AMPA/NMDA conductance waveforms.
 - [x] Record the connection class, species, experimental methods, direct observations, fitted values, assumptions, and parameter provenance for the first glutamatergic mechanism.
+- [x] Review human L2/L3 somatic Na+/K+ current measurements, human AIS sodium-subtype localization, and the model/measurement boundary for intrinsic spike initiation.
+- [x] Retrieve and inspect the Wilbers supplementary Tables S1–S3 and original CC0 Dataverse fitting scripts; record human parameter provenance, fit stages, and measurement protocols.
+- [ ] Inspect the original Wilbers `na_human.mod` and `k_human.mod` source text, reconcile the K+ fit/table discrepancy and 14-parameter bookkeeping, and verify rate equations, fixed `Rb`, units, and temperature before implementing spike generation.
+- [ ] Reconcile Eyal Table S4 with the canonical ModelDB package and distinguish its rodent-derived kinetics from its human-fitted conductances before any reproduction.
 - [ ] For each subsequent mechanism, gather relevant primary literature and authoritative technical references.
 - [ ] Add reproducible experiment protocols and results under `experiments/` only when real experiments are designed.
 
@@ -32,7 +36,9 @@
 - [x] Implement an integrated CPU-first passive-membrane slice with numerical and behavioral tests.
 - [x] Implement one human-evidence-grounded glutamatergic conductance mechanism coupled to the passive membrane, including transactional runtime-state updates and causal tests.
 - [ ] Retain a configurable default of 10,000 spiking-neuron units as an engineering configuration, not a biological claim.
-- [ ] Implement evidence-bounded intrinsic spike initiation and Rust-native concurrency with explicit ownership, synchronization, interruption, and recovery behavior.
+- [ ] Implement a human-evidence-bounded somatic-patch-equivalent spike mechanism only after exact equations, parameters, units, temperature, and fit behavior are reproduced; keep this distinct from a future anatomical AIS model.
+- [ ] Implement an AIS-resolved mechanism only when its geometry and functional channel-density/gating evidence are sufficiently constrained; do not derive conductances from immunostaining alone.
+- [ ] Implement Rust-native concurrency with explicit ownership, synchronization, interruption, and recovery behavior.
 - [ ] Implement save/restore that preserves live and learned state and safely rejects corrupted or resource-exhausting input.
 - [ ] Define and validate inspectable JSON model definitions separately from runtime and learned state.
 

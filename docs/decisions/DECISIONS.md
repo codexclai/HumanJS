@@ -92,3 +92,18 @@ Implement the first excitatory synaptic component as an AMPA/NMDA conductance in
 The literature-derived AMPA/NMDA waveform and peak-conductance parameters are fitted/effective parameters, not direct measurements of molecular receptor transition rates at an individual synapse. The short-term-depression utilization and recovery parameters are fitted to human paired-recording responses; applying connection-level dynamics to one effective contact is an explicit computational reduction. Keep these parameters explicit in model construction and evidence records; do not use them as universal defaults.
 
 The first implementation deliberately excludes stochastic vesicle fusion, explicit presynaptic calcium/docking/release-site machinery, synaptic-cleft glutamate dynamics and uptake, molecular receptor Markov/desensitization states, dendritic spines/cable morphology, and inhibitory synapses. It integrates interval-mean synaptic conductances and evaluates NMDA magnesium unblock at an estimated midpoint voltage. Software tests support only these computational equations and interfaces; they do not establish biological validation.
+
+
+## ADR-014 — Intrinsic spike initiation is evidence-gated and soma/AIS scopes remain distinct
+
+**Status:** Accepted · **Date:** 2026-11-10
+
+Do not add a threshold-only spike generator or generic rodent Hodgkin–Huxley mechanism and label it a human cortical neuron. The first possible spike-generation increment is a clearly named human somatic nucleated-patch equivalent, using a reproduced human Na+/K+ model and retaining the distinction between direct nucleated-patch measurements and fitted AP-model conductances. It must not claim anatomical AIS resolution, dendritic propagation, or intact whole-neuron behavior.
+
+An anatomical soma/AIS model is a separate milestone. Human NaV1.2/NaV1.6 immunolocalization may constrain subtype position qualitatively but does not supply functional channel density or gating kinetics. Do not convert staining intensity or peak position into conductance parameters.
+
+The Wilbers et al. (2023) repeated Table S2 label is resolved by the deposited fitting scripts: the inactivation parameter is named `th_inact_inf`. The original CC0 Dataverse fitting scripts identify parameter fit stages and temperature/protocol settings, but the binary `na_human.mod` and `k_human.mod` file contents have not yet been inspected. The K+ fitting script contains a mismatch between its earlier optimizer result, its final printed dictionary, and Table S2; the paper's stated 14 free parameter count also does not reconcile with the fit-variable lists visible in the deposited scripts. The exact `Rb` value/use, rate equations, units, and Q10/reference-temperature implementation still require source-file review.
+
+Before implementing the somatic model, inspect the original Wilbers mechanism files and reconcile those parameter manifests and equations. Before reproducing the Eyal et al. (2018) axo-somatic model, reconcile Table S4 against the original ModelDB source and distinguish its rodent-derived kinetic assumptions from fitted human conductance parameters. Keep all measured, fitted, transferred, and engineering parameters separately provenance-tagged.
+
+The evidence review is recorded in `research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md`. The review adds no spike-generating code and makes no biological-validation claim.

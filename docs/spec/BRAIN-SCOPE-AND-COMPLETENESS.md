@@ -211,4 +211,6 @@ Update this specification when owner requirements, scientific evidence, model me
 
 ## 9. Current state
 
-This specification defines intended scope only. At the time of writing, the new GitHub repository contains governance and architecture documents but no Rust simulation core, Python package, C ABI, C++ wrapper, or integrated WGSL backend. No whole-brain mechanism listed above should be treated as implemented in the new repository until code and tests exist.
+This specification defines intended scope; it is not a claim that all catalogue items are implemented. The current Rust repository contains a typed CPU passive-membrane mechanism and an effective human L2/L3 glutamatergic synapse mechanism integrated with that membrane. Their software-level verification and scientific boundaries are recorded in `docs/status/STATUS.md` and the corresponding research notes.
+
+A targeted human spike-initiation evidence review is recorded in `research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md`. It does not add action-potential code. A human somatic nucleated-patch equivalent and an anatomical soma/AIS model are distinct targets with different evidence requirements. No whole-neuron, AIS-resolved, population, network, cognitive, or whole-brain mechanism listed elsewhere in this specification should be treated as implemented until integrated code and scoped validation exist. The Python package, C ABI, C++ wrapper, and integrated WGSL backend remain unimplemented.
