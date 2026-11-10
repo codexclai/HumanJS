@@ -1,6 +1,6 @@
 # HumanJS — target system architecture
 
-**Status:** accepted direction, with one minimal CPU mechanism implemented.  
+**Status:** accepted direction, with two bounded CPU mechanisms implemented.  
 **Updated:** 2026-11-10.
 
 This document defines architectural boundaries and responsibilities. The full biological and functional scope is enumerated separately in ../spec/BRAIN-SCOPE-AND-COMPLETENESS.md. The target architecture is not a claim that all listed mechanisms, interfaces, GPU paths, or persistence formats already exist.
@@ -93,4 +93,18 @@ The model can derive total capacitance and leak conductance from an input resist
 
 The evidence note `research/HUMAN-NEOCORTEX-PASSIVE-MEMBRANE.md` documents human surgical-tissue recordings that show layer-dependent means and substantial heterogeneity. The current code is not calibrated to a complete cell dataset and has only software-level numerical/behavioral tests.
 
-Explicit exclusions at this stage: active channels (including sag currents), synaptic transmission/receptor kinetics, dendritic cable structure, action-potential initiation, neuron populations, network connectivity, save/restore, native concurrency, Python/C/C++ interfaces, JSON model loading, and WGSL. These remain future work, not implicit capabilities.
+## 11. Implemented CPU slice — human L2/L3 glutamatergic synapse
+
+The Rust core also contains a single effective glutamatergic synaptic-contact model parameterized for an adult human L2/L3 pyramidal-to-pyramidal evidence context. AMPA-like and NMDA-like inputs use separate normalized biexponential conductance waveforms. The waveforms use explicit peak conductance, rise time, and decay time; their time constants are effective conductance-shape parameters rather than molecular receptor transition rates.
+
+NMDA conductance is multiplied by a voltage-dependent magnesium-unblock factor using the Jahr-Stevens form. The gamma parameter, extracellular magnesium concentration, and coefficient are explicit. The initial parameter fixture uses the representative fitted Eyal et al. human L2/L3 model values and is not a universal default.
+
+Short-term depression/recovery uses an availability variable. A presynaptic spike triggers an effective response proportional to available resource and depletes the resource by the fitted utilization fraction. Availability recovers exponentially between events. Human paired-recording observations and model-fitted U/recovery values are documented in `research/HUMAN-CORTICAL-GLUTAMATERGIC-SYNAPSE.md`. The connection-level fitted values are applied to one effective contact as an explicit abstraction.
+
+The coupled membrane update analytically averages each receptor conductance waveform over the requested interval and uses a midpoint predictor-corrector for voltage-dependent NMDA magnesium unblock. A failed coupled step leaves both the membrane state and the synaptic state unchanged. The approximation depends on simulation step size; tests compare a 1 ms step with ten 0.1 ms steps.
+
+This is not a complete biological synapse. Explicitly unmodeled are presynaptic spike waveform/calcium entry, release-site/docked-vesicle/fusion mechanisms, stochastic or multivesicular release, cleft glutamate concentration/diffusion/uptake, molecular receptor Markov/desensitization states, spines/dendritic cable, and inhibitory inputs. The first implementation does not model local dendritic NMDA spikes. These mechanisms remain future work, not implicit capabilities.
+
+## 12. Validation status of current mechanisms
+
+The current Rust tests validate SI input handling, time arithmetic, exact passive RC integration, normalized conductance kernels, voltage-dependent magnesium unblock, fitted-scale short-term resource dynamics, depolarizing synaptic current, approximate step-size convergence, and atomic failure behavior. GitHub Actions runs formatting, Clippy, workspace tests, and repository policy checks. These are software-level checks only; they do not establish biological validation or whole-brain functionality.

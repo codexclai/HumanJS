@@ -1,7 +1,7 @@
 # HumanJS — current status
 
 **As of:** 2026-11-10  
-**Stage:** first Rust CPU mechanism implemented and its focused CI checks passed; scientific and integration work continues.
+**Stage:** two integrated Rust CPU mechanisms implemented; latest full verification passed.
 
 ## Canonical repository
 
@@ -10,45 +10,60 @@
 - GitHub `main` is the sole authoritative source. ChatGPT Project Sources may remain empty.
 - The live branch listing returned exactly one branch, `main`; no non-main refs remained.
 - No open issues or open pull requests were returned by the latest live checks.
-- Current verified implementation head: `66f56730dbef0075132e21263ea9b679f3f2e154`.
-- Workflow run `42824933385` passed for that commit: https://github.com/codexclai/HumanJS/actions/runs/42824933385.
+- Verified implementation commit: `d561df97ae0bbd1012d8cd3bb3b0e466e4f78304`.
+- Successful full workflow: run `42829179222`, commit `d561df97ae0bbd1012d8cd3bb3b0e466e4f78304`: https://github.com/codexclai/HumanJS/actions/runs/42829179222.
 
-## Implemented CPU slice
+## Implemented CPU mechanisms
 
-The Rust workspace contains `humanjs-core` with:
+### Passive membrane
 
-- Validated physical-unit wrappers for voltage, current, capacitance, conductance, input resistance, and membrane time constant.
-- Integer-nanosecond simulation timestamps and positive step durations.
-- Separate passive membrane model parameters, initial conditions, and live runtime state.
-- A single-compartment passive RC membrane equation driven by piecewise-constant injected current, integrated using its analytic exponential solution.
-- A conversion from input resistance and membrane time constant to lumped leak conductance and capacitance (`G = 1/R`, `C = tau/R`).
-- Validation and failure behavior that avoids partially updating runtime state when a step fails.
-- Numerical and behavioral tests for the analytic response, relaxation, step partitioning, hyperpolarization, reset, unit conversion, invalid physical parameters, non-finite values, and time overflow.
+The Rust workspace `crates/humanjs-core` contains:
+- Validated SI wrappers for voltage, current, capacitance, conductance, input resistance, and membrane time constant.
+- Integer-nanosecond simulation time and positive step durations.
+- Separate passive model parameters, initial conditions, and live runtime state.
+- A single-compartment passive RC equation integrated analytically for piecewise-constant injected current.
+- Derivation of lumped capacitance and leak conductance from supplied input resistance and time constant.
+- Failed-step handling that does not partially update membrane state.
 
-The model is a deliberately limited subthreshold mechanism. It is not a complete neuron and contains no active ion channels, synaptic receptors, dendrites, action potentials, population/network connectivity, or biological parameter defaults. The tests establish software behavior for the declared equation only.
+### Glutamatergic synapse
 
-## Evidence and scientific boundary
+A first integrated, CPU-only excitatory synaptic mechanism contains:
+- Independent AMPA-like and NMDA-like normalized biexponential conductance kernels.
+- Explicit conductance peak, rise time, and decay time parameters, validated so decay is longer than rise.
+- NMDA voltage-dependent magnesium unblock using gamma, extracellular magnesium concentration, and the Jahr-Stevens coefficient.
+- A deterministic presynaptic availability model with utilization and exponential recovery, fitted to the effective short-term depression/recovery scale reported for adult human L2/L3 pyramidal-to-pyramidal connections.
+- An integrated membrane step that uses interval-mean receptor conductances and a midpoint estimate for NMDA magnesium unblock.
+- Transactional coupled updates: a failed step leaves both membrane runtime state and synapse runtime state unchanged.
 
-`research/HUMAN-NEOCORTEX-PASSIVE-MEMBRANE.md` records human whole-cell patch-clamp evidence for layer-dependent passive membrane properties and notable within-layer heterogeneity. The initial model does not claim to reproduce the full distribution or the active sag behavior reported in those recordings. Its parameters must be supplied explicitly; no group mean is treated as a universal human neuron.
+The current synapse parameter fixture uses explicit human L2/L3 literature-based values in tests. It is not a universal default or a direct microscopic measurement of all receptor parameters.
+
+## Scientific evidence and limitations
+
+- `research/HUMAN-NEOCORTEX-PASSIVE-MEMBRANE.md` records human layer-specific passive membrane measurements and their limitations.
+- `research/HUMAN-CORTICAL-GLUTAMATERGIC-SYNAPSE.md` records human adult L2/L3 pyramidal-to-pyramidal evidence, the fitted AMPA/NMDA conductance-waveform parameters, short-term depression/recovery fits, and a separate pyramidal-to-interneuron study that is deliberately not used as the parameter source for the selected connection class.
+
+The synapse remains a bounded abstraction. It does not simulate presynaptic action potentials, calcium entry, docked/releasable vesicles, stochastic fusion, multivesicular release, explicit synaptic-cleft glutamate concentration/diffusion/uptake, molecular AMPA/NMDA Markov states or desensitization, dendritic spines/cable structure, or local NMDA dendritic spikes. It applies a connection-level depression fit to one effective contact as an explicit reduction. Tests establish computational behavior for these equations; they do not biologically validate the mechanism.
 
 ## Verification
 
-For commit `66f56730dbef0075132e21263ea9b679f3f2e154`, GitHub Actions run `42824933385` completed successfully and verified:
+For commit `d561df97ae0bbd1012d8cd3bb3b0e466e4f78304`, GitHub Actions run `42829179222` completed successfully and verified:
 
 - `cargo fmt --all -- --check`
 - `cargo clippy --workspace --all-targets -- -D warnings`
-- `cargo test --workspace --locked` — 6 unit tests and 6 integration tests passed; 0 failed.
-- `python3 .github/scripts/repository_policy.py` — repository policy passed (16 required files; no JSON files; no prohibited archives/generated output).
+- `cargo test --workspace --locked` — 10 unit tests and 9 integration tests passed; 0 failed.
+- `python3 .github/scripts/repository_policy.py` — repository policy passed (16 required files; no JSON files; no prohibited archives or generated output).
 
-The first implementation commit `a2161ef41f08238bef0b5014d5f4fc5f2a1a2761` initially failed the formatting gate only; the Rust sources were formatted in `66f56730dbef0075132e21263ea9b679f3f2e154`, then the full workflow passed. No lint, test, or policy failure occurred in the successful run.
+The first synapse commit needed formatting changes; the formatting gate then passed. Clippy identified an overly wide helper signature, which was refactored to pass typed synapse model/conductance values instead. The successful run above passed all checks. No tests were weakened or skipped in the successful workflow.
 
-A fresh local clone was attempted but this execution environment could not resolve `github.com`; no local checkout or local Rust test run was produced. Verification above was performed by the GitHub Actions runner against the committed repository state.
+A fresh local clone was attempted but this execution environment could not resolve `github.com`; no local checkout or local Rust test run was produced. The reported verification was performed by the GitHub Actions runner against the committed repository state.
 
 ## Not yet implemented
 
-- A configurable default of 10,000 spiking neuron units or any spiking neuron mechanism.
-- Synaptic transmission, receptor kinetics, vesicle release, plasticity, or active conductances.
-- Multicompartment morphology, population scheduling, or connected network dynamics.
+- A configurable default of 10,000 spiking neuron units or an intrinsic spike-generation mechanism.
+- Active voltage-gated membrane currents or calibrated human axon-initial-segment/somatic excitability.
+- Explicit presynaptic release machinery, stochastic vesicle fusion, glutamate-cleft dynamics/uptake, and molecular receptor-state kinetics.
+- Dendritic morphology/spines/cable filtering, multiple neuron compartments, population scheduling, and connected network dynamics.
+- Long-term synaptic plasticity or learning.
 - Runtime save/restore/checkpointing or safe interruption/resumption.
 - Rust-native multi-threaded simulation execution.
 - JSON model-definition loading and schema validation.
@@ -58,4 +73,4 @@ These remain requirements or future objectives, not current capabilities.
 
 ## Next implementation milestone
 
-Add conductance-based synaptic input with explicit receptor/transmitter kinetics and evidence records, then test causal current/voltage effects and interaction with the passive membrane. Keep parameters provenance-tagged and do not substitute a generic exponential conductance for receptor kinetics without documenting its abstraction boundary. Follow with an evidence-bounded spike-initiation mechanism, population integration, checkpointing, and Rust-native concurrency.
+Add an evidence-bounded intrinsic spike-initiation mechanism to the existing passive membrane and synaptic-current path. Gather direct human neuronal evidence where available and keep any axon-initial-segment, channel-density, and kinetic parameters provenance-tagged; do not simply transfer a rodent model and label it human. Follow with multi-compartment/dendritic integration, population interactions, persistence, and native concurrency.

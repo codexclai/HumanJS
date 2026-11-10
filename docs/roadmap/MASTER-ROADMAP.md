@@ -18,18 +18,21 @@
 
 ## P1 — scientific evidence workflow
 
-- [x] Review primary human evidence relevant to the first passive-membrane mechanism.
+- [x] Review primary human evidence relevant to the passive-membrane mechanism.
 - [x] Record species, preparation, method, anatomical resolution, measured values, heterogeneity, inference, and validation limits.
+- [x] Review human adult L2/L3 pyramidal-to-pyramidal short-term synaptic dynamics and model-fitted AMPA/NMDA conductance waveforms.
+- [x] Record the connection class, species, experimental methods, direct observations, fitted values, assumptions, and parameter provenance for the first glutamatergic mechanism.
 - [ ] For each subsequent mechanism, gather relevant primary literature and authoritative technical references.
 - [ ] Add reproducible experiment protocols and results under `experiments/` only when real experiments are designed.
 
 ## P2 — native Rust simulation foundation
 
-- [x] Establish a minimal Rust workspace based on the first real mechanism boundary.
+- [x] Establish a minimal Rust workspace based on real mechanism and ownership boundaries.
 - [x] Define typed physical quantities, integer simulation time, model parameters, initial conditions, runtime state, and simulation errors.
 - [x] Implement an integrated CPU-first passive-membrane slice with numerical and behavioral tests.
+- [x] Implement one human-evidence-grounded glutamatergic conductance mechanism coupled to the passive membrane, including transactional runtime-state updates and causal tests.
 - [ ] Retain a configurable default of 10,000 spiking-neuron units as an engineering configuration, not a biological claim.
-- [ ] Implement evidence-bounded spike initiation and Rust-native concurrency with explicit ownership, synchronization, interruption, and recovery behavior.
+- [ ] Implement evidence-bounded intrinsic spike initiation and Rust-native concurrency with explicit ownership, synchronization, interruption, and recovery behavior.
 - [ ] Implement save/restore that preserves live and learned state and safely rejects corrupted or resource-exhausting input.
 - [ ] Define and validate inspectable JSON model definitions separately from runtime and learned state.
 
@@ -42,7 +45,7 @@
 
 ## P4 — scientific mechanisms and whole-brain integration
 
-- [ ] Build evidence-grounded neuronal, dendritic, synaptic, receptor, release, plasticity, glial, and extracellular mechanisms.
+- [ ] Build evidence-grounded neuronal, dendritic, synaptic, receptor, release, plasticity, glial, and extracellular mechanisms beyond the first reduced glutamatergic slice.
 - [ ] Integrate anatomically qualified populations, microcircuits, and long-range pathways while distinguishing human evidence from animal evidence and model inference.
 - [ ] Develop spatially and temporally structured neuromodulation, homeostasis, circadian/sleep processes, memory systems, sensory pathways, executive/valuation systems, language, and action-related processes.
 - [ ] Include retinal circuitry and evidence-bounded cochlear/auditory-nerve transduction at the sensory boundary, or require an external transducer that genuinely performs those mechanisms.

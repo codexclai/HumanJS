@@ -56,8 +56,12 @@ The live branch listing on 2026-11-10 returned exactly one branch: `main`. No no
 
 ## Current implementation starting point
 
-The repository now contains a minimal Rust workspace and a CPU-only passive-membrane vertical slice. It represents one lumped membrane compartment with capacitance, leak conductance, an effective zero-current equilibrium, initial voltage, and injected current. The membrane equation is solved analytically for a piecewise-constant current over each step. Simulation time is stored as integer nanoseconds; physical quantities use validated SI wrappers.
+The Rust workspace now contains two integrated CPU mechanisms in `crates/humanjs-core`.
 
-A human-evidence note records layer-specific variability in passive properties measured from surgical human neocortical tissue. No human parameter set is installed as a universal default. The first mechanism is subthreshold-only and does not model active channels, synaptic transmission, spikes, multicompartment morphology, populations, or networks.
+The passive-membrane model represents one lumped compartment with capacitance, leak conductance, an effective zero-current equilibrium, initial voltage, injected current, and integer-nanosecond simulation time. Constant-current steps use the analytic passive RC solution. Its physical quantities use validated SI wrappers, and model parameters, initial conditions, and live state are distinct.
 
-Start the next implementation increment by adding a causal synaptic conductance mechanism with receptor-specific parameter provenance, then proceed toward spike generation, population interaction, checkpointing, and Rust-native concurrency. Do not claim those capabilities until implemented and tested.
+The glutamatergic synapse model adds AMPA- and NMDA-like normalized biexponential conductance waveforms, voltage-dependent NMDA magnesium unblock, and deterministic short-term depression/recovery. A presynaptic spike event scales the effective conductance response by available resources. The synaptic state is coupled to the passive membrane using interval-mean conductances and a midpoint magnesium-block approximation. The coupled membrane and synapse states are committed together only when a simulation step succeeds.
+
+The scientific record `research/HUMAN-CORTICAL-GLUTAMATERGIC-SYNAPSE.md` separates human L2/L3 paired-recording observations from model-fitted conductance/kinetic parameters and from engineering abstractions. The current mechanism does not include stochastic vesicle fusion, explicit cleft glutamate dynamics/uptake, molecular receptor Markov states, spines/dendritic cable, active channels, action potentials, or neuron populations.
+
+The next increment is an evidence-bounded intrinsic spike-initiation mechanism and its integration with the passive membrane and synaptic currents. Checkpointing, Rust-native concurrency, Python, C/C++, JSON model loading, and WGSL remain future work. Do not claim these capabilities until implemented and tested.

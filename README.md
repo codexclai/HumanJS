@@ -2,7 +2,7 @@
 
 HumanJS is an open-source scientific-software project pursuing a comprehensive, scientifically defensible computational model of the human brain.
 
-**Current stage:** the first CPU implementation slice is present: a typed, single-compartment passive membrane model with exact integration for constant injected current. This is a narrow subthreshold mechanism, not a complete neuron or working/validated brain.
+**Current stage:** the Rust CPU core now contains an integrated passive membrane and a bounded human L2/L3 glutamatergic synapse mechanism. The synapse uses receptor-specific effective conductance waveforms, voltage-dependent NMDA magnesium block, and deterministic short-term depression/recovery. This is a limited computational mechanism, not a complete neuron, complete synapse, or working/validated brain.
 
 ## Scope
 
@@ -27,9 +27,13 @@ HumanJS models the brain, not the whole human body. It is not a chatbot, externa
 
 GitHub `main` is the sole source of truth. The ChatGPT Project Sources area may remain empty; no uploaded source or separately synchronized archive is needed.
 
-## First CPU mechanism
+## Current CPU mechanisms
 
-The current mechanism is a single passive membrane patch. It accepts explicit SI-valued capacitance, leak conductance, equilibrium potential, initial voltage, injected current, and integer-nanosecond time steps. It does not yet implement active channels, synaptic receptors, dendrites, action potentials, neuron populations, or network connectivity.
+The passive membrane module represents one lumped compartment with capacitance, leak conductance, an effective zero-current equilibrium, initial voltage, injected current, and integer-nanosecond simulation time. Constant-current steps use the analytic passive RC solution.
+
+The glutamatergic synapse module adds AMPA- and NMDA-like biexponential conductance waveforms, a voltage-dependent NMDA magnesium-unblock factor, and a deterministic presynaptic resource model for short-term depression and recovery. The synaptic live state couples to the passive membrane using interval-mean conductances and a midpoint approximation for NMDA magnesium unblock.
+
+The synapse parameter fixture is based on human L2/L3 pyramidal-neuron literature and is explicitly supplied in tests. It is not installed as a default model. The implementation does not yet model explicit glutamate release/cleft dynamics, stochastic vesicle fusion, receptor Markov states, dendritic spines/cable structure, action-potential generation, or connected neuron populations.
 
 Run the native checks with:
 
