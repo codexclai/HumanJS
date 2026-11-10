@@ -202,42 +202,98 @@ The separate conductance-density fitting helper adjusts human and mouse channel 
 
 These deposited scripts materially improve parameter provenance and resolve the intended name of the repeated inactivation steady-state label. They do **not** expose the underlying `na_human.mod` and `k_human.mod` equations through the text extraction path used here. Exact gate-rate equations, any fixed `Rb`, the table-versus-script K+ result discrepancy, and the 14-parameter bookkeeping remain open.
 
-### Published fitted equations and inherited rate-form source
+### Original human channel mechanisms: equations and parameter values
 
-The article defines separate steady-state Boltzmann functions for the sodium activation and inactivation gates:
+The deposited pure voltage-clamp files are the authoritative equation sources inspected for this review. They are based on Mainen/Kole Hodgkin–Huxley rate forms, but use separately fitted human steady-state Boltzmann functions. The equations below are transcribed from Dataverse file 318629 (na_human.mod) and file 318647 (k_human.mod), not inferred from a secondary code snapshot.
 
-`m∞ = 1 / (1 + exp((Vhalf,act − Vm) / qact))`
+#### Human sodium mechanism (na_human.mod)
 
-`h∞ = 1 / (1 + exp((Vm − Vhalf,inact) / qinact))`
+gbar = 40 pS/μm² in the file's parameter declaration; this is a mechanism starting/default value, not the Table S2 spike-model fitted density and not a universal human default.
 
-The activation and inactivation time constants are fitted independently to the measured current traces. The article states that the Na+ gate model has 14 free parameters: two steady-state parameters for each gate, four activation-kinetic parameters, and six inactivation-kinetic parameters. The fit first estimates `m∞`, `h∞`, `mτ`, and `hτ`, then applies the same voltage-clamp command protocols in NEURON and minimizes the sum of squared normalized differences to experimental means with CMA-ES/DEAP (50–500 generations). Human and mouse channel models are fit independently.
+| Parameter | File value | Meaning |
+|---|---:|---|
+| th_act_inf | −42.2914566895 | Activation steady-state half-voltage, mV |
+| q_act_inf | 10.2311528961 | Activation steady-state slope, mV |
+| tha | −58.5923560662 | Activation rate-function voltage parameter, mV |
+| qa | 9.21455371864 | Activation rate-function slope, mV |
+| Ra, Rb | 0.213984927041 | Opening/closing rate prefactors, ms⁻¹; the file explicitly sets them equal |
+| th_inact_inf | −64.48 | Inactivation steady-state half-voltage, mV |
+| q_inact_inf | 11.02 | Inactivation steady-state slope, mV |
+| thi1 | −39.2986769113 | Inactivation time-constant voltage parameter, mV |
+| thi2 | −77.1667453246 | Recovery time-constant voltage parameter, mV |
+| qi1, qi2 | 7.21636386593; 4.74945004839 | Inactivation/recovery rate slopes, mV |
+| Rd, Rg | 0.0476391878314; 0.0119516550234 | Inactivation/recovery rate prefactors, ms⁻¹ |
+| temp, q10 | 25°C; 2.3 | Reference temperature and temperature coefficient |
+| vShift_inact | 0 mV | Additional shift applied only to the inactivation gate |
 
-The article states that its Na+ model is similar in HH style to the Mainen et al. ModelDB 8210 mechanism. The original `na3h5.mod` source exposes the following inherited rate template, which is a separate source from the fitted human parameters:
+The temperature adjustment is T_adj = q10 ^ ((T - T_ref) / 10).
 
-- `αm = trap0(Vm, tha, Ra, qa)`
-- `βm = trap0(−Vm, −tha, Rb, qa)`
-- `τm = 1 / (αm + βm)`
-- `αh = trap0(Vm, thi1, Rd, qi)`
-- `βh = trap0(−Vm, −thi2, Rg, qi)`
-- `τh = 1 / (αh + βh)`
-- `trap0(v, th, a, q) = a (v − th) / (1 − exp(−(v − th)/q))`, with the limiting value `a q` when `v = th`.
+The activation rates are a_m = trap0(V, tha, Ra, qa) and b_m = trap0(-V, -tha, Rb, qa). The activation time constant is tau_m = 1 / (T_adj * (a_m + b_m)), while its steady state is the separately fitted m_inf = 1 / (1 + exp((th_act_inf - V) / q_act_inf)).
 
-For the Wilbers fit, `m∞` and `h∞` are the separate Boltzmann functions above rather than the original template's `a/(a+b)` steady states. The source template contains `Rb = 0.124` as a fixed parameter and a Q10 adjustment of `2.3^((celsius − temp)/10)`; the exact value of `Rb` and the runtime/reference temperature used in the Wilbers simulations must be checked against their original implementation before translating the rate functions. Do not assume that every line of the older ModelDB 8210 mechanism was retained unchanged.
+For inactivation, V_s = V - vShift_inact, a_h = trap0(V_s, thi1, Rd, qi1), and b_h = trap0(-V_s, -thi2, Rg, qi2). Its time constant is tau_h = 1 / (T_adj * (a_h + b_h)), and its steady state is h_inf = 1 / (1 + exp((V_s - th_inact_inf) / q_inact_inf)).
 
-For the K+ current, the article uses three components with different inactivation behavior:
+The gate states follow first-order relaxation: m' = (m_inf - m) / tau_m and h' = (h_inf - h) / tau_h. The file initializes both gates at their steady-state values. Its conductance/current expression is g_Na = T_adj * gbar_Na * m^3 * h and I_Na = 1e-4 * g_Na * (V - E_Na), using the file's density/current conversion conventions.
 
-- `gk1 = gmax · m² · h1 · frac_inact · (1 − frac_h2)`
-- `gk2 = gmax · m² · h2 · frac_inact · frac_h2`
-- `gk3 = gmax · m² · (1 − frac_inact)`
-- `gk = gk1 + gk2 + gk3`
+#### Human potassium mechanism (k_human.mod)
 
-The slow-inactivation kinetics are shared between human and mouse because recorded time constants did not justify species-specific fit models. `frac_h2=0.4` and `frac_inact=0.85` are fixed, not fitted. The paper notes that this simplified HH K+ model did not accurately reproduce all K+ inactivation behavior.
+gbar = 40 pS/μm² in the file's parameter declaration. The K+ channel is modeled as one activation gate and two inactivation gates representing fast and slow inactivating fractions plus a non-inactivating fraction.
 
-**Direct measurement versus model fit:** Table S1 contains measured steady-state Boltzmann fit values; Table S2 contains the authors' single-compartment AP-model parameterization; Table S3 contains measured patch area and conductance. The main text reports human nucleated-patch conductance densities of Na+ 5.9 ± 0.8 pS/μm² (n=17) and K+ 31.2 ± 4.2 pS/μm² (n=13), mean ± SEM. Table S3 separately gives mean ± SD: Na+ density 5.85 ± 3.38 pS/μm² (n=17) and K+ density 31.22 ± 14.71 pS/μm² (n=13). The larger Table S2 fitted Na+ density (114.5 pS/μm²) is not a measured patch density. The authors explicitly note that the Na+ density required by their single-compartment AP model exceeds the density recorded in somatic nucleated patches. The model is therefore an optimized input-output representation, not a direct reproduction of measured somatic channel abundance.
+| Parameter | File value | Meaning |
+|---|---:|---|
+| th_act_inf | −18.4061635398 | Activation steady-state half-voltage, mV |
+| q_act_inf | 19.1995502734 | Activation steady-state slope, mV |
+| tha, thb | −29.9617980169 each | Activation/deactivation rate voltage parameters, mV |
+| qa, qb | 6.59040568888 each | Activation/deactivation slopes, mV |
+| Ra, Rb | 0.0184592505854 each | Opening/closing rate prefactors, ms⁻¹; explicitly equal |
+| th_inact_inf | −52.61 | Inactivation steady-state half-voltage, mV |
+| q_inact_inf | 13.09 | Inactivation steady-state slope, mV |
+| thi1, thi2 | 40.5659148938; −75.9382265931 | Inactivation/recovery time-constant voltage parameters, mV |
+| qi1, qi2 | 26.7739292447; 0.401833827494 | Inactivation/recovery slopes, mV |
+| Rd, Rg | 0.00169014356593; 0.000496879131264 | Inactivation/recovery rate prefactors, ms⁻¹ |
+| h2tau_inact | 450 | Slow-inactivation time constant, ms |
+| h2tau_inact_rec | 2789.79294281 | Slow-inactivation recovery time constant, ms |
+| prop_inact, prop_h2 | 0.85; 0.4 | Fraction inactivating; fraction of that assigned to slow inactivation |
+| inact_rate_factor | 1 | Scaling factor for inactivation during the inactivation branch |
+| temp, q10 | 34°C; 2.3 | Reference temperature and temperature coefficient |
 
-The article's Methods specify the single compartment as 10 μm diameter, specific capacitance 1 μF/cm², axial resistivity 200 Ω·cm, and reversal potentials 53 mV for Na+ and −101 mV for K+. It describes the conductance model as a nucleated-patch approximation, not an AIS-resolved neuron model. Its AP waveform fitting used model simulations optimized against experimental AP amplitude, rise speed, and fall speed; it does not identify the anatomical location or density gradient of Na+ channels in an intact human AIS.
+The activation time constant is tau_m = 1 / (T_adj * (a_m + b_m)), and m_inf is the separate Boltzmann activation function. Inactivation uses a_h = trap0(V, thi1, Rd, qi1) and b_h = trap0(-V, -thi2, Rg, qi2), with tau_h1 = 1 / (T_adj * (a_h + b_h)) and the separate inactivation Boltzmann h_inf. The slow gate time constant is set to 450 ms while inactivating and 2789.79294281 ms while recovering; this file does not fit a separate voltage-dependent slow-gate kinetic function.
 
-Most importantly, the authors state that the characteristics of the human AIS membrane and its contribution to AP initiation remain to be determined. The nucleated patch omits the AIS and cannot supply its channel density, geometry, or gating kinetics.
+The total K+ conductance is exactly decomposed as:
+
+    g_K = gbar_K * m^2 * [
+        h1 * prop_inact * (1 - prop_h2)
+      + h2 * prop_inact * prop_h2
+      + (1 - prop_inact)
+    ]
+    I_K = 1e-4 * g_K * (V - E_K)
+
+Unlike the Na+ mechanism, the K+ source does not multiply gbar_K by T_adj; the Q10 factor appears in the K+ gate time constants.
+
+#### Unresolved numerical issue in both original trap0 functions
+
+Both original human mechanism files contain this piecewise function (spacing normalized):
+
+    trap0(v, th, a, q):
+        if abs((v + th) / q) > 1e-6:
+            return a * (v - th) / (1 - exp(-(v - th) / q))
+        else:
+            return q * (1 + (v - th) / (2*q))
+
+The source comments out an earlier intended fallback a*q, but the active fallback omits the prefactor a. Its branch test uses v + th, whereas the main expression's removable singularity is at v = th. The analytic limit of the main expression at v = th is a*q. Thus the branch condition and active fallback are not an evident implementation of that limit. The comment says the earlier version trapped near zero voltage; that explanation does not establish that the replacement is mathematically or numerically correct.
+
+The mechanisms use a voltage lookup table from −120 to +100 mV with 199 subdivisions. Whether this branch is visited on the compiled NEURON lookup grid, whether it affects interpolated rates, and whether the published executable was built from the same source revision remain unverified. Do not silently substitute the mathematically expected limit and claim reproduction; first compile and compare the deposited mechanism under its published voltage protocols, then quantify the effect of any correction.
+
+#### What the deposited per-cell workbooks establish
+
+The public deposit includes per-cell summary workbooks:
+- data_fig3.xlsx, file 318666: 34 records overall, including 19 human Na+ recordings. All 19 have activation steady-state fits; the paper reports Vhalf_act = −32.13 ± 4.86 mV, n=19. The workbook contains 19 inactivation fit rows, but one record (H20.29.188.11.42.07.nwb) has inactivation fit quality 0.8600. Excluding that row yields mean −66.0018 mV and SD 7.8217 mV across 18 records, matching the paper's reported inactivation result (−66.00 ± 7.82 mV, n=18). The workbook does not itself state the exclusion rule; the match is a reconstruction from its per-record values and fit-quality column.
+- data_fig4.xlsx, file 318667: 43 records overall, including 13 human K+ recordings. The 13 human activation fits give Vhalf_act = −3.0315 ± 5.9490 mV and slope 13.8708 ± 1.3453 mV. Eleven human records contain inactivation fits, giving Vhalf_inact = −52.6861 ± 5.9748 mV and slope 12.8032 ± 1.8705 mV. These reproduce the corresponding published sample counts and closely match the reported summary values.
+
+The per-cell workbook summaries are not the raw whole-cell/nucleated-patch current traces. Their filename columns identify the source NWB recordings, but those original NWB trace files were not present among the 65 public files in the version-3.0 file listing examined here. Consequently, the original optimizer has not been independently rerun from raw trace data.
+
+The deposited analysis helpers specify voltage-clamp protocols and per-gate fitting methods, but the original NEURON model execution was not reproduced: the available browser VM did not have NEURON/nrnivmodl installed, and this runtime could not produce a clean local HumanJS clone. The source equations and file bytes have been inspected; they have not yet passed a model-level execution/reproduction check.
+
+The current-clamp helper uses a separate single-compartment model with 10 μm length/diameter, 200 Ω·cm axial resistivity, 1 μF/cm² capacitance, Rm=10,000 Ω·cm², g_pas=1/Rm, h.celsius=34, and E_K=-101+15 mV, E_Na=53+15 mV, E_pas=-85+15 mV. It applies −10 mV voltage shifts to the channels to account for the 15 mV current-clamp liquid-junction potential versus 5 mV during voltage clamp. The current-clamp helper fits conductance densities to AP features averaged 50/50 between human and mouse data; those resulting densities are model-fit quantities, not direct human channel-density measurements. The pure channel defaults gbar=40 pS/μm² must therefore not be substituted for final AP-fit conductance densities.
 
 ## 3. Tian et al. (2014): human AIS sodium-channel localization
 

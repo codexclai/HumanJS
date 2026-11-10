@@ -23,11 +23,15 @@
 - [x] Review human adult L2/L3 pyramidal-to-pyramidal short-term synaptic dynamics and model-fitted AMPA/NMDA conductance waveforms.
 - [x] Record the connection class, species, experimental methods, direct observations, fitted values, assumptions, and parameter provenance for the first glutamatergic mechanism.
 - [x] Review human L2/L3 somatic Na+/K+ current measurements, human AIS sodium-subtype localization, and the model/measurement boundary for intrinsic spike initiation.
-- [x] Retrieve and inspect the Wilbers supplementary Tables S1–S3 and original CC0 Dataverse fitting scripts; record human parameter provenance, fit stages, and measurement protocols.
-- [ ] Inspect the original Wilbers `na_human.mod` and `k_human.mod` source text, reconcile the K+ fit/table discrepancy and 14-parameter bookkeeping, and verify rate equations, fixed `Rb`, units, and temperature before implementing spike generation.
+- [x] Retrieve and inspect the Wilbers supplementary Tables S1–S3 and original CC0 Dataverse fitting scripts, including protocol and temperature settings.
+- [x] Retrieve and inspect the original Wilbers pure human na_human.mod and k_human.mod sources, equations, parameter values, units, Q10 behavior, conductance expressions and fixed Rb=Ra relation.
+- [x] Inspect author-deposited per-cell summary workbooks and verify the published human Na+/K+ sample counts and steady-state fit summaries.
+- [ ] Reproduce the original Wilbers mechanisms in compiled NEURON, test trap0 singularity handling on the actual lookup grid, and compare against published human voltage-clamp targets.
+- [ ] Reconcile the paper's 14-parameter methods count with 13 Na+/11 K+ visible fit/assignment parameters; explain the fit script's final K+ dictionary mismatch and the undeclared h12factor assignment.
+- [ ] Obtain or independently reproduce against raw voltage-clamp traces; the deposited per-cell workbooks are fit summaries and the NWB trace files were not in the 65-file public deposit listing examined.
 - [ ] Reconcile Eyal Table S4 with the canonical ModelDB package and distinguish its rodent-derived kinetics from its human-fitted conductances before any reproduction.
 - [ ] For each subsequent mechanism, gather relevant primary literature and authoritative technical references.
-- [ ] Add reproducible experiment protocols and results under `experiments/` only when real experiments are designed.
+- [ ] Add reproducible experiment protocols and results under experiments/ only when real experiments are designed.
 
 ## P2 — native Rust simulation foundation
 
