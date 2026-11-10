@@ -1,15 +1,15 @@
 # HumanJS — session boot
 
 **Updated:** 2026-11-10  
-**Canonical source:** this GitHub repository, on its current default branch.
+**Canonical source:** public GitHub repository `codexclai/HumanJS`, branch `main`.
 
-Read this file first whenever a new session begins. Do not assume that prior chat context, an uploaded archive, a local copy, or a remembered commit is current.
+Read this file first whenever a new session begins. Do not assume prior chat context, Project Sources, uploads, local copies, archives, or remembered commits are current.
 
 ## Mandatory reading order
 
 1. This file.
 2. PROJECT-INSTRUCTIONS.md.
-3. The preserved original owner prompt at archive/owner-inputs/Applys-everything-everywhere-everyway-maximumly-fully-completely.txt is historical input; current owner requirements and explicit later decisions control.
+3. The preserved original owner prompt at archive/owner-inputs/Applys-everything-everywhere-everyway-maximumly-fully-completely.txt (historical input; current owner decisions control).
 4. OWNER-REQUIREMENTS.md.
 5. architecture/SYSTEM-ARCHITECTURE.md.
 6. spec/BRAIN-SCOPE-AND-COMPLETENESS.md.
@@ -19,52 +19,46 @@ Read this file first whenever a new session begins. Do not assume that prior cha
 10. roadmap/MASTER-ROADMAP.md.
 11. status/STATUS.md.
 12. operations/GITHUB-SECURITY.md.
-13. Read research, experiment, API, implementation, and issue records relevant to the task when they exist.
+13. Read research, experiment, API, implementation, and issue records relevant to the task.
 
 ## Current authoritative decisions
 
-- Project name: HumanJS; lowercase identifier: humanjs; short identifier: ajs.
-- Owner preferred name: Thamindu. The current GitHub login is transitional and may change.
-- GitHub is the source of truth for current project work. No ZIP archive is a required source, output, backup, or synchronization artifact.
-- Repository visibility: public.
-- License: Apache-2.0. Public source can be copied and forked under the license; no public-repository setting can make it uncopyable.
-- Approved implementation technologies: Rust, WGSL, Python, C, and C++.
-- Rust is the native computational core; WGSL is for GPU compute; Python is the primary developer interface; C ABI and C++ provide native interoperability.
-- Node.js, JavaScript, TypeScript, npm, and JavaScript runtimes are discontinued. Do not restore them by habit or through legacy architecture.
-- The target is a scientifically defensible computational model of the human brain only, not a whole-body simulator or chatbot.
-- Preserve save/restore, native multi-threaded execution, and a configurable 10,000-spiking-neuron default. The 10,000 figure is an engineering default, not a biological claim or hard maximum.
-- Never delete any Git branch. Force pushes are permitted by the owner but must be deliberate and checked before use.
-- Code security and analysis features are not a preparation requirement under the owner's current preference. Secrets and private data must never be committed.
+- Project: HumanJS; lowercase identifier: humanjs; short identifier: ajs.
+- GitHub repository `codexclai/HumanJS`, branch `main`, is the sole source of truth.
+- No HumanJSProject.zip is required, maintained, synchronized, or delivered. ChatGPT Project Sources may remain empty.
+- GitHub Releases, Packages, and Deployments may be used when they serve a real versioned distribution, package, or hosted service; they do not replace the repository.
+- Repository is public and licensed Apache-2.0.
+- Approved stack: Rust (native core), WGSL (GPU compute), Python (developer interface), C (ABI), and C++ (interop).
+- Node.js, JavaScript, TypeScript, npm, JavaScript runtimes, and .ajs implementation are retired.
+- Scope is a scientifically defensible computational model of the human brain only, not a whole-body simulator or chatbot.
+- Preserve correct save/restore, Rust-native multithreaded execution, and a configurable 10,000-spiking-neuron default. This is an engineering default, not a biological claim or hard maximum.
+- **main is the only branch to use, permanently.** Never create, check out, update, merge, or otherwise use any other branch, existing or new. Make authorized changes directly on main. The intended repository state is main alone; inspect unique commits before deleting old non-main refs if deletion becomes available. Disclose limitations; never claim deletion without verification.
+- Do not require or configure GitHub rulesets, branch protection, or deletion-prevention settings. Force pushes are permitted but exceptional and must be inspected and verified.
+- HumanJS has no requirement to store credentials, private user data, or secrets. Do not add authentication/secret-management systems or .env/.env.example/dotenv infrastructure without a specific approved requirement.
 
-## What "migration complete" means
+## Project scope and evidence
 
-The current project's authority and accepted direction have moved to GitHub. The canonical owner requirements, original owner prompt, architecture boundaries, whole-brain scope/validation specification, decisions, roadmap, repository policy, and status are maintained here. No archive is needed to keep the active project synchronized.
+HumanJS is not a whole-body simulator, chatbot, external-LLM wrapper, generic agent framework, or claim of consciousness, sentience, subjective experience, human-equivalent intelligence, clinical validity, or biological completeness. External hosts may supply peripheral/body/sensory/environment signals through explicit interfaces.
 
-This does **not** mean every byte of the former Node.js project was copied into the new repository. The old JavaScript runtime and its package layout are intentionally retired, not ported. Historical documentation, research notes, and experiment outputs are not automatically active requirements or validated neuroscience. They are not bulk-imported merely to reproduce the old tree. Revisit a specific historical item only when it is useful to a current mechanism or experiment, and then check provenance, licensing, species/method, and whether it actually supports the proposed claim. The legacy snapshot receipt is provenance only; it does not make an old ZIP a current source or deliverable.
+Build causal, interacting, evidence-grounded mechanisms. Avoid fact tables, fixed lexicons/grammar parsers, object-ID cognition, numbered goal slots, fixed task-switch penalties, capped sequence lookup, global scalar neuromodulators, simplistic sensory transforms, and unsupported anatomy. Distinguish human from animal evidence, measured values from estimates/model conventions, and evidence from hypotheses. Record provenance, methods, uncertainty, and validation limits.
 
 ## Current repository status
 
-The GitHub-first governance and specification foundation is established on public repository `codexclai/HumanJS`, default branch `main`. The default branch's live HEAD and workflow state must be retrieved at the beginning of each session; do not treat a commit hash recorded in an old handoff as current. The latest preparation PR (#8) was merged, and its post-merge repository-policy workflow passed (run `42811770679`).
+The live main HEAD and workflow state must be retrieved at each session start. Do not rely on checkpoint hashes as current. The repository has a documentation/governance foundation; inspect current files before claiming any implementation. No simulation mechanism, biological validation, GPU acceleration, or runtime save/restore capability is established merely by a specification.
 
-The current tree is a documentation/governance foundation. It contains no Rust simulation core, Python package, C ABI, C++ wrapper, executable model definitions, or integrated WGSL backend. No brain mechanism should be described as implemented merely because it appears in the scope specification. No simulation, biological validation, GPU acceleration, or runtime save/restore capability is currently established by this repository.
-
-The latest repository inspection (2026-11-10) found no rulesets and reported `main` as unprotected. The GitHub integration cannot apply repository settings. The owner must configure branch-deletion prevention as described in operations/GITHUB-SECURITY.md. Force pushes must remain allowed. Code security and analysis features are optional and are not required by the owner's current preference.
+The last verified repository inspection on 2026-11-10 found nine non-main branch references in addition to main. They are legacy leftovers and must not be used. The connected GitHub integration did not expose a branch-deletion action at that inspection; verify available capabilities before attempting cleanup. No ruleset or branch-protection configuration is required by the owner.
 
 ## Session procedure
 
-1. Retrieve current repository metadata, default branch, latest commit, recursive file tree, open pull requests, issues, workflow runs, and relevant CI status.
-2. Read this BOOT file and its linked current documents from GitHub before implementation work.
-3. Classify material as active source, reviewed research, experiment, legacy, deferred, backup, or disposable temporary output.
-4. Preserve owner decisions. Later explicit owner decisions supersede conflicting historical prompts and legacy documentation.
-5. Inspect relevant files, dependencies, interfaces, tests, and historical changes before editing.
-6. Make coherent changes, run appropriate verification, and update canonical documentation and current status.
-7. Use GitHub commits, branches, pull requests, issues, Actions, and Dependabot where available. Verify every operation and disclose capability or permission limits.
-8. Never delete any Git branch. Force pushes are allowed only when deliberate and after checking the target and impact.
-9. Never silently discard or overwrite useful work. Never claim synchronization, tests, CI, or settings succeeded unless verified.
-10. End with exact changed paths, commit/PR references, verification results, unresolved limitations, and the next concrete action.
+1. Retrieve live repository metadata, default branch, main HEAD, recursive tree, open PRs/issues, workflow runs, and relevant CI status.
+2. Read this file and the mandatory documents above from GitHub.
+3. Inspect relevant implementation, interfaces, dependencies, tests, and history before editing.
+4. Make changes directly on main; never create or use another branch.
+5. Run relevant verification and report exact commands/results, failures, timeouts, and unrun checks.
+6. Update canonical documentation, current status, and handoff.
+7. Verify every GitHub operation and disclose capability limits.
+8. End with changed paths, commit references, verification results, unresolved limitations, and the next concrete action.
 
-## Preparation checkpoint
+## Implementation starting point
 
-The repository/documentation/CI preparation baseline is complete enough to begin the first Rust implementation vertical slice. Do not delay new implementation merely to copy the old JavaScript tree or bulk-import every historical document. Bring specific scientific evidence and prior experimental records into the active research area when the corresponding mechanism is designed, using traceable sources and explicit validation limits.
-
-The remaining repository-side owner action is to establish and verify branch-deletion prevention for all branches. This is distinct from the completed GitHub source-of-truth transition and does not block beginning implementation.
+The preparation baseline is sufficient to begin the first Rust CPU implementation vertical slice. Establish a minimal Rust workspace and select module boundaries from real ownership/data flow. Define typed time/state/error/resource contracts, implement a causally testable CPU mechanism, and add numerical and behavioral tests. Add persistence and Rust-native concurrency as explicit tested capabilities. Bring in only the scientific evidence required for each mechanism, with provenance and validation limits.
