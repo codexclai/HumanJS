@@ -5,9 +5,9 @@
 
 ## Public-repository limitation
 
-Every committed file, commit, tag, release asset, issue, and archive in a public repository is publicly accessible. Public source can be cloned and forked under the license terms. GitHub forking restrictions for individual repositories apply to private repositories; do not expect a public setting to prevent copying.
+Every committed file, commit, tag, release asset, issue, and archive in a public repository is publicly accessible. Public source can be cloned and forked under the license terms. No repository rule or license can make a public repository uncopyable.
 
-The realistic protection goal is to secure the owner account, prevent unauthorized changes to main, detect accidental secret publication, review contributions, preserve attribution, and maintain recoverable history.
+The realistic protection goal is to secure the owner account, prevent unauthorized changes to `main`, detect accidental secret publication, review contributions, preserve attribution, and maintain recoverable history.
 
 ## Account controls
 
@@ -18,37 +18,51 @@ The realistic protection goal is to secure the owner account, prevent unauthoriz
 - Use least-privilege tokens. Never paste tokens, private keys, recovery codes, or passwords into chat, issues, commits, or workflows.
 - Revoke credentials immediately if exposed. Removing a secret from the latest commit does not remove it from Git history or public clones; rotate the credential first.
 
-## Main branch rules
+## Main branch ruleset — owner action required
 
-Create a branch protection rule or repository ruleset targeting main:
+**Observed on 2026-11-10:** the repository branch listing reported `main.protected = false`; the repository rulesets endpoint returned an empty list. The connected GitHub integration has no repository-settings or branch-protection write operation. A branch-protection read request was denied to the integration. Do not say protection is enabled until the owner applies the ruleset and verifies it in GitHub.
 
-1. Require pull requests before merging.
-2. Require the repository-policy workflow to pass once it is present and working.
-3. Require all review conversations to be resolved.
-4. Require linear history and use squash merging.
-5. Block force pushes and branch deletion.
-6. Disable bypass where practical. Keep a documented recovery route for the owner.
-7. Require signed commits only after a verified signing setup exists and automation can produce verified signatures.
-8. Require at least one approval only when a trusted reviewer is available. A solo owner must not configure a rule that makes merging impossible.
-9. Restrict direct pushes to main where practical; feature branches and pull requests are preferred.
+In the repository web UI:
 
-Official guidance: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches and https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/available-rules-for-rulesets.
+1. Open **Settings → Rules → Rulesets → New ruleset → New branch ruleset**.
+2. Name it `Protect main`, set enforcement to **Active**, and target the branch `main`.
+3. Require a pull request before merging.
+4. Require the status check named `policy` (the job ID in `.github/workflows/repository-policy.yml`). Re-check this exact name in the ruleset picker.
+5. Require all review conversations to be resolved.
+6. Block force pushes and branch deletion. Require linear history if using squash merges as the normal merge method.
+7. Do not set a required approval count that makes a solo-owner repository impossible to merge. Add an approval requirement only after a separate trusted reviewer is available.
+8. Keep the bypass list empty unless the owner consciously chooses a documented emergency bypass. A pull request can still be authored and merged by the owner without a second reviewer when no approval count is required.
 
-## Security features to enable/check
+After saving, reload Settings → Rulesets and verify the ruleset is Active, targets `main`, and contains the expected rules. Also verify the main branch is reported as protected. Record the verification date in `docs/status/STATUS.md`.
 
-In repository Settings → Code security and analysis, check Dependabot alerts, secret scanning, push protection where available, code scanning/CodeQL once supported source code exists, and private vulnerability reporting. Verify actual setting state in GitHub; this document does not enable the settings.
+## Repository security features
 
-Official guidance: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/enabling-features-for-your-repository/managing-security-and-analysis-settings-for-your-repository.
+Open **Settings → Code security and analysis** and enable/verify, where available:
+- Dependabot alerts.
+- Dependabot security updates (the weekly Actions dependency update configuration is already committed separately).
+- Secret scanning and push protection.
+- Private vulnerability reporting.
+- Code scanning/CodeQL when supported source languages are present and the workflow is configured.
+
+The connected integration could not verify the settings endpoint. This document is configuration guidance, not evidence that these features are active. After enabling them, verify each control in the GitHub UI and update `docs/status/STATUS.md`.
 
 ## Actions controls
 
-- Set workflow permissions to read-only by default.
+- Workflow permissions are read-only by default; the current policy workflow grants only `contents: read`.
+- Third-party actions are pinned to reviewed full commit SHAs. Dependabot PR #2 updated `actions/checkout` to v7.0.1 and was merged after both push and pull-request policy runs passed.
 - Grant write permissions only to the specific job that needs them.
-- Pin third-party actions to reviewed full commit SHAs and update pins deliberately.
 - Prefer GitHub-hosted runners for ordinary CI. Do not run untrusted pull-request code on privileged self-hosted runners.
 - Keep deployments and releases separate from validation workflows.
-- Require successful CI before merging once branch protection is enabled.
+- Require successful CI before merging through the `main` ruleset once it is enabled.
 
-## Observed state and connector limits
+## Routine maintenance
 
-At baseline, main was observed as unprotected and the rulesets endpoint returned an empty list. The connected GitHub integration exposed repository and file operations but no repository-settings or branch-protection write action. Therefore the owner must apply and verify the branch and account security settings in the GitHub web UI. Do not mark any control enabled until it is observed in GitHub Settings or an authoritative read API.
+- Review repository collaborators and outside collaborators.
+- Review installed GitHub Apps, OAuth authorizations, deploy keys, webhooks, secrets, and Actions permissions.
+- Review Dependabot PRs; do not auto-merge major action updates without inspecting their diff and required workflow results.
+- Keep recovery codes and a separate owner-controlled account recovery method.
+- Never store credentials, private user data, or unlicensed third-party content in this public repository, including under `archive/`.
+
+## Status and capability boundary
+
+The repository policy workflow is active and has passed on the current main commit. That is not equivalent to branch protection or secret scanning. Account 2FA/passkey state and Code security and analysis state remain unverified. The connected GitHub integration can read and write repository files and PRs, but it cannot apply repository rulesets or account security settings. Those steps must be completed and verified by the owner in GitHub.
