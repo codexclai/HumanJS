@@ -35,6 +35,8 @@ The glutamatergic synapse module adds AMPA- and NMDA-like biexponential conducta
 
 The synapse parameter fixture is based on human L2/L3 pyramidal-neuron literature and is explicitly supplied in tests. It is not installed as a default model. The implementation does not yet model explicit glutamate release/cleft dynamics, stochastic vesicle fusion, receptor Markov states, dendritic spines/cable structure, action-potential generation, or connected neuron populations.
 
+A separate external NEURON experiment audits the canonical Eyal et al. six-cell human L2/L3 soma/axon model and compares selected Figure 7A spike responses with released human recordings. Its source mapping, reproduction code and limitations are documented under `experiments/`; this is not an AP mechanism implemented in HumanJS.
+
 Run the native checks with:
 
 ```sh

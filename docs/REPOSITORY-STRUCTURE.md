@@ -19,7 +19,7 @@ GitHub `main` is the authoritative project record. Create implementation directo
 | `bindings/c/`, `bindings/cpp/` | C ABI headers, C++ wrappers and tests | Planned |
 | `gpu/` | WGSL compute kernels and GPU resources | Planned |
 | `models/` | Inspectable brain/model/IR definitions, JSON where appropriate | Planned |
-| `experiments/` | Reproducible protocols, stimuli, configurations and results | Planned |
+| `experiments/` | Reproducible protocols, canonical external model reproductions, stimuli, configurations and results | Active |
 | `tests/` | Cross-layer integration and acceptance tests | Planned |
 | `benchmarks/` | Reproducible performance workloads and measurement records | Planned |
 | `tools/` | Maintainer tooling that is genuinely needed and maintained | Planned |

@@ -26,13 +26,14 @@
 - [x] Retrieve and inspect the Wilbers supplementary Tables S1–S3 and original CC0 Dataverse fitting scripts, including protocol and temperature settings.
 - [x] Retrieve and inspect the original Wilbers pure human na_human.mod and k_human.mod sources, equations, parameter values, units, Q10 behavior, conductance expressions and fixed Rb=Ra relation.
 - [x] Inspect author-deposited per-cell summary workbooks and verify the published human Na+/K+ sample counts and steady-state fit summaries.
-- [ ] Reproduce the original Wilbers mechanisms in compiled NEURON, test trap0 singularity handling on the actual lookup grid, and compare against published human voltage-clamp targets.
-- [ ] Reconcile the paper's 14-parameter methods count with 13 Na+/11 K+ visible fit/assignment parameters; explain the fit script's final K+ dictionary mismatch and the undeclared h12factor assignment.
+- [x] Compile the original pure Wilbers human Na+/K+ mechanisms in NEURON 9.0.2 and probe exact trap0 singularities plus the actual Na+ lookup grid; record the numerical outcomes without patching the source.
+- [ ] Reconcile the paper's 14-parameter methods count with the visible staged Na+/K+ fit/assignment variables; explain the K+ script's final dictionary mismatch and the undeclared h12factor assignment.
+- [ ] Reproduce the complete Wilbers voltage-clamp fitting workflow against raw current traces; the deposited per-cell workbooks are summary fits and the original NWB traces were not in the 65-file Dataverse listing examined.
 - [ ] Obtain or independently reproduce against raw voltage-clamp traces; the deposited per-cell workbooks are fit summaries and the NWB trace files were not in the 65-file public deposit listing examined.
 - [x] Retrieve and transcribe the original Eyal et al. 2018 supplementary Table S4 for all six soma/axon model parameter sets, confirming the nine-conductance + three NaTg-gate + two Ca-dynamics values per compartment and shared leak reversal potential.
-- [ ] Retrieve the canonical 133 MB ModelDB source archive and map Table S4 parameters to the original .mod files and compartment assignments; the official SenseLab endpoint returned HTTP 504 and the official GitHub mirror currently exposes only its readme.
+- [x] Retrieve and audit the canonical 139,316,573-byte Eyal ModelDB archive, map all six Table S4 parameter sets to the original HOC soma/axon templates, and identify the nine inserted conductance mechanisms plus CaDynamics_E2.
 - [ ] For each subsequent mechanism, gather relevant primary literature and authoritative technical references.
-- [ ] Add reproducible experiment protocols and results under experiments/ only when real experiments are designed.
+- [x] Add the Eyal Figure 7A six-cell NEURON reproduction protocol, checked-in Python 3 runner, released-trace comparisons, and explicit validation limitations under experiments/.
 
 ## P2 — native Rust simulation foundation
 
