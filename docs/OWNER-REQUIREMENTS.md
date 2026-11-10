@@ -108,4 +108,4 @@ Generalized learning and interacting neural systems should produce language, sym
 
 Former Node.js requirements are no longer active: Node.js runtime/version targets; JavaScript/TypeScript implementation; npm or private npm packaging; package.json distribution allowlists; Node.js worker_threads APIs; Artificial/ with .ajs-only definitions; legacy single-file/five-file package constraints; Generation 1 compatibility tied to that runtime; and the old ZIP as the required deliverable.
 
-The original Applys text is preserved in the legacy input record only as historical provenance. Where it conflicts with this current document and later explicit owner decisions, this current document controls.
+The original owner prompt is preserved verbatim at archive/owner-inputs/Applys-everything-everywhere-everyway-maximumly-fully-completely.txt. It is historical provenance, not a second active requirements source. Where it conflicts with this current document and later explicit owner decisions, this current document controls.

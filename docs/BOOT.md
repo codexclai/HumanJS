@@ -9,14 +9,15 @@ Read this file first whenever a new session begins. Do not assume that prior cha
 
 1. This file.
 2. PROJECT-INSTRUCTIONS.md.
-3. OWNER-REQUIREMENTS.md.
-4. architecture/SYSTEM-ARCHITECTURE.md.
-5. REPOSITORY-STRUCTURE.md.
-6. policies/ARCHIVE-AND-TRASH.md.
-7. decisions/DECISIONS.md.
-8. status/STATUS.md.
-9. operations/GITHUB-SECURITY.md.
-10. Read research, experiment, API, implementation, and issue records relevant to the task.
+3. The preserved original owner prompt at archive/owner-inputs/Applys-everything-everywhere-everyway-maximumly-fully-completely.txt is historical input; current owner requirements and explicit later decisions control.
+4. OWNER-REQUIREMENTS.md.
+5. architecture/SYSTEM-ARCHITECTURE.md.
+6. REPOSITORY-STRUCTURE.md.
+7. policies/ARCHIVE-AND-TRASH.md.
+8. decisions/DECISIONS.md.
+9. status/STATUS.md.
+10. operations/GITHUB-SECURITY.md.
+11. Read research, experiment, API, implementation, and issue records relevant to the task.
 
 ## Current authoritative decisions
 
