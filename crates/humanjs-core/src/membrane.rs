@@ -97,9 +97,8 @@ impl PassiveMembraneModel {
             voltage,
             duration,
             injected_current,
-            synaptic_model.reversal_potential(),
-            ampa,
-            nmda,
+            synaptic_model,
+            conductances,
             initial_block,
         )?;
         let midpoint = (voltage.as_volts() + first.as_volts()) * 0.5;
@@ -115,9 +114,8 @@ impl PassiveMembraneModel {
             voltage,
             duration,
             injected_current,
-            synaptic_model.reversal_potential(),
-            ampa,
-            nmda,
+            synaptic_model,
+            conductances,
             midpoint_block,
         )
     }
@@ -127,14 +125,13 @@ impl PassiveMembraneModel {
         voltage: Volts,
         duration: SimDuration,
         injected_current: Amperes,
-        synaptic_reversal: Volts,
-        ampa_siemens: f64,
-        nmda_siemens: f64,
+        synaptic_model: GlutamatergicSynapseModel,
+        conductances: SynapticConductances,
         nmda_unblocked_fraction: f64,
     ) -> Result<Volts, SimulationError> {
         let leak = self.leak_conductance.as_siemens();
-        let nmda_effective = nmda_siemens * nmda_unblocked_fraction;
-        let synaptic = ampa_siemens + nmda_effective;
+        let nmda_effective = conductances.nmda_siemens() * nmda_unblocked_fraction;
+        let synaptic = conductances.ampa_siemens() + nmda_effective;
         let total = leak + synaptic;
         require_finite("total membrane conductance (S)", total)
             .map_err(|_| SimulationError::NumericalOverflow)?;
@@ -143,7 +140,7 @@ impl PassiveMembraneModel {
         }
 
         let weighted_reversals = leak * self.equilibrium_potential.as_volts()
-            + synaptic * synaptic_reversal.as_volts()
+            + synaptic * synaptic_model.reversal_potential().as_volts()
             + injected_current.as_amperes();
         require_finite("total conductance-weighted current (A)", weighted_reversals)
             .map_err(|_| SimulationError::NumericalOverflow)?;
