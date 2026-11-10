@@ -1,5 +1,5 @@
 use crate::error::{require_finite, require_positive};
-use crate::{SimDuration, SimulationError, Siemens, TimeConstant, Volts};
+use crate::{Siemens, SimDuration, SimulationError, TimeConstant, Volts};
 
 /// Effective rise/decay parameters for one ionotropic glutamate-receptor component.
 ///
@@ -99,9 +99,8 @@ impl SynapticReceptorKinetics {
     }
 
     fn instantaneous(self, state: BiExponentialState) -> Result<f64, SimulationError> {
-        let conductance = self.peak_conductance.as_siemens()
-            * self.normalization
-            * (state.decay - state.rise);
+        let conductance =
+            self.peak_conductance.as_siemens() * self.normalization * (state.decay - state.rise);
         require_finite("instantaneous synaptic conductance (S)", conductance)?;
         if conductance < 0.0 {
             return Err(SimulationError::NumericalOverflow);
@@ -128,7 +127,10 @@ impl NmdaMagnesiumBlock {
         coefficient_per_millimolar: f64,
     ) -> Result<Self, SimulationError> {
         require_positive("NMDA magnesium-block gamma (mV^-1)", gamma_per_millivolt)?;
-        require_positive("extracellular magnesium concentration (mM)", magnesium_millimolar)?;
+        require_positive(
+            "extracellular magnesium concentration (mM)",
+            magnesium_millimolar,
+        )?;
         require_positive(
             "NMDA magnesium-block coefficient (mM^-1)",
             coefficient_per_millimolar,
@@ -154,8 +156,7 @@ impl NmdaMagnesiumBlock {
 
     /// Fraction of NMDA conductance not blocked by extracellular magnesium.
     pub fn fraction_unblocked(self, voltage: Volts) -> Result<f64, SimulationError> {
-        let log_block = self.magnesium_millimolar.ln()
-            + self.coefficient_per_millimolar.ln()
+        let log_block = self.magnesium_millimolar.ln() + self.coefficient_per_millimolar.ln()
             - self.gamma_per_millivolt * voltage.as_volts() * 1_000.0;
         if log_block.is_nan() {
             return Err(SimulationError::NumericalOverflow);
@@ -273,7 +274,10 @@ pub struct GlutamatergicSynapseInitialConditions {
 
 impl GlutamatergicSynapseInitialConditions {
     pub fn new(available_resources: f64) -> Result<Self, SimulationError> {
-        require_finite("initial presynaptic resource availability", available_resources)?;
+        require_finite(
+            "initial presynaptic resource availability",
+            available_resources,
+        )?;
         if !(0.0..=1.0).contains(&available_resources) {
             return Err(SimulationError::OutOfRangeValue {
                 field: "initial presynaptic resource availability",
@@ -282,7 +286,9 @@ impl GlutamatergicSynapseInitialConditions {
                 maximum: 1.0,
             });
         }
-        Ok(Self { available_resources })
+        Ok(Self {
+            available_resources,
+        })
     }
 
     /// A rested contact with no residual receptor activation.
@@ -317,8 +323,14 @@ impl GlutamatergicSynapseRuntimeState {
     ) -> Self {
         Self {
             available_resources: initial_conditions.available_resources,
-            ampa: BiExponentialState { rise: 0.0, decay: 0.0 },
-            nmda: BiExponentialState { rise: 0.0, decay: 0.0 },
+            ampa: BiExponentialState {
+                rise: 0.0,
+                decay: 0.0,
+            },
+            nmda: BiExponentialState {
+                rise: 0.0,
+                decay: 0.0,
+            },
         }
     }
 
@@ -378,7 +390,10 @@ impl GlutamatergicSynapseRuntimeState {
         let (nmda_average, next_nmda) = model.nmda.advance(self.nmda, duration)?;
 
         let dt = duration.as_seconds();
-        let tau_recovery = model.presynaptic_depression.recovery_time_constant.as_seconds();
+        let tau_recovery = model
+            .presynaptic_depression
+            .recovery_time_constant
+            .as_seconds();
         let recovery = (-dt / tau_recovery).exp();
         let next_resources = 1.0 - (1.0 - self.available_resources) * recovery;
         require_finite("presynaptic resource recovery", next_resources)?;
@@ -425,7 +440,7 @@ mod tests {
         GlutamatergicSynapseRuntimeState, NmdaMagnesiumBlock, PresynapticDepressionModel,
         SynapticReceptorKinetics,
     };
-    use crate::{SimDuration, Siemens, SimulationError, TimeConstant, Volts};
+    use crate::{Siemens, SimDuration, SimulationError, TimeConstant, Volts};
 
     fn human_l23_synapse_model() -> GlutamatergicSynapseModel {
         let ampa = SynapticReceptorKinetics::new(
@@ -441,11 +456,9 @@ mod tests {
         )
         .unwrap();
         let block = NmdaMagnesiumBlock::new(0.077, 1.0, 0.28).unwrap();
-        let depression = PresynapticDepressionModel::new(
-            0.45,
-            TimeConstant::from_milliseconds(144.0).unwrap(),
-        )
-        .unwrap();
+        let depression =
+            PresynapticDepressionModel::new(0.45, TimeConstant::from_milliseconds(144.0).unwrap())
+                .unwrap();
         GlutamatergicSynapseModel::new(
             ampa,
             nmda,

@@ -1,7 +1,7 @@
 use crate::error::require_finite;
 use crate::{
-    Amperes, Farads, GlutamatergicSynapseModel, GlutamatergicSynapseRuntimeState, Ohms,
-    Siemens, SimDuration, SimTime, SimulationError, SynapticConductances, TimeConstant, Volts,
+    Amperes, Farads, GlutamatergicSynapseModel, GlutamatergicSynapseRuntimeState, Ohms, Siemens,
+    SimDuration, SimTime, SimulationError, SynapticConductances, TimeConstant, Volts,
 };
 
 /// Parameters for a lumped, single-compartment passive membrane approximation.
@@ -105,8 +105,8 @@ impl PassiveMembraneModel {
         let midpoint = (voltage.as_volts() + first.as_volts()) * 0.5;
         require_finite("predicted midpoint membrane voltage (V)", midpoint)
             .map_err(|_| SimulationError::NumericalOverflow)?;
-        let midpoint_voltage = Volts::from_volts(midpoint)
-            .map_err(|_| SimulationError::NumericalOverflow)?;
+        let midpoint_voltage =
+            Volts::from_volts(midpoint).map_err(|_| SimulationError::NumericalOverflow)?;
         let midpoint_block = synaptic_model
             .nmda_magnesium_block()
             .fraction_unblocked(midpoint_voltage)?;

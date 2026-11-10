@@ -3,8 +3,14 @@ use std::fmt;
 /// Errors returned by validated model construction and simulation operations.
 #[derive(Debug, Clone, PartialEq)]
 pub enum SimulationError {
-    NonFiniteValue { field: &'static str, value: f64 },
-    NonPositiveValue { field: &'static str, value: f64 },
+    NonFiniteValue {
+        field: &'static str,
+        value: f64,
+    },
+    NonPositiveValue {
+        field: &'static str,
+        value: f64,
+    },
     OutOfRangeValue {
         field: &'static str,
         value: f64,

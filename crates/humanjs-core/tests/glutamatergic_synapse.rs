@@ -1,8 +1,8 @@
 use humanjs_core::{
     Amperes, Farads, GlutamatergicSynapseInitialConditions, GlutamatergicSynapseModel,
-    GlutamatergicSynapseRuntimeState, MembranePatchInitialConditions, NmdaMagnesiumBlock,
-    Ohms, PassiveMembraneModel, PassiveMembraneSimulation, PresynapticDepressionModel,
-    SimDuration, Siemens, SimulationError, SynapticReceptorKinetics, TimeConstant, Volts,
+    GlutamatergicSynapseRuntimeState, MembranePatchInitialConditions, NmdaMagnesiumBlock, Ohms,
+    PassiveMembraneModel, PassiveMembraneSimulation, PresynapticDepressionModel, Siemens,
+    SimDuration, SimulationError, SynapticReceptorKinetics, TimeConstant, Volts,
 };
 
 fn human_l23_synapse_model() -> GlutamatergicSynapseModel {
@@ -21,11 +21,9 @@ fn human_l23_synapse_model() -> GlutamatergicSynapseModel {
     )
     .unwrap();
     let magnesium = NmdaMagnesiumBlock::new(0.077, 1.0, 0.28).unwrap();
-    let depression = PresynapticDepressionModel::new(
-        0.45,
-        TimeConstant::from_milliseconds(144.0).unwrap(),
-    )
-    .unwrap();
+    let depression =
+        PresynapticDepressionModel::new(0.45, TimeConstant::from_milliseconds(144.0).unwrap())
+            .unwrap();
 
     GlutamatergicSynapseModel::new(
         ampa,
@@ -111,13 +109,9 @@ fn continuous_and_partitioned_synaptic_steps_converge() {
     // The held interval-mean conductance and midpoint NMDA block are
     // approximations; reducing the integration interval must approach the
     // same response without assuming exact semigroup equivalence.
+    assert!((one.voltage().as_volts() - partitioned.state().voltage().as_volts()).abs() < 3.0e-4);
     assert!(
-        (one.voltage().as_volts() - partitioned.state().voltage().as_volts()).abs()
-            < 3.0e-4
-    );
-    assert!(
-        (one_synapse.available_resources() - many_synapse.available_resources()).abs()
-            < 1.0e-12
+        (one_synapse.available_resources() - many_synapse.available_resources()).abs() < 1.0e-12
     );
 }
 
