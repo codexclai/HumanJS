@@ -9,7 +9,7 @@
 - Visibility: public. Default branch: `main`.
 - GitHub `main` is the sole authoritative source. ChatGPT Project Sources may remain empty.
 - No open pull requests or open issues were returned by the latest live check before this synchronization.
-- The current main-branch policy workflow passed on commit `9ddd7b2fd912ede619907b1e31bb713e6cad8830` (run `42815622728`, success). That check validates repository policy only; it is not a code build, simulation test, or biological validation.
+- The current main-branch policy workflow passed on commit `fbae7a9d13fdf78085b2a5325d86514288d4b470` (run `42818365413`, success). That check validates repository policy only; it is not a code build, simulation test, or biological validation.
 - The repository policy workflow is restricted to pushes to `main` and manual dispatch, with read-only `contents` permission and an immutable checkout action SHA.
 - Branch-generating dependency update automation is not part of the accepted workflow.
 
@@ -17,10 +17,10 @@
 
 - Consolidated the active requirements, system architecture, brain-scope specification, decision record, roadmap, security guidance, repository hygiene, status, and session boot sequence.
 - Confirmed that the boot process retrieves live GitHub state and does not depend on ChatGPT Project Sources or local uploads.
-- Removed superseded archive/migration material and duplicate project snapshots from the current tracked tree.
+- Removed superseded historical input copies, archive/migration records, and duplicate project snapshots from the current tracked tree.
 - Removed branch-generating update automation and pull-request-specific scaffolding to align repository operations with the permanent main-only policy.
 - Kept the repository license, attribution notice, contribution guidance, security policy, ignore rules, text attributes, and repository-policy validator.
-- Verified the previous repository-policy workflow succeeded on the current pre-cleanup main commit.
+- Verified the repository-policy workflow succeeded on the post-cleanup main commit (run `42818365413`).
 
 ## Implementation status — not started
 
