@@ -16,9 +16,10 @@ Read this file first whenever a new session begins. Do not assume that prior cha
 7. REPOSITORY-STRUCTURE.md.
 8. policies/ARCHIVE-AND-TRASH.md.
 9. decisions/DECISIONS.md.
-10. status/STATUS.md.
-11. operations/GITHUB-SECURITY.md.
-12. Read research, experiment, API, implementation, and issue records relevant to the task when they exist.
+10. roadmap/MASTER-ROADMAP.md.
+11. status/STATUS.md.
+12. operations/GITHUB-SECURITY.md.
+13. Read research, experiment, API, implementation, and issue records relevant to the task when they exist.
 
 ## Current authoritative decisions
 
@@ -32,6 +33,8 @@ Read this file first whenever a new session begins. Do not assume that prior cha
 - Node.js, JavaScript, TypeScript, npm, and JavaScript runtimes are discontinued. Do not restore them by habit or through legacy architecture.
 - The target is a scientifically defensible computational model of the human brain only, not a whole-body simulator or chatbot.
 - Preserve save/restore, native multi-threaded execution, and a configurable 10,000-spiking-neuron default. The 10,000 figure is an engineering default, not a biological claim or hard maximum.
+- Never delete any Git branch. Force pushes are permitted by the owner but must be deliberate and checked before use.
+- Code security and analysis features are not a preparation requirement under the owner's current preference. Secrets and private data must never be committed.
 
 ## What "migration complete" means
 
@@ -41,11 +44,11 @@ This does **not** mean every byte of the former Node.js project was copied into 
 
 ## Current repository status
 
-The GitHub-first governance and specification foundation is established on public repository `codexclai/HumanJS`, default branch `main`. The latest recorded main commit at this update is `2e0078ccaa5df0f10d9f7efc56a8b0e940a8c13f`. The repository-policy workflow passed on the post-merge push for that commit (run `42810467386`). Dependabot's reviewed `actions/checkout` update was merged in PR #2 and is pinned by full commit SHA.
+The GitHub-first governance and specification foundation is established on public repository `codexclai/HumanJS`, default branch `main`. The latest verified main commit at this update is `be2dc07d2503f590473757f67526f1024c3322a5`. The repository-policy workflow passed on the post-merge push for that commit (run `42810969518`).
 
 The current tree is a documentation/governance foundation. It contains no Rust simulation core, Python package, C ABI, C++ wrapper, executable model definitions, or integrated WGSL backend. No brain mechanism should be described as implemented merely because it appears in the scope specification. No simulation, biological validation, GPU acceleration, or runtime save/restore capability is currently established by this repository.
 
-The main branch is still reported as unprotected and the repository rulesets endpoint returned no rulesets in the latest repository check. The connected GitHub integration cannot write repository settings. Account controls and Code security and analysis settings also remain unverified. The owner-side steps are recorded in operations/GITHUB-SECURITY.md. Do not describe the public repository as fully hardened until those controls are applied and checked in GitHub.
+The latest repository inspection found no rulesets and reported `main` as unprotected. The GitHub integration cannot apply repository settings. The owner must configure branch-deletion prevention as described in operations/GITHUB-SECURITY.md. Force pushes must remain allowed. Code security and analysis features are optional and are not required by the owner's current preference.
 
 ## Session procedure
 
@@ -55,12 +58,13 @@ The main branch is still reported as unprotected and the repository rulesets end
 4. Preserve owner decisions. Later explicit owner decisions supersede conflicting historical prompts and legacy documentation.
 5. Inspect relevant files, dependencies, interfaces, tests, and historical changes before editing.
 6. Make coherent changes, run appropriate verification, and update canonical documentation and current status.
-7. Use GitHub commits, branches, pull requests, issues, Actions, Dependabot, and security features where available. Verify every operation and disclose capability or permission limits.
-8. Never silently discard or overwrite useful work. Never claim synchronization, tests, CI, or security settings succeeded unless verified.
-9. End with exact changed paths, commit/PR references, verification results, unresolved limitations, and the next concrete action.
+7. Use GitHub commits, branches, pull requests, issues, Actions, and Dependabot where available. Verify every operation and disclose capability or permission limits.
+8. Never delete any Git branch. Force pushes are allowed only when deliberate and after checking the target and impact.
+9. Never silently discard or overwrite useful work. Never claim synchronization, tests, CI, or settings succeeded unless verified.
+10. End with exact changed paths, commit/PR references, verification results, unresolved limitations, and the next concrete action.
 
 ## Preparation checkpoint
 
 The repository/documentation/CI preparation baseline is complete enough to begin the first Rust implementation vertical slice. Do not delay new implementation merely to copy the old JavaScript tree or bulk-import every historical document. Bring specific scientific evidence and prior experimental records into the active research area when the corresponding mechanism is designed, using traceable sources and explicit validation limits.
 
-Before treating the public repository as hardened for broader collaboration, the owner must apply and verify the main-branch ruleset and the account/repository security controls in operations/GITHUB-SECURITY.md. This owner-side hardening item is distinct from the completed GitHub source-of-truth transition.
+The remaining repository-side owner action is to establish and verify branch-deletion prevention for all branches. This is distinct from the completed GitHub source-of-truth transition and does not block beginning implementation.

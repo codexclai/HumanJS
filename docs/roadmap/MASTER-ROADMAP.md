@@ -13,8 +13,8 @@
 - [x] Add contribution and vulnerability-reporting guidance.
 - [x] Add a read-only repository policy workflow and weekly Dependabot configuration for GitHub Actions.
 - [x] Pin `actions/checkout` to a reviewed full commit SHA; merge PR #2 after push and pull-request checks passed.
-- [x] Verify the post-merge repository-policy workflow on main commit `2e0078ccaa5df0f10d9f7efc56a8b0e940a8c13f` (run `42810467386`, success).
-- [ ] Owner: apply and verify main branch ruleset and available repository/account security settings as documented in `docs/operations/GITHUB-SECURITY.md`.
+- [x] Verify the latest main-branch repository-policy workflow passed on commit `be2dc07d2503f590473757f67526f1024c3322a5` (run `42810969518`, success).
+- [ ] Owner: create and verify an active all-branches ruleset that prevents branch deletion, while leaving force pushes allowed. For `main`, require PR and policy CI where practical. See `docs/operations/GITHUB-SECURITY.md`.
 
 ## P1 — legacy disposition and scientific evidence workflow
 
