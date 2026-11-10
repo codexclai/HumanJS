@@ -1,7 +1,7 @@
 # HumanJS — current status
 
 **As of:** 2026-11-10  
-**Stage:** initial Rust CPU mechanism implemented; scientific and integration work continues.
+**Stage:** first Rust CPU mechanism implemented and its focused CI checks passed; scientific and integration work continues.
 
 ## Canonical repository
 
@@ -10,11 +10,12 @@
 - GitHub `main` is the sole authoritative source. ChatGPT Project Sources may remain empty.
 - The live branch listing returned exactly one branch, `main`; no non-main refs remained.
 - No open issues or open pull requests were returned by the latest live checks.
-- Before this implementation commit, the latest repository-policy workflow passed on commit `fccb71e43a66ebab09a54f54c06d7e8d4438d824` (run `42819045682`, success). That check validated repository policy only; it was not a code build, simulation test, or biological validation.
+- Current verified implementation head: `66f56730dbef0075132e21263ea9b679f3f2e154`.
+- Workflow run `42824933385` passed for that commit: https://github.com/codexclai/HumanJS/actions/runs/42824933385.
 
 ## Implemented CPU slice
 
-The new Rust workspace contains `humanjs-core` with:
+The Rust workspace contains `humanjs-core` with:
 
 - Validated physical-unit wrappers for voltage, current, capacitance, conductance, input resistance, and membrane time constant.
 - Integer-nanosecond simulation timestamps and positive step durations.
@@ -22,13 +23,26 @@ The new Rust workspace contains `humanjs-core` with:
 - A single-compartment passive RC membrane equation driven by piecewise-constant injected current, integrated using its analytic exponential solution.
 - A conversion from input resistance and membrane time constant to lumped leak conductance and capacitance (`G = 1/R`, `C = tau/R`).
 - Validation and failure behavior that avoids partially updating runtime state when a step fails.
-- Numerical and behavioral tests for the analytic response, relaxation, step partitioning, hyperpolarization, reset, unit conversion, and time overflow.
+- Numerical and behavioral tests for the analytic response, relaxation, step partitioning, hyperpolarization, reset, unit conversion, invalid physical parameters, non-finite values, and time overflow.
 
 The model is a deliberately limited subthreshold mechanism. It is not a complete neuron and contains no active ion channels, synaptic receptors, dendrites, action potentials, population/network connectivity, or biological parameter defaults. The tests establish software behavior for the declared equation only.
 
 ## Evidence and scientific boundary
 
 `research/HUMAN-NEOCORTEX-PASSIVE-MEMBRANE.md` records human whole-cell patch-clamp evidence for layer-dependent passive membrane properties and notable within-layer heterogeneity. The initial model does not claim to reproduce the full distribution or the active sag behavior reported in those recordings. Its parameters must be supplied explicitly; no group mean is treated as a universal human neuron.
+
+## Verification
+
+For commit `66f56730dbef0075132e21263ea9b679f3f2e154`, GitHub Actions run `42824933385` completed successfully and verified:
+
+- `cargo fmt --all -- --check`
+- `cargo clippy --workspace --all-targets -- -D warnings`
+- `cargo test --workspace --locked` — 6 unit tests and 6 integration tests passed; 0 failed.
+- `python3 .github/scripts/repository_policy.py` — repository policy passed (16 required files; no JSON files; no prohibited archives/generated output).
+
+The first implementation commit `a2161ef41f08238bef0b5014d5f4fc5f2a1a2761` initially failed the formatting gate only; the Rust sources were formatted in `66f56730dbef0075132e21263ea9b679f3f2e154`, then the full workflow passed. No lint, test, or policy failure occurred in the successful run.
+
+A fresh local clone was attempted but this execution environment could not resolve `github.com`; no local checkout or local Rust test run was produced. Verification above was performed by the GitHub Actions runner against the committed repository state.
 
 ## Not yet implemented
 
@@ -41,12 +55,6 @@ The model is a deliberately limited subthreshold mechanism. It is not a complete
 - Python developer package, stable C ABI, C++ wrapper, or integrated WGSL backend.
 
 These remain requirements or future objectives, not current capabilities.
-
-## Verification and environment
-
-The GitHub Actions workflow now runs Rust formatting, Clippy, workspace tests, and the repository policy validator on pushes to `main`. The result for this implementation commit must be checked before reporting these commands as passed.
-
-A fresh local clone was attempted but this execution environment could not resolve `github.com`; no local checkout or local Rust test run was produced. Repository updates were made through GitHub's Git data API and must be verified through the remote commit and workflow results.
 
 ## Next implementation milestone
 
