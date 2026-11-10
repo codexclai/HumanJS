@@ -167,7 +167,15 @@ The researchers' public data deposit is DataverseNL DOI [10.34894/L5J0SD](https:
 | `na_human.mod` | 318629 | Original NEURON Na+ mechanism file metadata; 3.5 KB, SHA1 `b199d70c3d0e7a2e991fd8d26c54b1318e3c0970` |
 | `k_human.mod` | 318647 | Original NEURON K+ mechanism file metadata; 4.1 KB, SHA1 `d299b3430ecda7a94f6d1c37ac76b2878052c7d5` |
 
-The two `.mod` files are listed by Dataverse as public `audio/mod` files. Their metadata and checksums were verified, but the available document extraction interfaces reject that MIME type, so their source text has not been inspected in this review. The corresponding older-current-clamp directory also lists `na_human.mod` (file 318563; SHA1 `ef158980e4bb427c97cfb8f379cd63006130b3b2`) and `k_human.mod` (file 318566; SHA1 `622f7c9867e727a3dc7dea1f9ba2efbfb94cfd3a`). Do not assume those duplicate-location files are byte-identical without comparing their content hashes.
+The two pure voltage-clamp mechanism files were retrieved from the CC0 Dataverse deposit and decoded as text. Their checksums match the deposit metadata:
+- `na_human.mod`, file 318629, 3,602 bytes, SHA1 `b199d70c3d0e7a2e991fd8d26c54b1318e3c0970`.
+- `k_human.mod`, file 318647, 4,220 bytes, SHA1 `d299b3430ecda7a94f6d1c37ac76b2878052c7d5`.
+
+The alternative current-clamp/hybrid copies are different model variants, not byte-identical duplicates:
+- `na_human.mod`, file 318563, 3,711 bytes, SHA1 `ef158980e4bb427c97cfb8f379cd63006130b3b2`; adds a global human-channel fraction na_human_ratio and scales current-clamp conductance by that fraction.
+- `k_human.mod`, file 318566, 4,326 bytes, SHA1 `622f7c9867e727a3dc7dea1f9ba2efbfb94cfd3a`; adds a global human-channel fraction k_human_ratio and scales K+ conductance by that fraction.
+
+The pure voltage-clamp files, not the hybrid copies, are the primary source for the human gate equations summarized below. The current-clamp variants must be considered separately when reproducing the AP simulations.
 
 #### Human Na+ fitting sequence recorded in the deposited script
 
