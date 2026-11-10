@@ -18,7 +18,8 @@ Read this file first whenever a new session begins. GitHub `main` is authoritati
 9. `docs/status/STATUS.md`.
 10. `docs/operations/GITHUB-SECURITY.md`.
 11. `docs/policies/REPOSITORY-HYGIENE.md`.
-12. Read only the research, experiment, API, implementation, and issue records relevant to the current task.
+12. `docs/status/SESSION-HANDOFF.md`.
+13. Read only the research, experiment, API, implementation, and issue records relevant to the current task.
 
 Do not search for or request old uploads or copied source snapshots. If evidence or a design detail is missing, research or generate the needed current record from reliable sources when the task requires it.
 
@@ -64,4 +65,4 @@ The glutamatergic synapse model adds AMPA- and NMDA-like normalized biexponentia
 
 The scientific record `research/HUMAN-CORTICAL-GLUTAMATERGIC-SYNAPSE.md` separates human L2/L3 paired-recording observations from model-fitted conductance/kinetic parameters and from engineering abstractions. The current mechanism does not include stochastic vesicle fusion, explicit cleft glutamate dynamics/uptake, molecular receptor Markov states, spines/dendritic cable, active channels, action potentials, or neuron populations.
 
-The next increment is an evidence-bounded intrinsic spike-initiation mechanism and its integration with the passive membrane and synaptic currents. Checkpointing, Rust-native concurrency, Python, C/C++, JSON model loading, and WGSL remain future work. Do not claim these capabilities until implemented and tested.
+The next increment is an evidence-bounded intrinsic spike-initiation mechanism and its integration with the passive membrane and synaptic currents. See `docs/status/SESSION-HANDOFF.md` for the current verified commit, test results, scientific boundaries, and next research step. Checkpointing, Rust-native concurrency, Python, C/C++, JSON model loading, and WGSL remain future work. Do not claim these capabilities until implemented and tested.

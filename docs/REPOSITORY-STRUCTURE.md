@@ -11,7 +11,7 @@ GitHub `main` is the authoritative project record. Create implementation directo
 | `SECURITY.md`, `CONTRIBUTING.md` | Security reporting and contribution rules | Active |
 | `Cargo.toml`, `Cargo.lock` | Rust workspace definition and lockfile | Active |
 | `crates/humanjs-core/` | Passive membrane and glutamatergic synapse CPU mechanisms and tests | Active |
-| `docs/` | Owner requirements, architecture, specifications, decisions, roadmap, operations, status | Active |
+| `docs/` | Owner requirements, architecture, specifications, decisions, roadmap, operations, status, current session handoff | Active |
 | `research/` | Human passive membrane and glutamatergic synapse evidence notes | Active |
 | `.github/scripts/` | Maintainer repository-policy validation | Active |
 | `.github/workflows/` | Main-branch policy and Rust verification | Active |

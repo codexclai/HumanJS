@@ -6,6 +6,7 @@
 ## Canonical repository
 
 - Repository: `codexclai/HumanJS`.
+- Current session handoff: `docs/status/SESSION-HANDOFF.md`.
 - Visibility: public. Default branch: `main`.
 - GitHub `main` is the sole authoritative source. ChatGPT Project Sources may remain empty.
 - The live branch listing returned exactly one branch, `main`; no non-main refs remained.
