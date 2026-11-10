@@ -3,7 +3,7 @@
 **Status:** accepted direction, not an implemented design.  
 **Updated:** 2026-11-10.
 
-This document defines architectural boundaries and responsibilities. It does not claim that any component exists or that a specific crate, GPU backend, Python binding framework, or on-disk schema has already been selected.
+This document defines architectural boundaries and responsibilities. The full biological and functional scope is enumerated separately in ../spec/BRAIN-SCOPE-AND-COMPLETENESS.md. Neither document claims that the listed mechanisms already exist or that a specific crate, GPU backend, Python binding framework, or on-disk schema has already been selected.
 
 ## 1. High-level topology
 

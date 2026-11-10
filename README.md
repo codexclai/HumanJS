@@ -24,7 +24,7 @@ Node.js, JavaScript, TypeScript, npm, and JavaScript runtimes are discontinued p
 
 1. Read docs/BOOT.md.
 2. Follow docs/PROJECT-INSTRUCTIONS.md.
-3. Review docs/OWNER-REQUIREMENTS.md and docs/architecture/SYSTEM-ARCHITECTURE.md.
+3. Review docs/OWNER-REQUIREMENTS.md, docs/architecture/SYSTEM-ARCHITECTURE.md, and docs/spec/BRAIN-SCOPE-AND-COMPLETENESS.md.
 4. Use GitHub history, issues, pull requests, workflows, and repository content as the project record.
 
 The owner is Thamindu. The current GitHub account handle is transitional and may change. Do not use it as the owner preferred name.
