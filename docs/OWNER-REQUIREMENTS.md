@@ -1,7 +1,7 @@
 # HumanJS — owner requirements and accepted project direction
 
 **Status:** current consolidated requirements, updated 2026-11-10.  
-**Precedence:** explicit owner decisions in this conversation and later GitHub decisions supersede conflicting instructions in historical prompts and the legacy Node.js archive.
+**Precedence:** the latest explicit owner decisions recorded in this document and the current decision record supersede any earlier conflicting project direction.
 
 ## 1. Identity and purpose
 
@@ -99,22 +99,21 @@ Generalized learning and interacting neural systems should produce language, sym
 
 - GitHub is the source of truth for current source, documentation, decisions, issues, experiments, workflows, and history.
 - Keep the repository organized and non-duplicative. Maintain one canonical owner-requirements document and one canonical current status/handoff.
-- Preserve useful original prompts, source material, research, unique experiment records, and meaningful history in clearly separated archival locations.
-- Separate active project material, research, experiments, legacy material, deferred work, backups, and disposable temporary artifacts.
+- Use Git history as the normal record of changes; do not keep duplicate project snapshots, copied input bundles, or unreviewed retired source in the working tree.
+- Add scientific material under `research/` and reproducible protocols/results under `experiments/` only when a concrete task needs them and provenance, relevance, and redistribution rights have been reviewed.
+- Remove confirmed temporary, duplicate, and obsolete content rather than creating general-purpose archive or backup trees.
 - Every substantive change or owner decision must have an appropriate record with reason, impact, provenance, verification, and follow-up.
 - Do not manufacture folders, files, tests, workflows, or architecture merely to look comprehensive.
 
-## 10. Explicitly superseded legacy requirements
+## 10. Discontinued technical direction
 
-Former Node.js requirements are no longer active: Node.js runtime/version targets; JavaScript/TypeScript implementation; npm or private npm packaging; package.json distribution allowlists; Node.js worker_threads APIs; Artificial/ with .ajs-only definitions; legacy single-file/five-file package constraints; Generation 1 compatibility tied to that runtime; and the old ZIP as the required deliverable.
-
-The original owner prompt is preserved verbatim at archive/owner-inputs/Applys-everything-everywhere-everyway-maximumly-fully-completely.txt. It is historical provenance, not a second active requirements source. Where it conflicts with this current document and later explicit owner decisions, this current document controls.
+The former Node.js runtime, JavaScript/TypeScript implementation, npm packaging, package.json distribution rules, Node.js worker APIs, `.ajs`-only model definitions, fixed package-file limits, Generation 1 runtime compatibility, and legacy ZIP delivery approach are discontinued. Do not recreate or port those designs. Use the accepted Rust, WGSL, Python, C, and C++ architecture. Current requirements in this document and later decision records are the sole active direction.
 
 ## 11. Latest owner decisions — GitHub-only and main-only
 
 - GitHub repository `codexclai/HumanJS`, branch `main`, is the sole canonical project source. ChatGPT Project Sources may remain empty.
-- No `HumanJSProject.zip` is required, maintained, synchronized, or delivered. GitHub Releases, Packages, or Deployments may be used only when they serve a real distribution or hosted-service need.
+- No separately maintained project archive or synchronization artifact is part of the workflow. GitHub `main` is the complete current source.
 - `main` is the only branch to use, permanently. Never create or use another branch, including existing non-main refs. The intended repository state is `main` alone; inspect unique commits before deleting old refs if branch deletion is available. Report capability limits honestly.
 - Do not require or configure GitHub rulesets, branch protection, or branch-deletion-prevention settings. Force pushes are permitted but exceptional and must be inspected and verified.
 - HumanJS has no requirement to store credentials, private user data, or secrets. Do not add authentication/secret-management features, `.env`, `.env.example`, `dotenv`, or generic environment-file infrastructure without a specific approved product requirement.
-- These later explicit decisions supersede conflicting older branch, archive, environment-file, and delivery instructions in historical prompts or documents.
+- These later explicit decisions supersede any earlier conflicting branch, storage, environment-file, or delivery policy.

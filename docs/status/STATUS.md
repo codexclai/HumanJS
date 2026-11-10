@@ -1,58 +1,45 @@
 # HumanJS — current status
 
 **As of:** 2026-11-10  
-**Stage:** GitHub-first project foundation complete; ready to begin the first Rust CPU implementation slice. Owner has adopted a permanent main-only workflow; no branch-governance settings are required.
+**Stage:** repository foundation clean-up and verification complete; ready to begin the first Rust CPU implementation slice.
 
-## Verified GitHub baseline
+## Canonical repository
 
 - Repository: `codexclai/HumanJS`.
 - Visibility: public. Default branch: `main`.
-- Preparation PR #8 was merged as `41fac9518a37f39d0f8aba8ddbe27cf5db14d03f`.
-- The post-merge repository-policy workflow passed: run `42811770679`.
-- Retrieve live `main` HEAD and current workflow status each session; this document is a checkpoint, not a substitute for querying GitHub.
-- Preparation PRs #7 and #8 and Dependabot PR #2 are merged. No open pull requests were reported in the latest check.
-- `.github/workflows/repository-policy.yml` runs on push, pull request, and manual dispatch. It grants read-only `contents` permission, pins `actions/checkout` by full commit SHA, and invokes the Python repository-policy validator.
-- `.github/dependabot.yml` checks GitHub Actions dependencies weekly.
-- The repository has documentation/governance, owner-input provenance, and repository automation; it does not yet contain the active simulation implementation.
+- GitHub `main` is the sole authoritative source. ChatGPT Project Sources may remain empty.
+- No open pull requests or open issues were returned by the latest live check before this synchronization.
+- The current main-branch policy workflow passed on commit `9ddd7b2fd912ede619907b1e31bb713e6cad8830` (run `42815622728`, success). That check validates repository policy only; it is not a code build, simulation test, or biological validation.
+- The repository policy workflow is restricted to pushes to `main` and manual dispatch, with read-only `contents` permission and an immutable checkout action SHA.
+- Branch-generating dependency update automation is not part of the accepted workflow.
 
 ## Completed preparation
 
-- GitHub is the canonical project source of truth. No ZIP archive is required for active work, synchronization, or delivery.
-- The short project instructions and mandatory boot sequence are in the repository.
-- The complete original owner prompt is preserved verbatim in `archive/owner-inputs/`; current accepted requirements are consolidated in `docs/OWNER-REQUIREMENTS.md`.
-- The target system architecture and stack boundaries are documented.
-- The stack-independent whole-brain scope catalogue and validation ladder are documented in `docs/spec/BRAIN-SCOPE-AND-COMPLETENESS.md`.
-- Accepted decisions, repository layout, archive/trash policy, roadmap, status, and continuity process are documented.
-- Apache-2.0 licensing and the owner attribution notice are in the proper root files.
-- Contribution guidance, security reporting guidance, PR template, Dependabot configuration, ignore/attribute rules, and the repository-policy workflow are present.
-- The repository-policy workflow passed on the merged preparation PRs and on the post-merge main push. This validates repository policy only; it is not a Rust build, simulation test, or biological validation.
+- Consolidated the active requirements, system architecture, brain-scope specification, decision record, roadmap, security guidance, repository hygiene, status, and session boot sequence.
+- Confirmed that the boot process retrieves live GitHub state and does not depend on ChatGPT Project Sources or local uploads.
+- Removed superseded archive/migration material and duplicate project snapshots from the current tracked tree.
+- Removed branch-generating update automation and pull-request-specific scaffolding to align repository operations with the permanent main-only policy.
+- Kept the repository license, attribution notice, contribution guidance, security policy, ignore rules, text attributes, and repository-policy validator.
+- Verified the previous repository-policy workflow succeeded on the current pre-cleanup main commit.
 
-## Implementation state — not yet started
+## Implementation status — not started
 
-The new GitHub repository does not yet contain:
-- A Rust workspace or executable brain/simulation mechanism.
+The repository does not yet contain:
+- A Rust workspace or executable simulation mechanism.
 - A Python developer package or its tests.
 - A stable C ABI or C++ wrapper.
 - An integrated WGSL GPU execution backend.
 - Executable JSON brain/model/IR definitions.
 - Runtime save/restore, native worker execution, or simulation integration tests.
 
-The owner-required configurable default of 10,000 spiking neuron units, save/restore, and Rust-native multi-threaded execution remain requirements, not implemented capabilities. CPU execution is the first implementation target. GPU support is an objective and must not be claimed until implemented and measured on actual supported hardware.
+The configurable default of 10,000 spiking neuron units, save/restore, Rust-native multi-threaded execution, and CPU execution remain requirements, not implemented capabilities. CPU is the first implementation target. GPU support is an objective and must not be claimed until implemented and measured on actual supported hardware.
 
-## Legacy and research disposition
+## Branch status and operational limitation
 
-The source-of-truth transition is complete: current owner intent and the accepted target architecture are recorded in GitHub. The former Node.js/JavaScript runtime, package layout, and `.ajs` implementation are retired and must not be line-by-line ported. The old project snapshot receipt is retained only as provenance; no replacement archive is required.
+The live branch check on 2026-11-10 found nine non-main refs in addition to `main`. Comparing each against `main` showed each has one unique commit and is 8–16 commits behind; none is to be used or updated. The connected GitHub operations available in this session can list, compare, and update refs but do not expose branch deletion. No authenticated GitHub browser session was available. These refs therefore remain physically present and must not be described as deleted. The intended steady state remains `main` only.
 
-The former project contained additional historical research notes, architecture documents, experiment scripts, result JSON, and old runtime test records. These have not been bulk-copied into active paths. That is intentional: old software results are not biological validation, and every research item must be screened for source provenance, species/method, relevance, and redistribution rights before promotion. Migrate a specific record when it supports a current design or reproducible experiment; do not make wholesale historical copying a prerequisite to starting the new implementation.
-
-## Current branch and delivery policy
-
-The owner now requires main to be the only branch used, permanently. No new or existing non-main branch may be used. The intended final repository state is main alone. The last verified branch listing (2026-11-10) contained nine non-main refs in addition to main. Inspect their unique commits before deleting them when branch deletion is available. The connected GitHub integration did not expose a branch-deletion operation at the last check; do not claim those refs have been removed. No rulesets, branch protection, or deletion-prevention settings are required.
-
-No HumanJSProject.zip is required, maintained, or delivered. ChatGPT Project Sources may remain empty. GitHub Releases, Packages, and Deployments are optional and should be used only for actual distribution or hosted-service needs.
-
-HumanJS has no requirement to store credentials, private user data, or secrets. Do not introduce authentication/secret-management features or generic .env/.env.example/dotenv infrastructure without an approved product requirement.
+No rulesets, branch protection, deletion-prevention settings, or automatic branch-generating updates are required. Force pushes remain exceptional and must be inspected and verified.
 
 ## Next implementation milestone
 
-Start a minimal Rust workspace with one end-to-end, CPU-only simulation vertical slice. Select module boundaries from real ownership and data-flow requirements, not arbitrary brain-region crates. Define typed time/state/error/resource contracts, write numerical unit tests, and make the first integrated mechanism causally testable. Add persistence and native concurrency as explicit, tested capabilities rather than placeholders. Bring in only the scientific evidence required for the first mechanism and record its provenance.
+Start a minimal Rust workspace with one end-to-end, CPU-only simulation vertical slice. Choose module boundaries from actual ownership and data flow, not arbitrary brain-region crates. Define typed time/state/error/resource contracts, write numerical unit tests, and make the first integrated mechanism causally testable. Add persistence and Rust-native concurrency as explicit tested capabilities rather than placeholders. Gather only the scientific evidence needed for the selected first mechanism and record its provenance.

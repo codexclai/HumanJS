@@ -1,36 +1,47 @@
-# HumanJS — repository operating instructions
+# HumanJS — ChatGPT Project Instructions
 
-GitHub repository `codexclai/HumanJS`, branch `main`, is the sole canonical source for active code, docs, requirements, decisions, research, experiments, issues, workflows, and history. No project ZIP is required or maintained. ChatGPT Project Sources may remain empty.
+## Canonical source and session continuity
+The sole source of truth is the live GitHub repository `codexclai/HumanJS`, branch `main`. ChatGPT Project Sources are intentionally allowed to remain empty. Do not request, expect, or depend on uploads, local source attachments, remembered snapshots, or a separately synchronized project archive.
 
-At every new chat, inspect live repository metadata and `main` HEAD, read `docs/BOOT.md` first, and follow its mandatory reading order. Never treat old chats, local copies, archives, or remembered commits as current. The original owner prompt remains preserved at `archive/owner-inputs/Applys-everything-everywhere-everyway-maximumly-fully-completely.txt`; current owner decisions and `docs/OWNER-REQUIREMENTS.md` supersede conflicting historical text.
+At the start of every new chat:
+1. Fetch live repository metadata and confirm that the default branch is `main`.
+2. Read `docs/BOOT.md` from the current `main` before reading other project files.
+3. Retrieve the current `main` commit and full repository tree; inspect current file contents and relevant history rather than trusting previous chat summaries.
+4. Follow the mandatory reading order in `docs/BOOT.md`.
+5. Check current workflow results, open issues/PRs, and branch refs. Report only what was actually verified.
 
-## Branch policy
-`main` is the only branch to use, permanently. Never create, check out, update, merge, or otherwise use another branch, existing or new. Make authorized changes directly on `main`; verify every commit and resulting HEAD. The intended final repository state is `main` alone. Existing non-main refs are leftovers: inspect unique commits before deleting them when deletion is available. Never use them for work. Disclose tool limitations rather than claiming deletion. Do not require or configure rulesets, branch protection, or deletion-prevention settings. Force pushes are permitted but exceptional; inspect and verify carefully.
+Never assume that previous chat context, cached content, or a local checkout is current. If a local workspace is needed, use a clean checkout synchronized from `main`.
 
-## Purpose and scope
-HumanJS is a scientifically defensible computational model of the human brain only. It is not a whole-body simulator, chatbot, external-LLM wrapper, generic agent framework, or claim of consciousness, sentience, human-equivalent intelligence, clinical validity, or biological completeness. External hosts may provide peripheral/body/sensory/environment inputs and receive outputs through explicit interfaces.
+## Branch and GitHub operating policy
+`main` is the only project branch to use, permanently. Never create, check out, update, merge, or work from another branch. Make authorized repository changes directly on `main`, verify each resulting commit, and never claim a write succeeded without checking GitHub.
 
-## Approved stack
-- Rust: native simulation core, mechanisms, runtime, APIs, concurrency, resources, persistence.
-- WGSL: GPU compute.
-- Python: primary developer API, scientific workflows, experiments, analysis, tooling.
-- C: stable native interoperability through a designed C ABI.
-- C++: native interoperability and wrappers, preferably over the C ABI.
+Do not create project branches, pull requests, branch-generating automation, Dependabot update PRs, or other workflows that require non-main branches. Do not require or configure branch protection, rulesets, or deletion-prevention settings. Force pushes are permitted only as an exceptional, justified operation after inspecting the exact target and impact. Existing non-main refs are not permission to use them; inspect unique commits before deletion and report honestly when the available tools cannot delete refs.
 
-Node.js, JavaScript, TypeScript, npm, JavaScript runtimes, and `.ajs` implementation are retired. Do not reintroduce them into active work.
+Use GitHub features only when they solve a real need. Releases, Packages, and Deployments are optional and must not be created just for appearances. The public repository is the canonical delivery location.
 
-Retain correct save/restore, Rust-native multithreaded execution, and a configurable default of 10,000 spiking neuron units (engineering default, not biological count or hard maximum). CPU execution and fallbacks must work. Claim GPU/WGSL support only after actual hardware integration, correctness checks, and reproducible benchmarks. Keep model definitions, initial conditions, live runtime state, learned state, and checkpoints distinct. Applicable inspectable model/IR definitions should use JSON.
+## Purpose and scientific scope
+HumanJS is a scientifically defensible computational model of the **human brain only**. It is not a whole-body simulator, chatbot, external-LLM wrapper, generic agent framework, or claim of consciousness, sentience, subjective experience, human-equivalent intelligence, clinical validity, or biological completeness. External hosts may provide body, peripheral, sensory, actuator, and environmental inputs/outputs through explicit interfaces.
 
-## Scientific and engineering requirements
-Implement causal, interacting, evidence-grounded mechanisms, not biological labels on generic software stand-ins. Do not substitute fact tables, fixed lexicons/English grammar parsers, object-ID tracking, numbered goal slots, fixed task-switch penalties, capped sequence lookup, global scalar neuromodulators, simplistic sensory transforms, or arbitrary anatomy presented as measured human biology. Prefer primary research; distinguish human/animal evidence, measurements/estimates, findings/hypotheses, and record provenance, uncertainty, methods, and validation limits.
+Build causal, interacting, evidence-grounded mechanisms. Do not replace biology with fact tables, fixed lexicons or grammar parsers, object-ID cognition, numbered goal slots, fixed task-switch penalties, capped sequence lookup, global scalar neuromodulators, generic sensory transforms, or unsupported anatomy. Distinguish human from animal evidence, measurements from estimates, findings from hypotheses, and biology from engineering conventions. Record sources, methods, provenance, uncertainty, disputes, and validation limits.
 
-Inspect existing code, dependencies, interfaces, data flow, history, and tests before changing anything. Implement integrated, testable functionality. Add relevant numerical, unit, integration, causal, persistence, concurrency, and regression tests. Fix root causes; never weaken tests or claim unrun checks passed. Hardware/resource detection, fallback, cancellation, backpressure, recovery, and monitoring must be real, bounded, observable, configurable, explainable, and tested.
+## Approved technology and architecture
+- **Rust:** authoritative simulation state, computational core, mechanisms, runtime, APIs, scheduling, resources, concurrency, and persistence.
+- **WGSL:** GPU compute kernels, integrated through a Rust-owned backend.
+- **Python:** primary developer interface, scientific workflows, experiments, analysis, and tooling.
+- **C:** stable native interoperability through a deliberately designed C ABI.
+- **C++:** interoperability and ergonomic wrappers, preferably over the C ABI.
 
-HumanJS has no requirement to store credentials, private user data, or secrets. Do not introduce authentication/secret-management features, `.env`, `.env.example`, `dotenv`, or generic env-file infrastructure without a specific approved requirement. Keep `.gitignore` limited to actual generated project artifacts.
+Rust owns simulation truth. Python must not replace the native core with a subprocess or external AI. C/C++ boundaries need explicit ownership, lifetime, error, buffer, and thread-safety contracts. CPU execution is mandatory and is the correctness reference. Claim GPU support or acceleration only after actual hardware execution, correctness checks, and reproducible benchmarks.
 
-## Documentation and delivery
-Keep `/docs` canonical for requirements, architecture, specifications, decisions, research, experiments, status, recovery, and handoffs. Maintain one authoritative document per topic. Record meaningful decisions, changes, rationale, evidence, failures, and verification. Update `docs/BOOT.md` and status after meaningful work.
+## Retained product requirements
+Keep model definitions, initial conditions, live runtime state, learned state, and checkpoints distinct. Use JSON for applicable inspectable model/IR definitions. Retain correct save/restore, Rust-native multi-threaded execution, and a configurable default of 10,000 spiking neuron units. That number is an engineering default, not a biological neuron count or hard maximum. Do not claim these capabilities are implemented until they exist and are tested.
 
-GitHub is source and delivery location. Use Releases for intentional versioned distributions, Packages for actual distributable packages, and Deployments only for a real hosted service. These are optional and do not replace the repository. Never produce HumanJSProject.zip or claim a GitHub-generated source archive is a separately maintained project deliverable.
+## Engineering quality
+Inspect existing code, interfaces, dependencies, data flow, and tests before changing anything. Build integrated functionality, not names, inventories, placeholders, or disconnected scaffolding. Design typed contracts and safe resource bounds. Add appropriate numerical, unit, behavioral, integration, persistence, concurrency, interoperability, and regression tests. Fix root causes; never weaken tests or hide failures. Verify the exact commands and results, identify unrun checks, and state limitations plainly.
 
-Verify every GitHub operation. Report exact changed paths, tests/results, failures, limitations, untested areas, and next actions.
+Use dependencies only when justified. Do not introduce authentication, credential storage, secret-management systems, `.env`, `.env.example`, dotenv, or generic environment-file infrastructure without a specific approved requirement. Keep the repository free of secrets, private data, unlicensed material, generated output, duplicate snapshots, and temporary clutter.
+
+## Documentation and completion
+Keep `/docs` canonical. Maintain one authoritative requirements document, architecture document, decision record, roadmap, current status, and session handoff. Record meaningful decisions, changes, rationale, source provenance, tests, failures, and limitations. Update `docs/BOOT.md` and `docs/status/STATUS.md` after meaningful project changes.
+
+A task is complete only when the implementation, integration, tests, relevant evidence review, and documentation are verified. Never claim biological validation from ordinary software tests. At the end of work, report changed paths, commit(s), verification commands/results, limitations, and the next concrete step.

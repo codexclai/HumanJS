@@ -1,30 +1,34 @@
 # GitHub repository operations
 
 **Canonical repository:** `codexclai/HumanJS`  
-**Canonical branch:** `main`
+**Canonical branch:** `main`  
+**Last inspected:** 2026-11-10
 
-## Owner's branch policy
+## Permanent main-only policy
 
-`main` is the only branch permitted for all project work, permanently.
+`main` is the only branch permitted for project work, permanently.
 
-- Never create, check out, update, merge, or otherwise use another branch, whether new or existing.
-- Commit authorized changes directly to `main`; verify each resulting commit and HEAD.
-- The intended final repository state is `main` alone. Existing non-main references are legacy leftovers. Inspect their unique commits before deleting them when branch deletion is supported. If the available integration cannot delete branches, report that limitation and leave them unused.
-- Do not require or configure GitHub rulesets, branch-protection rules, deletion-prevention rules, or other branch governance settings.
-- Force pushes are permitted but exceptional. Inspect target and impact, explain why necessary, and verify the outcome.
+- Never create, check out, update, merge, or otherwise use another repository branch, whether new or existing.
+- Commit authorized maintainer work directly to `main`; verify every resulting commit and remote HEAD.
+- Do not create project pull requests or enable automation that creates non-main update branches.
+- Existing non-main refs are unused leftovers. Inspect their unique commits before deletion; never use them for implementation.
+- Do not require or configure rulesets, branch-protection rules, deletion-prevention rules, or other branch governance settings.
+- Force pushes are permitted but exceptional. Inspect the exact target and impact, document the reason, use an expected-head/lease check, and verify the result.
 
-The latest verified inspection on 2026-11-10 found nine non-main branches in addition to main. The connected GitHub integration exposed branch search and ref update but no branch-deletion operation. Do not claim the extra refs have been removed. Recheck current state and capabilities before any cleanup.
+## Current branch cleanup limitation
+
+The live inspection found nine non-main refs in addition to `main`. GitHub comparisons showed one unique commit on each non-main ref and that each ref is 8–16 commits behind `main`. They are not used. The GitHub tools available during this inspection expose branch search/comparison and ref updates, but not branch deletion; no authenticated browser session was available to delete them. Do not claim the repository physically contains only `main` until a fresh branch listing verifies that state. Recheck deletion capability in a future session.
 
 ## Repository and delivery
 
-GitHub is the sole source of truth for code, docs, requirements, decisions, research, experiments, issues, workflows, and history. No HumanJSProject.zip is required or maintained. ChatGPT Project Sources may remain empty.
+GitHub `main` is the sole source of truth for code, docs, requirements, decisions, research, experiments, issues, workflows, and history. The ChatGPT Project Sources area may remain empty. Do not rely on uploaded files or a separately synchronized project archive.
 
-Use Releases for intentional versioned source/binary distributions, Packages for actual distributable packages, and Deployments/Environments only when a real hosted service exists. These are optional and do not replace the repository.
+Use Releases for intentional versioned distributions, Packages for actual distributable packages, and Deployments only when a real hosted service exists. These features are optional and do not replace the repository.
 
 ## Project configuration boundary
 
-HumanJS has no requirement to store credentials, private user data, or secrets. Do not add authentication, secret storage, `.env`, `.env.example`, `dotenv`, or generic env-file infrastructure without a specific approved product requirement. Do not add generic configuration boilerplate without a demonstrated need.
+HumanJS has no requirement to store credentials, private user data, or secrets. Do not add authentication, secret storage, environment files, dotenv, or generic secret/configuration infrastructure without a specific approved product requirement.
 
 ## General repository hygiene
 
-Keep workflow permissions minimal and review dependency updates. Use GitHub features only when they support an actual project need. Verify commits, workflows, releases, packages, and deployments before reporting success. Public repository content is public under its license; do not add material that the project has no reason or right to publish.
+Keep workflow permissions minimal and pin third-party actions to reviewed immutable SHAs. Do not add automation that creates branches. Verify commits and workflow runs before reporting success. Public repository content is public under its license; do not add material that the project has no reason or right to publish.

@@ -2,14 +2,15 @@ name: Repository policy
 
 on:
   push:
-  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: repository-policy-${{ github.ref }}
+  group: repository-policy-main
   cancel-in-progress: true
 
 jobs:
