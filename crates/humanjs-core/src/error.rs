@@ -5,6 +5,16 @@ use std::fmt;
 pub enum SimulationError {
     NonFiniteValue { field: &'static str, value: f64 },
     NonPositiveValue { field: &'static str, value: f64 },
+    OutOfRangeValue {
+        field: &'static str,
+        value: f64,
+        minimum: f64,
+        maximum: f64,
+    },
+    InvalidKineticOrdering {
+        rise_seconds: f64,
+        decay_seconds: f64,
+    },
     ZeroDuration,
     TimeOverflow,
     NumericalOverflow,
@@ -19,6 +29,22 @@ impl fmt::Display for SimulationError {
             Self::NonPositiveValue { field, value } => {
                 write!(formatter, "{field} must be positive; received {value}")
             }
+            Self::OutOfRangeValue {
+                field,
+                value,
+                minimum,
+                maximum,
+            } => write!(
+                formatter,
+                "{field} must be between {minimum} and {maximum}; received {value}"
+            ),
+            Self::InvalidKineticOrdering {
+                rise_seconds,
+                decay_seconds,
+            } => write!(
+                formatter,
+                "synaptic decay time ({decay_seconds} s) must exceed rise time ({rise_seconds} s)"
+            ),
             Self::ZeroDuration => formatter.write_str("simulation duration must be positive"),
             Self::TimeOverflow => formatter.write_str("simulation clock overflowed"),
             Self::NumericalOverflow => {
