@@ -7,9 +7,10 @@
 
 - Repository: `codexclai/HumanJS`.
 - Visibility: public. Default branch: `main`.
-- Latest main commit: `be2dc07d2503f590473757f67526f1024c3322a5`.
-- Repository-policy workflow passed on the post-merge push for that commit: run `42810969518`.
-- Preparation PR #7 and Dependabot PR #2 are merged. No open pull requests were reported in the latest check.
+- Preparation PR #8 was merged as `41fac9518a37f39d0f8aba8ddbe27cf5db14d03f`.
+- The post-merge repository-policy workflow passed: run `42811770679`.
+- Retrieve live `main` HEAD and current workflow status each session; this document is a checkpoint, not a substitute for querying GitHub.
+- Preparation PRs #7 and #8 and Dependabot PR #2 are merged. No open pull requests were reported in the latest check.
 - `.github/workflows/repository-policy.yml` runs on push, pull request, and manual dispatch. It grants read-only `contents` permission, pins `actions/checkout` by full commit SHA, and invokes the Python repository-policy validator.
 - `.github/dependabot.yml` checks GitHub Actions dependencies weekly.
 - The repository has documentation/governance, owner-input provenance, and repository automation; it does not yet contain the active simulation implementation.

@@ -44,11 +44,11 @@ This does **not** mean every byte of the former Node.js project was copied into 
 
 ## Current repository status
 
-The GitHub-first governance and specification foundation is established on public repository `codexclai/HumanJS`, default branch `main`. The latest verified main commit at this update is `be2dc07d2503f590473757f67526f1024c3322a5`. The repository-policy workflow passed on the post-merge push for that commit (run `42810969518`).
+The GitHub-first governance and specification foundation is established on public repository `codexclai/HumanJS`, default branch `main`. The default branch's live HEAD and workflow state must be retrieved at the beginning of each session; do not treat a commit hash recorded in an old handoff as current. The latest preparation PR (#8) was merged, and its post-merge repository-policy workflow passed (run `42811770679`).
 
 The current tree is a documentation/governance foundation. It contains no Rust simulation core, Python package, C ABI, C++ wrapper, executable model definitions, or integrated WGSL backend. No brain mechanism should be described as implemented merely because it appears in the scope specification. No simulation, biological validation, GPU acceleration, or runtime save/restore capability is currently established by this repository.
 
-The latest repository inspection found no rulesets and reported `main` as unprotected. The GitHub integration cannot apply repository settings. The owner must configure branch-deletion prevention as described in operations/GITHUB-SECURITY.md. Force pushes must remain allowed. Code security and analysis features are optional and are not required by the owner's current preference.
+The latest repository inspection (2026-11-10) found no rulesets and reported `main` as unprotected. The GitHub integration cannot apply repository settings. The owner must configure branch-deletion prevention as described in operations/GITHUB-SECURITY.md. Force pushes must remain allowed. Code security and analysis features are optional and are not required by the owner's current preference.
 
 ## Session procedure
 
