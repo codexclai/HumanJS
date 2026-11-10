@@ -109,3 +109,12 @@ Generalized learning and interacting neural systems should produce language, sym
 Former Node.js requirements are no longer active: Node.js runtime/version targets; JavaScript/TypeScript implementation; npm or private npm packaging; package.json distribution allowlists; Node.js worker_threads APIs; Artificial/ with .ajs-only definitions; legacy single-file/five-file package constraints; Generation 1 compatibility tied to that runtime; and the old ZIP as the required deliverable.
 
 The original owner prompt is preserved verbatim at archive/owner-inputs/Applys-everything-everywhere-everyway-maximumly-fully-completely.txt. It is historical provenance, not a second active requirements source. Where it conflicts with this current document and later explicit owner decisions, this current document controls.
+
+## 11. Latest owner decisions — GitHub-only and main-only
+
+- GitHub repository `codexclai/HumanJS`, branch `main`, is the sole canonical project source. ChatGPT Project Sources may remain empty.
+- No `HumanJSProject.zip` is required, maintained, synchronized, or delivered. GitHub Releases, Packages, or Deployments may be used only when they serve a real distribution or hosted-service need.
+- `main` is the only branch to use, permanently. Never create or use another branch, including existing non-main refs. The intended repository state is `main` alone; inspect unique commits before deleting old refs if branch deletion is available. Report capability limits honestly.
+- Do not require or configure GitHub rulesets, branch protection, or branch-deletion-prevention settings. Force pushes are permitted but exceptional and must be inspected and verified.
+- HumanJS has no requirement to store credentials, private user data, or secrets. Do not add authentication/secret-management features, `.env`, `.env.example`, `dotenv`, or generic environment-file infrastructure without a specific approved product requirement.
+- These later explicit decisions supersede conflicting older branch, archive, environment-file, and delivery instructions in historical prompts or documents.
