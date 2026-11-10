@@ -11,9 +11,9 @@
 - GitHub `main` is the sole authoritative source. ChatGPT Project Sources may remain empty.
 - The live branch listing returned exactly one branch, `main`; no non-main refs remained.
 - No open issues or open pull requests were returned by the latest live checks.
-- Verified code commit: `d561df97ae0bbd1012d8cd3bb3b0e466e4f78304`.
-- Latest repository head before this evidence-document update: `bf8b44080c1e5908da15cecef177d4896ad03bf3`.
-- Successful full workflow on that head: run `42830050128`: https://github.com/codexclai/HumanJS/actions/runs/42830050128.
+- Latest verified `main` HEAD: `3706624e75437656c2db320f87fde08dc6f13ab1`.
+- Successful full workflow on that exact HEAD: run `42841617776`: https://github.com/codexclai/HumanJS/actions/runs/42841617776.
+- Integrated CPU code commit: `d561df97ae0bbd1012d8cd3bb3b0e466e4f78304`, separately passed in run `42829179222`.
 
 ## Implemented CPU mechanisms
 
@@ -69,7 +69,7 @@ For code commit `d561df97ae0bbd1012d8cd3bb3b0e466e4f78304`, GitHub Actions run `
 
 The first synapse commit needed formatting changes; the formatting gate then passed. Clippy identified an overly wide helper signature, which was refactored to pass typed synapse model/conductance values instead. The successful run above passed all checks. No tests were weakened or skipped in the successful workflow.
 
-The documentation-only head `bf8b44080c1e5908da15cecef177d4896ad03bf3` also passed the full workflow in run `42830050128`. The evidence note was added after that run; its own workflow result must be checked after commit.
+The evidence/documentation commit `3706624e75437656c2db320f87fde08dc6f13ab1` passed the full workflow in run `42841617776`, including formatting, Clippy, all 19 existing tests, and repository policy. This update made no Rust implementation changes and did not alter or weaken the existing tests.
 
 A fresh local clone was attempted but this execution environment could not resolve `github.com`; no local checkout or local Rust test run was produced. Verification was performed by the GitHub Actions runner against the committed repository state.
 

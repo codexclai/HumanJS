@@ -2,14 +2,14 @@
 
 **Updated:** 2026-11-10  
 **Canonical repository:** `codexclai/HumanJS`, branch `main` only.  
-**Verified main HEAD before this evidence/documentation increment:** `bf8b44080c1e5908da15cecef177d4896ad03bf3`.
+**Verified main HEAD before this evidence/documentation increment:** `3706624e75437656c2db320f87fde08dc6f13ab1`.
 
 ## Verified repository state
 
 - Public repository; default branch `main`.
 - Live branch listing contains exactly `main`.
 - No open issues or pull requests.
-- Latest completed full workflow on the documented head: run `42830050128`, success: https://github.com/codexclai/HumanJS/actions/runs/42830050128.
+- Latest completed full workflow on the documented head: run `42841617776`, success: https://github.com/codexclai/HumanJS/actions/runs/42841617776.
 - Previous integrated CPU code commit `d561df97ae0bbd1012d8cd3bb3b0e466e4f78304` passed full CI in run `42829179222`.
 
 ## Implemented CPU mechanisms
@@ -19,7 +19,7 @@ The Rust workspace `crates/humanjs-core` contains:
 2. An effective glutamatergic synapse with separate AMPA/NMDA biexponential conductance kernels, voltage-dependent NMDA magnesium unblock, and deterministic short-term availability/depression/recovery.
 3. Coupled membrane/synapse stepping using interval-mean receptor conductances and midpoint NMDA magnesium unblock. Both live states update atomically only after a successful step.
 
-The latest code verification passed formatting, Clippy, tests (10 unit + 9 integration), and repository policy. No local clone or local Rust run exists; the container could not resolve GitHub.
+The latest full workflow passed formatting, Clippy, tests (10 unit + 9 integration), and repository policy. The evidence/documentation commit did not change Rust code; the existing tests remain unchanged. No local clone or local Rust run exists; the container could not resolve GitHub.
 
 ## Current spike-initiation evidence review — no code added
 
