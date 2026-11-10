@@ -1,31 +1,45 @@
 # HumanJS — current status
 
 **As of:** 2026-11-10  
-**Stage:** repository/governance foundation; new implementation has not started.
+**Stage:** GitHub-first governance foundation merged; implementation has not started.
 
-## Live repository baseline at preparation start
+## Verified GitHub baseline
 
-- Correct connected repository identified: codexclai/HumanJS.
-- Repository visibility: public; default branch: main.
+- Correct connected repository: codexclai/HumanJS.
+- Public repository; default branch: main.
 - Repository initially contained only LICENSE and NOTICE.
-- Apache-2.0 license present; owner attribution is being updated to Thamindu.
-- Main branch was observed as unprotected and no repository rulesets were returned.
-- Connected GitHub tooling supports repository and Git-object/file reads/writes, but does not expose repository-settings/branch-protection mutation.
+- LICENSE and NOTICE now attribute the owner original contributions to Thamindu.
+- Main was observed as unprotected; no repository rulesets were returned.
+- The connected GitHub integration exposes repository and Git-object/file reads and writes, but does not expose repository-settings or branch-protection mutation.
 
-## Preparation work
+## Completed in the governance foundation
 
-The preparation pass establishes canonical project identity, owner requirements, technology policy, target architecture, documentation entry points, archive separation policy, GitHub security guidance, and bounded repository automation. This documentation is a specification, not an implementation.
+Pull request #1, Establish GitHub-first HumanJS project foundation, was merged into main on 2026-11-10. The merge added 22 files and 850 lines, including:
+
+- Canonical README and /docs/BOOT.md.
+- Short Project Instructions.
+- Consolidated owner requirements and target architecture.
+- Repository structure and archive/trash policy.
+- Decision record and current status.
+- GitHub security, contribution, and vulnerability guidance.
+- GitHub Actions repository-policy workflow and its Python validator.
+- Dependabot configuration for GitHub Actions updates.
+- .gitignore and .gitattributes.
+- Current personal copyright attribution to Thamindu.
+
+The Repository policy workflow ran successfully on the pull request commit (run ID 42784128927, conclusion success). This verifies only the governance checks in that workflow. It is not a software build, simulation test, or biological validation.
 
 ## Not yet implemented or migrated
 
 - No Rust workspace or biological simulation implementation has been migrated to this GitHub repository.
-- No Python package, C ABI, C++ wrapper, WGSL runtime, executable model JSON definitions, or tests exist here.
+- No Python package, C ABI, C++ wrapper, WGSL runtime, executable model JSON definitions, or biological simulation tests exist here.
 - No GPU backend exists or has been measured on real hardware.
-- Save/restore and concurrency are requirements, not implemented capabilities in this new repository.
-- The legacy ZIP contains 379 files. Its complete source tree and research collection have not yet been bulk-migrated into GitHub. The snapshot hash, inventory, and caveats are documented separately.
-- Repository policy workflow results must be observed on GitHub Actions before being reported as passing.
-- Branch protection, signed-commit enforcement, push protection, Dependabot alerts, and CodeQL settings require GitHub settings access and verification.
+- Save/restore and native concurrency remain owner requirements, not implemented capabilities in the new repository.
+- The legacy snapshot contains 379 files, including 315 documentation files and a large research/experiment record. The complete source tree and research collection have not been bulk-migrated into GitHub. The hash, inventory, and scope are documented in operations/LEGACY-SNAPSHOT-RECEIPT.md.
+- The verbatim owner prompt is being preserved separately in archive/owner-inputs. It is not a second active instruction source.
+- Repository policy workflow has passed its PR-triggered run. A push-triggered main-branch run should also be observed.
+- Branch protection, signed-commit enforcement, push protection, Dependabot alerts, and CodeQL settings still require GitHub settings access and verification.
 
-## Immediate next milestone after repository foundation
+## Immediate next milestone
 
-Review legacy research and experiment evidence, select what is valuable and legally suitable, and migrate its text records into GitHub under canonical research/experiments/archive paths. Then establish a minimal Rust workspace and a tested Python-facing CPU simulation slice. Do not restore the old JavaScript architecture.
+Finish review and migration of valuable legacy research and experiment evidence. Decide which legacy artifacts are historically useful, scientifically relevant, legally redistributable, or disposable. Keep retired Node.js code out of active paths. Then establish a minimal Rust workspace and one tested Python-facing CPU simulation vertical slice. Do not restore the old JavaScript architecture.
