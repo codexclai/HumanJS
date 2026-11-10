@@ -23,7 +23,7 @@ Active implementation technologies are Rust, WGSL, Python, C, and C++. Rust is t
 
 **Status:** Accepted · **Date:** 2026-11-10
 
-The HumanJS GitHub repository is canonical for active code, docs, issues, decisions, research records, experiments, workflows, and history. ChatGPT sessions must refresh from GitHub at session start. ZIP archives and loose uploads are migration inputs only; they are not current state or required deliverables.
+The HumanJS GitHub repository, branch main, is the sole canonical source for active code, docs, issues, decisions, research records, experiments, workflows, and history. ChatGPT sessions must refresh from GitHub at session start. No HumanJSProject.zip is required, maintained, or delivered. ChatGPT Project Sources may remain empty. Releases, Packages, and Deployments are optional delivery mechanisms only when an actual product need exists.
 
 ## ADR-004 — Public repository and Apache-2.0
 
@@ -59,4 +59,10 @@ Cognition and biological function must arise from causal, interacting, appropria
 
 **Status:** Accepted · **Date:** 2026-11-10
 
-Active source, research, experiments, legacy snapshots, retired material, deferred work, backups, and temporary output must be separated. Public repository content is public, including archives and history. Do not publish secrets, personal data, or unlicensed material. Do not rewrite Git history, force-push, or delete branches without explicit authorization.
+Active source, research, experiments, legacy snapshots, retired material, deferred work, backups, and temporary output must be separated. Preserve provenance and avoid unnecessary material. The latest owner decision is to use main only, never create or use other branches, and aim for main as the sole remaining branch; inspect unique commits before deleting existing non-main refs when deletion is available. Do not require rulesets or branch-protection settings. Force pushes are permitted but exceptional and must be inspected and verified.
+
+## ADR-010 — Permanent main-only workflow and GitHub delivery
+
+**Status:** Accepted · **Date:** 2026-11-10
+
+The owner supersedes the earlier branch-preservation policy: main is the only branch to use permanently. Never create or use other branches, including existing non-main refs. The intended repository state is main alone; inspect unique commits before deleting old refs when deletion is available. Do not require or configure rulesets or branch protection. Force pushes remain permitted but exceptional and verified. No HumanJSProject.zip is required or maintained; GitHub Releases, Packages, and Deployments are optional when justified by a real distribution or hosted-service need. ChatGPT Project Sources may remain empty.
