@@ -20,7 +20,11 @@ impl PassiveMembraneModel {
         leak_conductance: Siemens,
         equilibrium_potential: Volts,
     ) -> Self {
-        Self { capacitance, leak_conductance, equilibrium_potential }
+        Self {
+            capacitance,
+            leak_conductance,
+            equilibrium_potential,
+        }
     }
 
     /// Derive a lumped RC approximation from passive input resistance and time constant.
@@ -39,9 +43,15 @@ impl PassiveMembraneModel {
         Ok(Self::new(capacitance, conductance, equilibrium_potential))
     }
 
-    pub const fn capacitance(self) -> Farads { self.capacitance }
-    pub const fn leak_conductance(self) -> Siemens { self.leak_conductance }
-    pub const fn equilibrium_potential(self) -> Volts { self.equilibrium_potential }
+    pub const fn capacitance(self) -> Farads {
+        self.capacitance
+    }
+    pub const fn leak_conductance(self) -> Siemens {
+        self.leak_conductance
+    }
+    pub const fn equilibrium_potential(self) -> Volts {
+        self.equilibrium_potential
+    }
 
     fn advance_voltage(
         self,
@@ -50,8 +60,8 @@ impl PassiveMembraneModel {
         injected_current: Amperes,
     ) -> Result<Volts, SimulationError> {
         let conductance = self.leak_conductance.as_siemens();
-        let equilibrium = self.equilibrium_potential.as_volts()
-            + injected_current.as_amperes() / conductance;
+        let equilibrium =
+            self.equilibrium_potential.as_volts() + injected_current.as_amperes() / conductance;
         require_finite("current-driven equilibrium voltage (V)", equilibrium)
             .map_err(|_| SimulationError::NumericalOverflow)?;
 
@@ -71,8 +81,12 @@ pub struct MembranePatchInitialConditions {
 }
 
 impl MembranePatchInitialConditions {
-    pub const fn new(voltage: Volts) -> Self { Self { voltage } }
-    pub const fn voltage(self) -> Volts { self.voltage }
+    pub const fn new(voltage: Volts) -> Self {
+        Self { voltage }
+    }
+    pub const fn voltage(self) -> Volts {
+        self.voltage
+    }
 }
 
 /// Live state of the currently simulated passive membrane patch.
@@ -83,8 +97,12 @@ pub struct MembranePatchRuntimeState {
 }
 
 impl MembranePatchRuntimeState {
-    pub const fn time(self) -> SimTime { self.time }
-    pub const fn voltage(self) -> Volts { self.voltage }
+    pub const fn time(self) -> SimTime {
+        self.time
+    }
+    pub const fn voltage(self) -> Volts {
+        self.voltage
+    }
 }
 
 /// CPU simulation for one passive membrane patch.
@@ -110,11 +128,15 @@ impl PassiveMembraneSimulation {
         }
     }
 
-    pub const fn model(&self) -> PassiveMembraneModel { self.model }
+    pub const fn model(&self) -> PassiveMembraneModel {
+        self.model
+    }
     pub const fn initial_conditions(&self) -> MembranePatchInitialConditions {
         self.initial_conditions
     }
-    pub const fn state(&self) -> MembranePatchRuntimeState { self.state }
+    pub const fn state(&self) -> MembranePatchRuntimeState {
+        self.state
+    }
 
     /// Advance using constant injected current over the requested interval.
     ///
@@ -126,12 +148,13 @@ impl PassiveMembraneSimulation {
         injected_current: Amperes,
     ) -> Result<MembranePatchRuntimeState, SimulationError> {
         let next_time = self.state.time.checked_add(duration)?;
-        let next_voltage = self.model.advance_voltage(
-            self.state.voltage,
-            duration,
-            injected_current,
-        )?;
-        let next_state = MembranePatchRuntimeState { time: next_time, voltage: next_voltage };
+        let next_voltage =
+            self.model
+                .advance_voltage(self.state.voltage, duration, injected_current)?;
+        let next_state = MembranePatchRuntimeState {
+            time: next_time,
+            voltage: next_voltage,
+        };
         self.state = next_state;
         Ok(next_state)
     }

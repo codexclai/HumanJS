@@ -13,7 +13,9 @@ impl Volts {
     pub fn from_millivolts(value: f64) -> Result<Self, SimulationError> {
         Self::from_volts(value * 1.0e-3)
     }
-    pub const fn as_volts(self) -> f64 { self.0 }
+    pub const fn as_volts(self) -> f64 {
+        self.0
+    }
 }
 
 /// Injected electrical current, in amperes. Negative current is permitted.
@@ -28,7 +30,9 @@ impl Amperes {
     pub fn from_picoamperes(value: f64) -> Result<Self, SimulationError> {
         Self::from_amperes(value * 1.0e-12)
     }
-    pub const fn as_amperes(self) -> f64 { self.0 }
+    pub const fn as_amperes(self) -> f64 {
+        self.0
+    }
 }
 
 /// Total membrane capacitance, in farads.
@@ -43,7 +47,9 @@ impl Farads {
     pub fn from_picofarads(value: f64) -> Result<Self, SimulationError> {
         Self::from_farads(value * 1.0e-12)
     }
-    pub const fn as_farads(self) -> f64 { self.0 }
+    pub const fn as_farads(self) -> f64 {
+        self.0
+    }
 }
 
 /// Total leak conductance, in siemens.
@@ -58,7 +64,9 @@ impl Siemens {
     pub fn from_nanosiemens(value: f64) -> Result<Self, SimulationError> {
         Self::from_siemens(value * 1.0e-9)
     }
-    pub const fn as_siemens(self) -> f64 { self.0 }
+    pub const fn as_siemens(self) -> f64 {
+        self.0
+    }
 }
 
 /// Input resistance, in ohms.
@@ -73,7 +81,9 @@ impl Ohms {
     pub fn from_megohms(value: f64) -> Result<Self, SimulationError> {
         Self::from_ohms(value * 1.0e6)
     }
-    pub const fn as_ohms(self) -> f64 { self.0 }
+    pub const fn as_ohms(self) -> f64 {
+        self.0
+    }
 }
 
 /// Passive membrane time constant, in seconds.
@@ -88,7 +98,9 @@ impl TimeConstant {
     pub fn from_milliseconds(value: f64) -> Result<Self, SimulationError> {
         Self::from_seconds(value * 1.0e-3)
     }
-    pub const fn as_seconds(self) -> f64 { self.0 }
+    pub const fn as_seconds(self) -> f64 {
+        self.0
+    }
 }
 
 #[cfg(test)]
@@ -107,10 +119,7 @@ mod tests {
             Farads::from_picofarads(125.0).unwrap().as_farads(),
             125.0e-12
         );
-        assert_eq!(
-            Siemens::from_nanosiemens(4.0).unwrap().as_siemens(),
-            4.0e-9
-        );
+        assert_eq!(Siemens::from_nanosiemens(4.0).unwrap().as_siemens(), 4.0e-9);
         assert_eq!(Ohms::from_megohms(2.0).unwrap().as_ohms(), 2.0e6);
         assert_eq!(
             TimeConstant::from_milliseconds(5.0).unwrap().as_seconds(),

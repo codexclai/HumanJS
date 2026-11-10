@@ -1,6 +1,6 @@
 use humanjs_core::{
-    Amperes, MembranePatchInitialConditions, Ohms, PassiveMembraneModel,
-    PassiveMembraneSimulation, SimDuration, SimTime, TimeConstant, Volts,
+    Amperes, MembranePatchInitialConditions, Ohms, PassiveMembraneModel, PassiveMembraneSimulation,
+    SimDuration, SimTime, TimeConstant, Volts,
 };
 
 fn example_model() -> PassiveMembraneModel {
@@ -16,9 +16,7 @@ fn example_model() -> PassiveMembraneModel {
 fn simulation(initial_voltage_mv: f64) -> PassiveMembraneSimulation {
     PassiveMembraneSimulation::new(
         example_model(),
-        MembranePatchInitialConditions::new(
-            Volts::from_millivolts(initial_voltage_mv).unwrap(),
-        ),
+        MembranePatchInitialConditions::new(Volts::from_millivolts(initial_voltage_mv).unwrap()),
     )
 }
 
@@ -66,9 +64,7 @@ fn constant_current_solution_is_consistent_across_step_partitioning() {
     }
 
     assert!(
-        (one_step_state.voltage().as_volts()
-            - many_steps.state().voltage().as_volts())
-            .abs()
+        (one_step_state.voltage().as_volts() - many_steps.state().voltage().as_volts()).abs()
             < 1.0e-12
     );
     assert_eq!(one_step.state().time(), many_steps.state().time());

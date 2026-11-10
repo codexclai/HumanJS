@@ -30,10 +30,7 @@ impl fmt::Display for SimulationError {
 
 impl std::error::Error for SimulationError {}
 
-pub(crate) fn require_finite(
-    field: &'static str,
-    value: f64,
-) -> Result<(), SimulationError> {
+pub(crate) fn require_finite(field: &'static str, value: f64) -> Result<(), SimulationError> {
     if value.is_finite() {
         Ok(())
     } else {
@@ -41,10 +38,7 @@ pub(crate) fn require_finite(
     }
 }
 
-pub(crate) fn require_positive(
-    field: &'static str,
-    value: f64,
-) -> Result<(), SimulationError> {
+pub(crate) fn require_positive(field: &'static str, value: f64) -> Result<(), SimulationError> {
     require_finite(field, value)?;
     if value > 0.0 {
         Ok(())

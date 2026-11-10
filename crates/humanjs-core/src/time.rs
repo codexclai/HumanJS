@@ -85,6 +85,9 @@ mod tests {
     fn clock_overflow_is_reported() {
         let time = SimTime::from_nanoseconds(u64::MAX);
         let duration = SimDuration::from_nanoseconds(1).unwrap();
-        assert_eq!(time.checked_add(duration), Err(SimulationError::TimeOverflow));
+        assert_eq!(
+            time.checked_add(duration),
+            Err(SimulationError::TimeOverflow)
+        );
     }
 }
