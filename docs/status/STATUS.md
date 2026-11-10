@@ -1,7 +1,7 @@
 # HumanJS — current status
 
 **As of:** 2026-11-10  
-**Stage:** GitHub-first project foundation complete; ready to begin the first Rust CPU implementation slice. Branch-deletion prevention is the remaining owner-side repository setting.
+**Stage:** GitHub-first project foundation complete; ready to begin the first Rust CPU implementation slice. Owner has adopted a permanent main-only workflow; no branch-governance settings are required.
 
 ## Verified GitHub baseline
 
@@ -45,13 +45,13 @@ The source-of-truth transition is complete: current owner intent and the accepte
 
 The former project contained additional historical research notes, architecture documents, experiment scripts, result JSON, and old runtime test records. These have not been bulk-copied into active paths. That is intentional: old software results are not biological validation, and every research item must be screened for source provenance, species/method, relevance, and redistribution rights before promotion. Migrate a specific record when it supports a current design or reproducible experiment; do not make wholesale historical copying a prerequisite to starting the new implementation.
 
-## Owner-side GitHub setting — branch deletion prevention
+## Current branch and delivery policy
 
-The latest repository check reported `main` as unprotected and returned an empty repository-rulesets list. The connected integration cannot create repository rulesets. The owner's policy is to **never delete any branch**. Force pushes are permitted and should not be blocked by the ruleset.
+The owner now requires main to be the only branch used, permanently. No new or existing non-main branch may be used. The intended final repository state is main alone. The last verified branch listing (2026-11-10) contained nine non-main refs in addition to main. Inspect their unique commits before deleting them when branch deletion is available. The connected GitHub integration did not expose a branch-deletion operation at the last check; do not claim those refs have been removed. No rulesets, branch protection, or deletion-prevention settings are required.
 
-The owner must create an active branch ruleset targeting all branches with deletion restriction enabled, and force-push restriction disabled. Leave GitHub's automatic deletion of merged head branches disabled. For `main`, require PRs and the `policy` status check if practical, without requiring a second approval that blocks the solo owner. Exact steps are in `docs/operations/GITHUB-SECURITY.md`.
+No HumanJSProject.zip is required, maintained, or delivered. ChatGPT Project Sources may remain empty. GitHub Releases, Packages, and Deployments are optional and should be used only for actual distribution or hosted-service needs.
 
-Code security and analysis features are not required by the owner's current preference. The repository must still never contain secrets, credentials, private data, or unlicensed third-party material. Account 2FA/passkey state remains unverified and should be maintained independently.
+HumanJS has no requirement to store credentials, private user data, or secrets. Do not introduce authentication/secret-management features or generic .env/.env.example/dotenv infrastructure without an approved product requirement.
 
 ## Next implementation milestone
 
