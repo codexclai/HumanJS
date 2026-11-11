@@ -6,11 +6,11 @@
 ## Canonical repository and live state
 
 - Repository: `codexclai/HumanJS`, public, default branch `main`.
-- `main` is the only branch; the live branch listing returned exactly `main`. The full tree contained 63 entries and was not truncated.
-- No open issues or pull requests were returned by live checks.
-- Latest source/code commit: `3c28de63c8a953c85084ff7c6731caae144b4ee6`. Latest research audit update: `ebb88a8fa1c2b5280aebd27f05976966c0dd8393`.
-- GitHub Actions run `43024172929` passed on exact repository head `7a187e7db0498ee35cbd5d35814c5cebc26aef10`: https://github.com/codexclai/HumanJS/actions/runs/43024172929. `cargo fmt --all -- --check`, workspace Clippy with warnings denied, and `cargo test --workspace --locked` passed (27 core, 3 passive, 6 synapse tests); Python syntax, the seven-CSV Figure S5 validator (including human/mouse model replay references), and repository policy also passed.
-- This chat did not complete a fresh local clone because network DNS resolution failed. No local Rust test run is claimed.
+- Live verification on 2026-11-11: default branch `main`; current baseline HEAD `73311b47fb18e768f15f8b1f678bced91117cf98`; complete 63-entry tree, not truncated; exactly one branch (`main`); zero open issues and zero open pull requests.
+- Latest code commit remains `3c28de63c8a953c85084ff7c6731caae144b4ee6`; latest research evidence commit remains `ebb88a8fa1c2b5280aebd27f05976966c0dd8393`.
+- GitHub Actions run `43024354498` passed on baseline HEAD `73311b47fb18e768f15f8b1f678bced91117cf98`: https://github.com/codexclai/HumanJS/actions/runs/43024354498. `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo test --workspace --locked` passed (27 core, 3 passive, 6 synapse tests); Python syntax, the seven-CSV Figure S5 validator (including both-species K-recovery model references), and repository policy passed.
+- A fresh NEURON 9.0.2 check independently reconfirmed that unchanged `k_human.mod` and `k_mouse.mod` compile with `nrnivmodl` but fail unmodified `modlunit` at the untyped `trates(v+vshift)` call (line 82). This is a source unit-annotation failure, not a HumanJS CI failure; ADR-014 records the typed temporary diagnostic findings. No deposited source was modified.
+- No fresh local Rust test run is claimed; the verified Rust checks above ran in GitHub Actions.
 
 ## Implemented Rust CPU mechanisms
 
