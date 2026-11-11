@@ -351,6 +351,8 @@ The total K+ conductance is exactly decomposed as:
 
 Unlike the Na+ mechanism, the K+ source does not multiply gbar_K by T_adj; the Q10 factor appears in the K+ gate time constants.
 
+**Published-model limitation:** the article's Discussion explicitly states that the fitted HH channel models captured many measured properties but did not accurately reproduce all of them, specifically identifying potassium-channel inactivation mechanisms. The authors connect this limitation to the relatively poor fit of simulated K+ currents and AP falling speeds. This is direct evidence that the deposited K+ HH mechanism is an imperfect approximation of the measured human K+ behavior, not a definitive or fully validated kinetic description. The HumanJS exploratory implementation must retain this limitation even if its own software tests pass. Source: Wilbers et al. (2023), *Science Advances*, DOI https://doi.org/10.1126/sciadv.ade3300.
+
 #### Unresolved numerical issue in both original trap0 functions
 
 Both original human mechanism files contain this piecewise function (spacing normalized):
