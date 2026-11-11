@@ -8,7 +8,7 @@
 - Repository: `codexclai/HumanJS`, public, default branch `main`.
 - `main` is the only branch; the live branch listing returned exactly `main`.
 - No open issues or pull requests were returned by live checks.
-- Latest source/code commit: `46ed2817758e6dcf36cc15a57e11a32f96085342`. Latest K+ protocol/optimizer audit: updated in the current research record.
+- Latest source/code commit: `46ed2817758e6dcf36cc15a57e11a32f96085342`. Latest K+ protocol/optimizer and NEURON unit audit: `314e3f72738b1c16bcf20f6789716ea36d210c56`.
 - GitHub Actions run `42975907351` passed on exact code head `46ed2817758e6dcf36cc15a57e11a32f96085342`: https://github.com/codexclai/HumanJS/actions/runs/42975907351. Rust formatting, Clippy, Rust workspace tests (including the full K+ clamp-series comparison), Python syntax validation, and repository policy all passed.
 - This chat did not complete a fresh local clone because network DNS resolution failed. No local Rust test run is claimed.
 - A fresh local clone in this chat was not completed because network DNS resolution failed. No local cargo test run is claimed.
@@ -74,6 +74,15 @@ The K+ file matches the parameter values actually applied in the deposited fitti
 - The human optimizer uses a pooled human/mouse fast-recovery target of 236.824345 ms. The 450-ms slow-inactivation and 2,789.7929-ms slow-recovery constants are fixed mechanism values, not fitted variables. The reported slow-inactivation score (2.4386) is substantially larger than fast-inactivation (0.0721) and fast-recovery (0.00235), and receives 0.05 relative weight.
 - The K fitting helper reads `Experimental means/k_tau_act.csv`, `k_tau_inact_fast.csv`, and `k_tau_inact_slow.csv`; these files are absent from the public 65-file inventory. The K plotting script references `data_fig5.xlsx`, also absent. The available `K_data_fig2.xlsx` contains AP-clamp amplitude series, not voltage-step kinetic traces. No raw K voltage-clamp NWB current traces were found in the inspected public inventory.
 - This closes the source-protocol/optimizer audit, not the numerical reproduction gate. Rust tests now replay the deposited activation, inactivation, and recovery command sequences and compare the full K_IV_ss steady-state voltage series with the paper-level human summary. Half-range interpolation gives −3.25 mV activation midpoint, −51.48 mV inactivation midpoint, and 0.936 availability at −80 mV, each within the published human mean ± SD. This is a coarse summary comparison, not raw-trace or kinetic validation. The tests passed formatting, Clippy, and Rust workspace tests in workflow `42975907351`. Full voltage-series comparisons against published group-level summaries remain; raw-trace and exact per-voltage target reproduction cannot be claimed from the inspected public deposit.
+
+
+### NEURON 9.0.2 unit-check audit
+
+- `nrnivmodl` compiles the original pure `k_human.mod` and `na_human.mod` unchanged, but emits the warning that assignment to GLOBAL `tadj` is not thread-safe.
+- `modlunit` 9.0.2 on each unmodified file fails before reaching the kinetic equations: K line 82 and Na line 80, at the call `trates(v+vshift)`, because the procedure argument has no voltage-unit annotation.
+- Temporary typed probes show the source `(/ms)` prefactors are incompatible with the voltage numerator in `trap0`; the equation requires `mV^-1 ms^-1`. The same probes expose the fallback's wrong dimensions/missing prefactor, the branch predicate's `v+th` versus the denominator's `v-th` singularity, the missing temperature unit in the Q10 exponent, and missing mV units on activation midpoint/slope parameters.
+- With explicit function/procedure/return units, equation-consistent prefactors, the Q10 temperature interval, activation parameter units, and the commented-out `a*q` limit, temporary K+ and Na+ diagnostic copies pass `modlunit` 9.0.2. No deposited source file was modified.
+- HumanJS already uses the equation-consistent prefactor unit and stable analytic limit. The source's original NMODL is not a unit-checked reference implementation; do not claim exact reproduction of its defective branch.
 
 ## Not yet implemented
 
