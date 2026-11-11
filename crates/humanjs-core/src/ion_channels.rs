@@ -901,11 +901,12 @@ mod tests {
     }
 
     fn fit_k_activation_current_tau(current: &[f64], step_ms: f64) -> Option<(f64, f64)> {
-        let peak_index = current
-            .iter()
-            .enumerate()
-            .max_by(|left, right| left.1.total_cmp(right.1))?
-            .0;
+        let mut peak_index = 0;
+        for (index, value) in current.iter().enumerate().skip(1) {
+            if value > &current[peak_index] {
+                peak_index = index;
+            }
+        }
         if peak_index < 4 {
             return None;
         }
