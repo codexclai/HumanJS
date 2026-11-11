@@ -11,7 +11,6 @@
 - Latest source/code commit: `660dee7287376720d37d96dac939941fe26df7d6`. Latest research audit update: `8944ad147ece6aa33d73efdfdc5ab985b919407a`.
 - GitHub Actions run `43016424733` passed on exact code head `660dee7287376720d37d96dac939941fe26df7d6`: https://github.com/codexclai/HumanJS/actions/runs/43016424733. Rust formatting, Clippy, Rust workspace tests (including the 50-condition K+ recovery grid), Python syntax validation, and repository policy all passed.
 - This chat did not complete a fresh local clone because network DNS resolution failed. No local Rust test run is claimed.
-- A fresh local clone in this chat was not completed because network DNS resolution failed. No local cargo test run is claimed.
 
 ## Implemented Rust CPU mechanisms
 
@@ -85,12 +84,15 @@ The K+ file matches the parameter values actually applied in the deposited fitti
 - HumanJS already uses the equation-consistent prefactor unit and stable analytic limit. The source's original NMODL is not a unit-checked reference implementation; do not claim exact reproduction of its defective branch.
 
 
-### Publisher supplementary K+ kinetic curves found
+### Publisher supplementary Figure S5: visual series mapping and K slow-inactivation digitization
 
-- The publisher-hosted Supplementary Figure S5 contains K+ activation, fast/slow inactivation, and fast/slow recovery time-constant plots (panels I–N). PDF extraction exposes table-like numerical series, including 21 slow-inactivation points and five fast-recovery points.
-- The extracted series labels are unlabelled and the legend-to-series mapping is not preserved. Some recovery voltage labels may be OCR-ambiguous. Do not treat the OCR output as validated human targets or use it for fitting yet.
-- The exact Dataverse `Experimental means/k_tau_*.csv` inputs and raw per-cell K+ voltage-clamp traces remain absent from the inspected version, but the supplementary curves may support a careful digitization once the model line and human/mouse markers are visually mapped.
-
+- Retrieved the official 13-page, 1,468,232-byte supplement from the new PMC AWS dataset. SHA-256: `dfa1daaf4dd0e3979bac84b9cb8b1874c4514d40588969a21d7766a7f12f2a1d`. The prior PMC FTP/legacy cloud routes are no longer the correct distribution path.
+- Rendered Figure S5 page 7 and verified the legend visually: red continuous line = human model, blue continuous line = mouse model, red open circles = human experimental means, blue crosses = mouse experimental means. The caption duplicates panel label “I” for fast inactivation; the actual plot is labelled J.
+- Digitized panel K (slow-inactivation time constant) as 10 human and 10 mouse group-mean markers from −30 to +60 mV in 10-mV steps. The CSV preserves raster pixel centers, axis calibration, source hash, and conservative plot-digitization uncertainties (±2.5 mV, ±25 ms). These are estimated reading uncertainties, not biological SD.
+- Added `experiments/validate_wilbers_fig_s5_digitization.py` to verify source provenance, species/marker mapping, point counts, axis calibration, and values. The CI workflow now executes this validator.
+- The panel's two model curves are visually near the fixed 450-ms slow-inactivation setting. Experimental group-mean markers vary with voltage and between plotted species means, consistent with the authors' stated limitation that their HH model did not accurately reproduce K+ inactivation.
+- Main-text K+ summary values: activation V1/2 human −3.0 ± 5.9 mV (n=13) vs mouse −7.9 ± 6.0 mV (n=29), P=0.02; inactivation V1/2 human −52.7 ± 6.0 mV (n=11) vs mouse −65.0 ± 5.3 mV (n=26), P<10⁻⁶; resting-potential availability human 0.94 ± 0.05 vs mouse 0.86 ± 0.06. Human K+ currents activate faster at lower voltages; fast/slow inactivation and recovery time constants were described as similar between species, although human currents recover to a larger proportion of initial amplitude.
+- Remaining: digitize panels I, J, M, and N; compare model and experimental curves with explicit uncertainty. The exact Dataverse `Experimental means/k_tau_*.csv` files and raw per-cell K+ voltage-clamp traces remain absent. This is group-mean figure digitization, not raw-trace reproduction or biological validation.
 ## Not yet implemented
 
 - A scientifically accepted/validated somatic-patch-equivalent or anatomical soma/AIS spike model.
@@ -107,4 +109,4 @@ These remain requirements or future objectives, not current capabilities.
 
 ## Next milestone
 
-Keep the spike-capable code provisional. Reproduce the Wilbers K+ fast/slow inactivation and recovery protocols independently; audit rate-prefactor dimensional conventions and temperature semantics; compare gate curves/time constants/recovery behavior against the published voltage-clamp protocols and human summaries; and verify the current-clamp conductance-fit objective and setup. Add independent validation tests before considering promotion. Keep the single-compartment preparation-equivalent distinct from any anatomical soma/AIS model. Do not claim biological validation from software tests or external model reproduction.
+Keep the spike-capable code provisional. Digitize Figure S5 panels I, J, M, and N with the now-verified species/model legend; compare gate curves and fixed model time constants against the plotted group means with explicit uncertainty. Continue to preserve the missing raw-trace/Dataverse CSV limitation. Then independently verify current-clamp conductance-fit objective and setup, temperature semantics, and the source rate-prefactor dimensional convention before considering any promotion. Keep the single-compartment preparation-equivalent distinct from an anatomical soma/AIS model. Do not claim biological validation from software tests or external model reproduction.
