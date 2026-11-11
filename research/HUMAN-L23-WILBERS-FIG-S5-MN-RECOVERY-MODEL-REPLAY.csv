@@ -2,7 +2,7 @@
 # DOI: https://doi.org/10.1126/sciadv.ade3300
 # Official PMC AWS object: https://pmc-oa-opendata.s3.amazonaws.com/PMC10569700.1/sciadv.ade3300_sm.pdf
 # PDF SHA-256: dfa1daaf4dd0e3979bac84b9cb8b1874c4514d40588969a21d7766a7f12f2a1d
-# Model values are independent SciPy references from the deposited NMODL equations and K_recovery current protocol.
+# Human and mouse model values are independent SciPy references from the deposited NMODL equations and K_recovery current protocol. Mouse values use the pre-fit default activation Ra=0.0167/ms.
 # NEURON itself was not executed; the Rust test replays the protocol and fits the two-component current recovery curve.
 # Protocol: -120 mV for 2 ms, +40 mV conditioning for 5000 ms, recovery at each voltage/delay, then +40 mV test for 5 ms; dt=0.5 ms.
 # Delays (ms): 4, 144, 484, 1024, 1764, 2704, 3844, 5184, 6724, 8464.
@@ -10,9 +10,9 @@
 # Rust deterministic constrained-fit comparison tolerances: tau1 +/-3 ms; tau2 +/-15 ms versus SciPy.
 # Experimental values are supplied only at -80 mV; blank cells elsewhere are intentionally missing, not zero.
 # Pooled experimental means: fast=236.82434540670081 ms; slow=2789.7929428108187 ms.
-recovery_voltage_mV,model_tau1_ms_scipy_reference,model_tau2_ms_scipy_reference,pooled_fast_mean_ms,pooled_slow_mean_ms,experimental_human_fast_at_minus80_ms,experimental_mouse_fast_at_minus80_ms,experimental_human_slow_at_minus80_ms,experimental_mouse_slow_at_minus80_ms
--90,115.73075979,2791.29666336,236.82434540670081,2789.7929428108187,,,,
--85,155.66825752,2794.57789332,236.82434540670081,2789.7929428108187,,,,
--80,235.14906691,2803.29195806,236.82434540670081,2789.7929428108187,228.52749381071555,245.12119700268607,1999.7294967866596,3579.8563888349777
--75,376.90997245,2816.54937565,236.82434540670081,2789.7929428108187,,,,
--70,332.21621839,2814.89062697,236.82434540670081,2789.7929428108187,,,,
+recovery_voltage_mV,human_model_tau1_ms_scipy_reference,human_model_tau2_ms_scipy_reference,mouse_model_tau1_ms_scipy_reference,mouse_model_tau2_ms_scipy_reference,pooled_fast_mean_ms,pooled_slow_mean_ms,experimental_human_fast_at_minus80_ms,experimental_mouse_fast_at_minus80_ms,experimental_human_slow_at_minus80_ms,experimental_mouse_slow_at_minus80_ms
+-90,115.73075979,2791.29666336,115.58795806,2790.86004591,236.82434540670081,2789.7929428108187,,,,
+-85,155.66825752,2794.57789332,155.36435720,2793.13706931,236.82434540670081,2789.7929428108187,,,,
+-80,235.14906691,2803.29195806,234.45197856,2799.26883873,236.82434540670081,2789.7929428108187,228.52749381071555,245.12119700268607,1999.7294967866596,3579.8563888349777
+-75,376.90997245,2816.54937565,374.38822308,2801.18430952,236.82434540670081,2789.7929428108187,,,,
+-70,332.21621839,2814.89062697,329.90099276,2799.71737253,236.82434540670081,2789.7929428108187,,,,
