@@ -3,7 +3,7 @@
 **Updated:** 2026-11-11  
 **Canonical repository:** `codexclai/HumanJS`, branch `main` only.  
 **Latest implementation/CI change:** `3c28de63c8a953c85084ff7c6731caae144b4ee6` (no later Rust code changes in this continuation).  
-**Latest research record:** `4491eb69f21001e599eb3d38f2be47da1c9d652e`.  
+**Latest research record:** `7df2bb1e25021fe454b9c18979e5a54602dd3272`.  
 Verify the live HEAD and newest workflow before relying on this handoff.  
 **Documentation reconciliation:** subsequent commits on `main`; verify the live HEAD and workflow before using this handoff in a later session.
 
@@ -12,7 +12,7 @@ Verify the live HEAD and newest workflow before relying on this handoff.
 - Public repository; default branch `main`; live baseline HEAD before this documentation refresh: `73311b47fb18e768f15f8b1f678bced91117cf98`.
 - Full tree: 63 entries, not truncated. Live branch listing: exactly `main`. No open issues or pull requests.
 - GitHub Actions run `43024354498` passed on that exact baseline: https://github.com/codexclai/HumanJS/actions/runs/43024354498. Formatting, Clippy, workspace tests (27 core, 3 passive, 6 synapse), Python syntax, seven-CSV Figure S5 validation, and repository policy passed.
-- Fresh independent NEURON 9.0.2 `modlunit` invocation on unmodified `k_human.mod` and `k_mouse.mod` again failed at the untyped `trates(v+vshift)` call, line 82. Both species' repeated diagnostics are now recorded in `research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md`. The original files still compile with `nrnivmodl`; see ADR-014 for the temporary typed-probe findings. No source file was changed.
+- Fresh independent NEURON 9.0.2 `modlunit` invocation on unmodified `k_human.mod` and `k_mouse.mod` again failed at the untyped `trates(v+vshift)` call, line 82. Both species' repeated diagnostics are now recorded in `research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md`. The original files still compile with `nrnivmodl`; see ADR-014 for the temporary typed-probe findings. No source file was changed. The same research record clarifies that the article's public Dataverse data statement is satisfied by deposited summary/model files; it does not mean the missing per-cell K kinetic CSVs or raw voltage-clamp traces occur in the inspected 65-file v3.0 inventory.
 - No fresh local Rust test run is claimed; the Rust checks above were run in GitHub Actions.
 
 ## Current HumanJS implementation
