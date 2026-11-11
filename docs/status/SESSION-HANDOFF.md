@@ -137,3 +137,12 @@ No biological validation, clinical validity, whole-brain functionality, or consc
 - The 20×20 calibration-grid structure is visible, but numerical CSV outputs and the outcome helper are still unavailable. The HumanJS 114.48/29.05 pS/µm² values remain untraceable to a source table entry.
 - Next: inspect the full Dataverse v3.0 file inventory and identify any alternate source file containing the missing helper; retrieve the exact calibration CSVs and compare the all-human table cell with the Rust preset before changing parameters.
 
+
+### 2026-11-12 current-clamp inventory correction
+
+- Fresh live DataverseNL API query for DOI 10.34894/L5J0SD v3.0 returned the complete 65-file inventory.
+- The unrestricted current-clamp files are present: `AP1comparison.csv` file 318555 (846 bytes), `gbar_na.csv` file 318551 (8,224 bytes), and `gbar_k.csv` file 318552 (8,037 bytes).
+- The CSV contents were **not retrieved** in this session; BotStopper blocked the file-access requests. Earlier wording “files unavailable” means bytes/content unavailable, not absent from the deposit.
+- The current-clamp directory contains only three Python source files in the inventory: `cc_tools.py`, `currentclamp.py`, and `fit_gbar_na_k.py`. No separately named extractor module is listed. Retrieved `cc_tools.py` calls but does not define `get_outcomes_full`.
+- Do not infer that no external dependency exists; record the released source set as incomplete for independent execution. The 114.48/29.05 pS/µm² HumanJS preset remains untraced and the spike model remains exploratory.
+- Next: obtain the three CSV bytes through a legitimate alternate Dataverse access route, verify file checksums, parse the grid orientation/values, and map the exact all-human/mixed source fit only if the missing outcome extractor can also be resolved. Do not retune before those conditions are met.
