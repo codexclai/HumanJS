@@ -522,7 +522,7 @@ A stdlib-only validator, `experiments/validate_wilbers_fig_s5_digitization.py`, 
 
 The original pure `k_human.mod` and `na_human.mod` were checked with NEURON 9.0.2's own `modlunit`, separately from compilation. Both mechanisms compile unchanged with `nrnivmodl`; compilation emits a warning that assignment to the GLOBAL variable `tadj` is not thread-safe. Compilation does **not** establish dimensional consistency.
 
-On the unmodified files, `modlunit` stops before the rate equations: K+ fails at line 82 and Na+ at line 80 on `trates(v+vshift)`. The procedure signature `PROCEDURE trates(v)` has no voltage unit annotation, so the checker treats the passed millivolt expression as nonconformable with the untyped argument. The source also leaves `rates(vm)` and `trap0(v,th,a,q)` arguments/return units unannotated.
+On the unmodified files, `modlunit` stops before the rate equations: K+ fails at line 82 and Na+ at line 80 on `trates(v+vshift)`. The procedure signature `PROCEDURE trates(v)` has no voltage unit annotation, so the checker treats the passed millivolt expression as nonconformable with the untyped argument. The source also leaves `rates(vm)` and `trap0(v,th,a,q)` arguments/return units unannotated. A fresh follow-up run on 2026-11-11 independently repeated the K+ failure on both deposited species files: `k_human.mod` and `k_mouse.mod` each stop at line 82 with the same nonconformable-unit diagnostic. Both files had already compiled unchanged with `nrnivmodl`; this additional check confirms the initial untyped-signature failure is shared by the human and mouse K implementations, rather than specific to the human parameter set.
 
 Temporary diagnostic copies were then used to expose the masked errors; no Dataverse source file was modified:
 
