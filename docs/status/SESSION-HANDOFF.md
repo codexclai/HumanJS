@@ -2,18 +2,19 @@
 
 **Updated:** 2026-11-11  
 **Canonical repository:** `codexclai/HumanJS`, branch `main` only.  
-**Latest implementation/CI change:** `a5d9e3c640c0f04a2ef9ce5d925553afde869de2`.  
-**Latest research record:** `768bc0e0e313883576cbb7469cda7de6478637f0`.  
+**Latest implementation/CI change:** `3c28de63c8a953c85084ff7c6731caae144b4ee6`.  
+**Latest research record:** `ebb88a8fa1c2b5280aebd27f05976966c0dd8393`.  
 Verify the live HEAD and newest workflow before relying on this handoff.  
 **Documentation reconciliation:** subsequent commits on `main`; verify the live HEAD and workflow before using this handoff in a later session.
 
-## Verified repository state at start of this continuation
+## Verified repository state at handoff
 
 - Public repository; default branch `main`.
-- Full tree retrieved: 55 entries, not truncated.
+- Current `main` HEAD: `7a187e7db0498ee35cbd5d35814c5cebc26aef10`.
+- Full tree retrieved: 63 entries, not truncated.
 - Live branch listing contained exactly `main`.
 - No open issues or pull requests were returned.
-- GitHub Actions run `43016424733` passed on exact code head `660dee7287376720d37d96dac939941fe26df7d6`: https://github.com/codexclai/HumanJS/actions/runs/43016424733. Rust formatting, Clippy, workspace tests (including all 50 conditions in the K+ recovery protocol), Python syntax validation, and repository policy all passed.
+- GitHub Actions run `43024172929` passed on this exact repository head: https://github.com/codexclai/HumanJS/actions/runs/43024172929. Formatting, Clippy, workspace tests (27 core, 3 passive, 6 synapse), Python syntax, the seven-CSV Figure S5 validator, and repository policy all passed.
 - This chat did not complete a fresh local clone because DNS resolution failed. Do not claim a local Rust test run.
 
 ## Current HumanJS implementation
