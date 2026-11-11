@@ -29,9 +29,9 @@ The third mechanism was committed before the scientific evidence gate in ADR-014
 ### Exploratory model parameter choices and unresolved issues
 
 - Na+ gates use the pure Wilbers human `na_human.mod` values.
-- K+ gates use the pure `k_human.mod` values that match Table S2 and the first optimizer result. The fitting script's later final dictionary disagrees. This choice is provisional.
-- The K+ script assigns `h12factor_k_human=10.5`, while the pure mechanism uses `inact_rate_factor=1` and does not declare that variable. Its relevance remains unresolved.
-- The paper's 14-parameter sodium methods count remains unreconciled with the visible staged fitting/assignment sequence.
+- K+ gates use the pure `k_human.mod` values that match Table S2 and the first optimizer result. The fitting script explicitly applies this first result; its trailing alternate dictionary is a bare literal and is never applied.
+- The K+ script assigns `h12factor_k_human=10.5`, but the pure mechanism does not declare it and `channel_tools.py` does not read it; no effect is evidenced in the deposited pure-mechanism fit path.
+- The article's 14-parameter model description includes two inactivation steady-state values and independent `Rb`; the deposited scripts fix the former from experiment and constrain `Rb = Ra`, leaving 11 optimizer variables.
 - Current-clamp fitted conductance densities (114.48 pS/μm² Na+, 29.05 pS/μm² K+) were fitted against cross-species mean AP features; they are not direct human channel-density measurements.
 - The 10 μm cylindrical geometry, 34°C, −10 mV channel shift, +15 mV reversal offsets, 1 μF/cm² capacitance, Rm=10,000 Ω·cm² leak, and 20 μs maximum step follow the deposited current-clamp helper.
 - The Rust `trap0` uses a stable analytic limit at the mathematical singularity. This is not an exact reproduction of the source's branch behavior.
@@ -57,7 +57,7 @@ Runner: `experiments/reproduce_eyal_figure7a.py`.
 
 - Pure human `na_human.mod` and `k_human.mod` retrieved from the CC0 DataverseNL deposit, checksum-verified, compiled unchanged, and probed in NEURON 9.0.2.
 - Exact-singularity probes exposed non-finite `trap0` values. The active Na+ table's 200 nodes were finite; direct Na+ rates with table disabled were non-finite at exact singularities. K+ has no active table; exact singularities return non-finite values and two opposite-sign branch triggers produce negative inactivation time constants.
-- K+ source matches Table S2 and the first optimizer result, but the script's later final dictionary differs and assigns an undeclared `h12factor_k_human`. The 14-parameter sodium count remains unresolved.
+- The K+ source matches the parameter values actually applied by the script; the alternate dictionary is not applied. The 14-versus-11 parameter count is explained by fixed inactivation steady states and `Rb = Ra`.
 - Full Wilbers voltage-clamp fitting was not reproduced from raw NWB traces; public workbooks are summary fits and original NWB traces were not present in the 65-file Dataverse listing examined.
 
 ## Corrective documentation work completed in this continuation
@@ -73,8 +73,8 @@ Runner: `experiments/reproduce_eyal_figure7a.py`.
 ## Next concrete work
 
 1. Verify the live main HEAD and the latest workflow after documentation updates.
-2. Inspect original Wilbers `k_human.mod`, fitting script, hybrid current-clamp variants, and associated parameter assignments to establish the exact role (or non-role) of `h12factor_k_human` and the final K+ dictionary.
-3. Reconcile the 14-parameter sodium methods count against the script stages and source files; do not infer a missing parameter.
+2. Independently reproduce the Wilbers K+ fast/slow inactivation and recovery protocols from the source equations; confirm no separate hybrid mechanism variant changes the `h12factor_k_human` interpretation.
+3. Keep the article's 14-parameter description distinct from the deposited 11-variable optimizer sequence (fixed inactivation steady states; `Rb = Ra`) and verify the constraints against protocol outputs.
 4. Audit units and temperature semantics for all Na+/K+ rate prefactors and current-clamp fitted conductances.
 5. Build independent numerical comparisons for Na+/K+ steady states, time constants, fast/slow recovery and source-singularity neighborhoods; reproduce published voltage-clamp protocols where raw data permit.
 6. Verify the cross-species current-clamp fit target and geometry/reversal/channel-shift setup before promoting the model.
