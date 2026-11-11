@@ -8,8 +8,8 @@
 - Repository: `codexclai/HumanJS`, public, default branch `main`.
 - `main` is the only branch; the live branch listing returned exactly `main`.
 - No open issues or pull requests were returned by live checks.
-- Latest source/code commit: `5dfba6257ffb375bf741b8149026f13274600ae5`. Latest K+ protocol/optimizer audit: `d2fc1d2acb09b4011a7b018276e119e0d1cb8ed9`.
-- GitHub Actions run `42973247775` passed on exact head `5dfba6257ffb375bf741b8149026f13274600ae5`: https://github.com/codexclai/HumanJS/actions/runs/42973247775. Rust formatting, Clippy, Rust workspace tests, Python syntax validation, and repository policy all passed.
+- Latest source/code commit: `8e2781f608ef0fe820024124e01933bd7265c63e`. Latest K+ protocol/optimizer audit: `81c8ab87682e3b40385cf31b22d0ac8107b39173`.
+- GitHub Actions run `42975485454` passed on exact code head `8e2781f608ef0fe820024124e01933bd7265c63e`: https://github.com/codexclai/HumanJS/actions/runs/42975485454. Rust formatting, Clippy, Rust workspace tests (including the new K+ clamp replay regression), Python syntax validation, and repository policy all passed.
 - This chat did not complete a fresh local clone because network DNS resolution failed. No local Rust test run is claimed.
 - A fresh local clone in this chat was not completed because network DNS resolution failed. No local cargo test run is claimed.
 
@@ -46,7 +46,7 @@ Parameter/evidence boundaries:
 - The 10 μm cylindrical geometry, 34°C, −10 mV channel shift, +15 mV reversal offsets, 1 μF/cm² capacitance, leak corresponding to Rm=10,000 Ω·cm², and 20 μs step follow the authors' current-clamp helper.
 - The Rust `trap0` function uses a stable analytic limit at the mathematical singularity. It does not reproduce the problematic source branch logic exactly. The pure NMODL files declare the prefactor as `/ms`, but the voltage-valued numerator in the source equation requires `mV⁻¹·ms⁻¹`; HumanJS retains numeric values and uses the equation-consistent internal unit pending source unit-contract verification.
 
-Current software tests cover the analytic rate limit/continuity, human gate half-voltage steady states, potassium fast/slow inactivation branch constants and conductance fractions, positive finite time constants over a bounded voltage scan, Q10 scaling, one-spike waveform scale, approximate step-size convergence, reset, and transactional failure. They do not reproduce the full published voltage-clamp protocols or independently validate the fitted current-clamp model. See ADR-014, ADR-016, `docs/architecture/SYSTEM-ARCHITECTURE.md`, and `research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md`.
+Current software tests cover the analytic rate limit/continuity, human gate half-voltage steady states, potassium fast/slow inactivation branch constants and conductance fractions, positive finite time constants over a bounded voltage scan, Q10 scaling, the deposited K+ activation/inactivation/recovery clamp replay, one-spike waveform scale, approximate step-size convergence, reset, and transactional failure. They do not reproduce the full published voltage-clamp protocols or independently validate the fitted current-clamp model. See ADR-014, ADR-016, `docs/architecture/SYSTEM-ARCHITECTURE.md`, and `research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md`.
 
 ## Human spike-initiation evidence and external model reproduction
 
@@ -73,7 +73,7 @@ The K+ file matches the parameter values actually applied in the deposited fitti
 - Reconstructed the model-side activation/inactivation and recovery clamp sequences, including the 5-s +40-mV inactivation pulse and recovery intervals 4–8,464 ms at −90 to −70 mV. The helper also contains a deactivation protocol, but it is not part of the human fit criteria.
 - The human optimizer uses a pooled human/mouse fast-recovery target of 236.824345 ms. The 450-ms slow-inactivation and 2,789.7929-ms slow-recovery constants are fixed mechanism values, not fitted variables. The reported slow-inactivation score (2.4386) is substantially larger than fast-inactivation (0.0721) and fast-recovery (0.00235), and receives 0.05 relative weight.
 - The K fitting helper reads `Experimental means/k_tau_act.csv`, `k_tau_inact_fast.csv`, and `k_tau_inact_slow.csv`; these files are absent from the public 65-file inventory. The K plotting script references `data_fig5.xlsx`, also absent. The available `K_data_fig2.xlsx` contains AP-clamp amplitude series, not voltage-step kinetic traces. No raw K voltage-clamp NWB current traces were found in the inspected public inventory.
-- This closes the source-protocol/optimizer audit, not the numerical reproduction gate. A Rust unit test now replays the source activation, inactivation, and recovery command sequences using exact first-order gate updates and independently calculated model-output reference values. This is a model-side equation/protocol regression test, not experimental validation. Full voltage-series comparisons against published group-level summaries remain; raw-trace and exact per-voltage target reproduction cannot be claimed from the inspected public deposit.
+- This closes the source-protocol/optimizer audit, not the numerical reproduction gate. A Rust unit test now replays the source activation, inactivation, and recovery command sequences using exact first-order gate updates and independently calculated model-output reference values. It passed formatting, Clippy, and Rust workspace tests in workflow `42975485454`. This is a model-side equation/protocol regression test, not experimental validation. Full voltage-series comparisons against published group-level summaries remain; raw-trace and exact per-voltage target reproduction cannot be claimed from the inspected public deposit.
 
 ## Not yet implemented
 
