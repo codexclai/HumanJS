@@ -142,7 +142,18 @@ No biological validation, clinical validity, whole-brain functionality, or consc
 
 - Fresh live DataverseNL API query for DOI 10.34894/L5J0SD v3.0 returned the complete 65-file inventory.
 - The unrestricted current-clamp files are present: `AP1comparison.csv` file 318555 (846 bytes), `gbar_na.csv` file 318551 (8,224 bytes), and `gbar_k.csv` file 318552 (8,037 bytes).
-- The CSV contents were **not retrieved** in this session; BotStopper blocked the file-access requests. Earlier wording “files unavailable” means bytes/content unavailable, not absent from the deposit.
-- The current-clamp directory contains only three Python source files in the inventory: `cc_tools.py`, `currentclamp.py`, and `fit_gbar_na_k.py`. No separately named extractor module is listed. Retrieved `cc_tools.py` calls but does not define `get_outcomes_full`.
-- Do not infer that no external dependency exists; record the released source set as incomplete for independent execution. The 114.48/29.05 pS/µm² HumanJS preset remains untraced and the spike model remains exploratory.
+- The CSV contents have since been retrieved through the signed object-store redirect and verified against Dataverse metadata; see the subsequent resolution entry.
+- The current-clamp directory contains only three Python source files in the inventory: `cc_tools.py`, `currentclamp.py`, and `fit_gbar_na_k.py`. No separately named extractor module is listed because `get_outcomes_full` is defined at the end of `cc_tools.py`; the earlier extraction omitted that part of the file.
+- Do not infer that no external dependency exists; record the released source set as incomplete for independent execution. The 114.48/29.05 pS/µm² preset is now traced to the all-human-kinetics grid endpoint; the spike model remains exploratory pending its broader scientific acceptance gate.
 - Next: obtain the three CSV bytes through a legitimate alternate Dataverse access route, verify file checksums, parse the grid orientation/values, and map the exact all-human/mixed source fit only if the missing outcome extractor can also be resolved. Do not retune before those conditions are met.
+
+
+### 2026-11-12 — current-clamp calibration source fully recovered
+
+- Corrected the earlier incomplete extraction finding: complete Dataverse `cc_tools.py` (file 318557; 10,448 bytes; SHA-1 `f64162577fa5dd86892b46570d597e58e083a02b`) defines `get_outcomes_full` and `get_outcomes`. The previous “missing helper” conclusion was wrong.
+- Retrieved `AP1comparison.csv`, `gbar_na.csv`, and `gbar_k.csv` via Dataverse's signed SURF object-store redirect. Their sizes and SHA-1 hashes match Dataverse metadata. Preserved the three CC0 source tables verbatim in `research/WILBERS-CURRENT-CLAMP-*.csv`.
+- Parsed the exact AP feature extractor and Powell objective. The three targets are absolute AP peak voltage, mean rising 30–70% dV/dt, and mean falling 70–30% dV/dt. Targets are 50:50 human/mouse median means; Powell starts [95,65], bounds [20,150], and applies a ×4 penalty unless exactly one AP is detected.
+- The all-human kinetic (Na ratio=1, K ratio=1) top-right grid cell is Na 114.47654963753565 and K 29.045736151752504 pS/μm², which rounds exactly to the HumanJS preset 114.48/29.05. Preset provenance is now resolved to the all-human-kinetics endpoint; it is not a human-only AP fit.
+- Added `experiments/validate_wilbers_current_clamp_grid.py` and a repository-policy CI step. It validates upstream SHA-1 hashes, AP1 target medians, grid axes/orientation, bounds, and all-human/all-mouse endpoints.
+- Original NEURON/SciPy optimizer not rerun: NEURON, SciPy, and NumPy are unavailable in the execution environment. No biological validation is claimed.
+- Next: review the existing provisional spike mechanism against this now-resolved source provenance and prioritize a defensible acceptance gate (or explicitly defer its status); do not retune the conductance values based solely on this provenance correction.
