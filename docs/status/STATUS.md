@@ -8,10 +8,10 @@
 - Repository: `codexclai/HumanJS`, public, default branch `main`.
 - `main` is the only branch; the live branch listing returned exactly `main`.
 - No open issues or pull requests were returned by live checks.
-- Latest implementation commit: `92e3b4357755dec271dbc23020da87b3b858c074` (exploratory Na+/K+ single-compartment model and follow-up formatting/test corrections).
-- GitHub Actions run `42969235743` passed on that exact implementation commit: https://github.com/codexclai/HumanJS/actions/runs/42969235743.
-- The workflow ran `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo test --workspace --locked`, Python AST syntax validation for the Eyal runner, and `python3 .github/scripts/repository_policy.py`. Every step passed.
-- That workflow ran on the implementation commit before the current documentation-only reconciliation commits. A fresh workflow for the final documentation head must be checked separately.
+- Latest implementation commit: `ecebdfade5f14639b839d39f8e34c7769ca69726` (corrected channel-prefactor dimensional metadata and added/adjusted gate regression tests).
+- Earlier GitHub Actions run `42971014142` passed on documentation head `6007494b9c5bdffd47821931be65a8fc0234418e`: https://github.com/codexclai/HumanJS/actions/runs/42971014142. Its Rust formatting, Clippy, workspace tests, Python AST syntax validation, and repository policy steps all passed.
+- Current code/documentation head `ecebdfade5f14639b839d39f8e34c7769ca69726` has workflow run `42972168530` pending: https://github.com/codexclai/HumanJS/actions/runs/42972168530. GitHub returned no job records yet. An older run `42971760205` remained `in_progress` without started steps, so the current run has not provided verification yet.
+- This chat did not complete a fresh local clone because network DNS resolution failed. No local Rust test run is claimed.
 - A fresh local clone in this chat was not completed because network DNS resolution failed. No local cargo test run is claimed.
 
 ## Implemented Rust CPU mechanisms
