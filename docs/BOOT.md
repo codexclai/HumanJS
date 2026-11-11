@@ -41,7 +41,7 @@ Do not search for or request old uploads or copied source snapshots. If evidence
 
 `main` is the only branch to use, permanently. Never create, check out, update, merge, or otherwise use another branch. Make authorized changes directly on `main`. Do not create branches, PRs, or automation that opens non-main update branches. No branch protection, rulesets, or deletion-prevention settings are required. Force pushes are permitted but exceptional and must be inspected and verified.
 
-The live repository check on 2026-11-11 verified default branch `main`, baseline HEAD `73311b47fb18e768f15f8b1f678bced91117cf98`, a complete 63-entry tree, exactly one branch (`main`), and no open issues or pull requests. Workflow `43024354498` passed formatting, Clippy, all workspace tests (27 core, 3 passive, 6 synapse), Python syntax, the seven-CSV Figure S5 validator, and repository policy. A fresh NEURON 9.0.2 check reconfirmed that unmodified `k_human.mod` and `k_mouse.mod` compile but fail `modlunit` at the untyped `trates(v+vshift)` call; ADR-014 documents the typed temporary diagnostics. Recheck the live repository, tree, branch list, and workflow at the start of every session; do not rely on this historical check.
+The live repository check on 2026-11-11 verified default branch `main`, HEAD `65fb7d37e410a2eedc44b1f29e1f528956c8d535`, a complete 63-entry tree, exactly one branch (`main`), and no open issues or pull requests. GitHub Actions run `43070078342` passed on that exact HEAD: formatting, Clippy, all Rust workspace tests, Python experiment-runner syntax, the seven-CSV Figure S5 evidence validator, and repository policy. Recheck the live repository, tree, branch list, and workflow at the start of every session; do not rely on this historical check.
 
 ## Session procedure
 
@@ -69,7 +69,7 @@ This third mechanism is **not yet an accepted or biologically validated human ne
 
 The research record `research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md` documents human somatic patch evidence, AIS localization limits, the Wilbers source/runtime discrepancies, and the separate Eyal six-cell soma/axon reproduction. Eyal's transferred rodent-like kinetics are not a source of human channel gating parameters. External model execution is not HumanJS implementation or biological validation.
 
-The latest main workflow must be inspected live. GitHub Actions run `43016424733` passed formatting, Clippy, Rust workspace tests (including all 50 combinations in the deposited five-voltage × ten-delay K+ recovery protocol), experiment-runner syntax validation, and repository policy on code commit `660dee7287376720d37d96dac939941fe26df7d6`. These are software checks only.
+The latest verified main workflow is `43070078342` on HEAD `65fb7d37e410a2eedc44b1f29e1f528956c8d535`; all job steps passed, including formatting, Clippy, Rust workspace tests, Python syntax, seven-CSV Figure S5 validation, and repository policy. These are software checks only; no fresh local Rust run is claimed.
 
 Checkpointing, Rust-native concurrency, the configurable 10,000-unit default, Python package, C/C++, JSON model loading, and WGSL remain future work. Do not claim these capabilities until implemented and tested.
 
