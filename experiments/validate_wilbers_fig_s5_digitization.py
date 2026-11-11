@@ -218,6 +218,69 @@ def validate_recovery_model_replay() -> None:
     print(f"{filename}: five current-fit recovery model references and pooled source means verified")
 
 
+def validate_k_inactivation_model_vs_group_means() -> None:
+    """Compare source-protocol model outputs with digitized group means, without refitting."""
+    _, fast_rows = read_rows("HUMAN-L23-WILBERS-FIG-S5-J-FAST-INACTIVATION.csv")
+    expected_fast_model_ms = [
+        52.28040780,
+        41.56348462,
+        33.46364661,
+        27.26460691,
+        22.46933683,
+        18.74507968,
+    ]
+    human_fast_rows = [row for row in fast_rows if row["species"] == "human"]
+    if [float(row["voltage_mV"]) for row in human_fast_rows] != [0, 10, 20, 30, 40, 50]:
+        raise SystemExit("panel J: human model/data voltage grid mismatch")
+    fast_residuals = [
+        model - float(row["tau_fast_inactivation_ms"])
+        for model, row in zip(expected_fast_model_ms, human_fast_rows)
+    ]
+    fast_rmse = math.sqrt(sum(value * value for value in fast_residuals) / len(fast_residuals))
+    fast_within_plot_error = sum(abs(value) <= 2.0 for value in fast_residuals)
+    if abs(fast_rmse - 5.9142156484) > 1.0e-8 or fast_within_plot_error != 3:
+        raise SystemExit(
+            f"panel J: expected human model/group-mean RMSE 5.914 ms and 3/6 "
+            f"within ±2 ms; found {fast_rmse:.6f} ms and {fast_within_plot_error}/6"
+        )
+
+    _, slow_rows = read_rows("HUMAN-L23-WILBERS-FIG-S5-K-SLOW-INACTIVATION.csv")
+    if len(slow_rows) != 20:
+        raise SystemExit("panel K: expected ten slow-inactivation means per species")
+    slow_residuals: dict[str, list[float]] = {"human": [], "mouse": []}
+    for row in slow_rows:
+        # The deposited source fit fixes the slow component to 450 ms; it is not optimized.
+        slow_residuals[row["species"]].append(450.0 - float(row["tau_slow_inactivation_ms"]))
+    expected_slow_rmse = {"human": 148.9672380089, "mouse": 166.3847559123}
+    expected_within_plot_error = {"human": 2, "mouse": 3}
+    for species in ("human", "mouse"):
+        residuals = slow_residuals[species]
+        if len(residuals) != 10:
+            raise SystemExit(f"panel K: expected ten {species} observations")
+        rmse = math.sqrt(sum(value * value for value in residuals) / len(residuals))
+        within_plot_error = sum(abs(value) <= 25.0 for value in residuals)
+        if (
+            abs(rmse - expected_slow_rmse[species]) > 1.0e-8
+            or within_plot_error != expected_within_plot_error[species]
+        ):
+            raise SystemExit(
+                f"panel K: {species} fixed-450-ms comparison changed: "
+                f"RMSE={rmse:.6f} ms, within ±25 ms={within_plot_error}/10"
+            )
+        print(
+            f"panel K {species}: fixed 450-ms source slow component vs group means "
+            f"RMSE={rmse:.2f} ms; {within_plot_error}/10 within ±25-ms plot-reading estimate"
+        )
+    print(
+        f"panel J human: source-protocol model vs digitized group means "
+        f"RMSE={fast_rmse:.2f} ms; {fast_within_plot_error}/6 within ±2-ms plot-reading estimate"
+    )
+    print(
+        "Panel J/K comparisons are group-mean discrepancy summaries, not refits, "
+        "biological SD tests, or biological validation."
+    )
+
+
 def main() -> int:
     panels = {
         "I activation": {
@@ -305,6 +368,7 @@ def main() -> int:
     )
     validate_mouse_model_prefit_check()
     validate_recovery_model_replay()
+    validate_k_inactivation_model_vs_group_means()
     print(
         f"Figure S5 evidence record passed: {total} experimental group-mean markers "
         "(46 manually digitized, 4 transcribed from source-script constants); "
