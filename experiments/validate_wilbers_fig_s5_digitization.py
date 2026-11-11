@@ -171,23 +171,27 @@ def validate_recovery_model_replay() -> None:
     filename = "HUMAN-L23-WILBERS-FIG-S5-MN-RECOVERY-MODEL-REPLAY.csv"
     _, rows = read_rows(filename)
     expected = [
-        (-90.0, 115.73075979, 2791.29666336),
-        (-85.0, 155.66825752, 2794.57789332),
-        (-80.0, 235.14906691, 2803.29195806),
-        (-75.0, 376.90997245, 2816.54937565),
-        (-70.0, 332.21621839, 2814.89062697),
+        (-90.0, 115.73075979, 2791.29666336, 115.58795806, 2790.86004591),
+        (-85.0, 155.66825752, 2794.57789332, 155.36435720, 2793.13706931),
+        (-80.0, 235.14906691, 2803.29195806, 234.45197856, 2799.26883873),
+        (-75.0, 376.90997245, 2816.54937565, 374.38822308, 2801.18430952),
+        (-70.0, 332.21621839, 2814.89062697, 329.90099276, 2799.71737253),
     ]
     if len(rows) != len(expected):
         raise SystemExit(f"{filename}: expected five recovery-voltage model references")
     pooled_fast = (228.52749381071555 + 245.12119700268607) / 2.0
     pooled_slow = (1999.7294967866596 + 3579.8563888349777) / 2.0
-    for row, (voltage, tau1, tau2) in zip(rows, expected):
+    for row, (voltage, human_tau1, human_tau2, mouse_tau1, mouse_tau2) in zip(rows, expected):
         if float(row["recovery_voltage_mV"]) != voltage:
             raise SystemExit(f"{filename}: recovery voltage grid mismatch: {row}")
-        if abs(float(row["model_tau1_ms_scipy_reference"]) - tau1) > 1.0e-8:
-            raise SystemExit(f"{filename}: fast current-fit reference mismatch: {row}")
-        if abs(float(row["model_tau2_ms_scipy_reference"]) - tau2) > 1.0e-8:
-            raise SystemExit(f"{filename}: slow current-fit reference mismatch: {row}")
+        if abs(float(row["human_model_tau1_ms_scipy_reference"]) - human_tau1) > 1.0e-8:
+            raise SystemExit(f"{filename}: human fast current-fit reference mismatch: {row}")
+        if abs(float(row["human_model_tau2_ms_scipy_reference"]) - human_tau2) > 1.0e-8:
+            raise SystemExit(f"{filename}: human slow current-fit reference mismatch: {row}")
+        if abs(float(row["mouse_model_tau1_ms_scipy_reference"]) - mouse_tau1) > 1.0e-8:
+            raise SystemExit(f"{filename}: mouse fast current-fit reference mismatch: {row}")
+        if abs(float(row["mouse_model_tau2_ms_scipy_reference"]) - mouse_tau2) > 1.0e-8:
+            raise SystemExit(f"{filename}: mouse slow current-fit reference mismatch: {row}")
         if abs(float(row["pooled_fast_mean_ms"]) - pooled_fast) > 1.0e-9:
             raise SystemExit(f"{filename}: pooled fast-recovery mean mismatch: {row}")
         if abs(float(row["pooled_slow_mean_ms"]) - pooled_slow) > 1.0e-9:
