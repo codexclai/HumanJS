@@ -815,6 +815,26 @@ mod tests {
         advance_k_clamp(model, &mut gates, 40.0, 5.0, 0.5)
     }
 
+
+    fn half_range_voltage(volts: &[f64], values: &[f64], increasing: bool) -> f64 {
+        let minimum = values.iter().copied().fold(f64::INFINITY, f64::min);
+        let maximum = values.iter().copied().fold(f64::NEG_INFINITY, f64::max);
+        for index in 0..volts.len() - 1 {
+            let left = (values[index] - minimum) / (maximum - minimum);
+            let right = (values[index + 1] - minimum) / (maximum - minimum);
+            let crosses_half = if increasing {
+                left <= 0.5 && right >= 0.5
+            } else {
+                left >= 0.5 && right <= 0.5
+            };
+            if crosses_half {
+                let fraction = (0.5 - left) / (right - left);
+                return volts[index] + fraction * (volts[index + 1] - volts[index]);
+            }
+        }
+        panic!("voltage-clamp curve did not cross half range");
+    }
+
     #[test]
     fn deposited_k_voltage_clamp_protocols_replay_with_stable_gate_dynamics() {
         let model = wilbers_voltage_clamp_model();
@@ -836,6 +856,50 @@ mod tests {
         assert!(recovered.windows(2).all(|pair| pair[1] > pair[0]));
         assert!((recovered[2] - 0.479_816_410_714_972_83).abs() < 1.0e-9);
         assert!((recovered[9] - 0.735_092_972_795_100_9).abs() < 1.0e-9);
+    }
+
+
+    #[test]
+    fn potassium_clamp_curves_are_consistent_with_published_human_group_summaries() {
+        let model = wilbers_voltage_clamp_model();
+        // K_IV_ss uses -110 to +50 mV in 10-mV increments.
+        let voltages: Vec<f64> = (-110..=50).step_by(10).map(f64::from).collect();
+        let activation: Vec<f64> = voltages
+            .iter()
+            .map(|voltage| replay_k_activation(model, *voltage))
+            .collect();
+        let inactivation: Vec<f64> = voltages
+            .iter()
+            .map(|voltage| replay_k_inactivation(model, *voltage))
+            .collect();
+
+        let activation_half = half_range_voltage(&voltages, &activation, true);
+        let fit_voltages: Vec<f64> = voltages
+            .iter()
+            .copied()
+            .filter(|voltage| *voltage <= 0.0)
+            .collect();
+        let fit_inactivation: Vec<f64> = inactivation
+            .iter()
+            .copied()
+            .zip(voltages.iter())
+            .filter_map(|(value, voltage)| (*voltage <= 0.0).then_some(value))
+            .collect();
+        let inactivation_half =
+            half_range_voltage(&fit_voltages, &fit_inactivation, false);
+        let inactivation_max = inactivation.iter().copied().fold(0.0_f64, f64::max);
+        let minus_80_index = voltages.iter().position(|voltage| *voltage == -80.0).unwrap();
+        let availability_at_minus_80 = inactivation[minus_80_index] / inactivation_max;
+
+        // The half-range crossing is a transparent interpolation, not the
+        // source's nonlinear least-squares Boltzmann fit. These values should
+        // fall within the paper's human group mean ± SD.
+        assert!((activation_half - (-3.03)).abs() < 5.95);
+        assert!((inactivation_half - (-52.69)).abs() < 5.97);
+        assert!((availability_at_minus_80 - 0.94).abs() < 0.05);
+        assert!((activation_half - (-3.250_450_672_099_808_5)).abs() < 1.0e-8);
+        assert!((inactivation_half - (-51.484_526_215_264_54)).abs() < 1.0e-8);
+        assert!((availability_at_minus_80 - 0.936_220_052_891_604_8).abs() < 1.0e-8);
     }
 
     #[test]
