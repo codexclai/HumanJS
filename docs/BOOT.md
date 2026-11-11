@@ -88,16 +88,16 @@ The official 13-page Supplementary Figure S5 PDF is retrieved from the new publi
 
 ### Current-clamp conductance-grid follow-up (2026-11-11)
 
-The deposited current-clamp scripts now establish that fit_gbar_na_k.py runs the cross-species-midpoint Powell objective over a 20×20 grid of Na/K human-kinetic ratios (400 conductance fits), exporting gbar_na.csv and gbar_k.csv. currentclamp.py also runs separate all-human, all-mouse and mixed-ratio fits and uses interpolated fitted densities for AP heatmaps and 200-AP sweeps. The script's initial 96.01446023/48.84943554 pS/µm² values are starting values, not fit results. The interpolation CSVs, AP1comparison.csv, and complete get_outcomes_full helper remain unretrieved. Consequently, exact source provenance of HumanJS's 114.48/29.05 pS/µm² preset remains unresolved. Keep the spike model exploratory; do not retune or describe these as human measurements.
+The deposited current-clamp scripts run the cross-species-midpoint Powell objective over a 20×20 grid of Na/K human-kinetic ratios (400 conductance fits). The exact source CSVs and `get_outcomes_full` are now retrieved and checksum-verified. The all-human kinetic grid corner maps to the HumanJS 114.48/29.05 pS/µm² preset after rounding. The optimizer still targets 50:50 human/mouse median AP features; this is not a human-only fit or direct channel-density measurement. The spike model remains exploratory.
 
 ### Current-clamp source completeness finding (2026-11-11)
 
-The retrieved Dataverse `cc_tools.py` (file 318557) does not define `get_outcomes_full`, `get_outcomes`, or any amp/upstroke/downstroke extractor, although `fit_densities` calls `get_outcomes_full` inside its Powell objective and after optimization. The available source set is therefore incomplete as an executable fit workflow unless an additional unverified dependency supplies the helper. Feature definitions and windows remain unknown, so the optimizer cannot be independently reproduced. The numerical gbar interpolation CSVs remain unavailable and the HumanJS 114.48/29.05 pS/µm² preset remains untraceable. Do not infer missing feature definitions or retune the exploratory model.
+The complete Dataverse `cc_tools.py` (file 318557) defines `get_outcomes_full` and `get_outcomes`; the prior contrary conclusion was an incomplete extraction. The feature definitions, targets, grid orientation, and exact preset mapping are recorded in the 2026-11-12 research audit. The original NEURON/SciPy optimizer was not rerun; the deposited grid outputs were verified by SHA-1 and CI.
 
 
 ### Current-clamp dataset inventory correction (2026-11-12)
 
-A fresh live DataverseNL v3.0 inventory query returned all 65 files and confirms that `AP1comparison.csv` (file 318555), `gbar_na.csv` (318551), and `gbar_k.csv` (318552) are present and marked unrestricted in `Figures5_6/Current_clamp`. Their contents could not be fetched in the latest session because Dataverse BotStopper blocked the file-access requests. The complete inventory lists only `cc_tools.py`, `currentclamp.py`, and `fit_gbar_na_k.py` as Python source in that directory; no separate outcome-extractor module is listed. The complete `cc_tools.py` defines `get_outcomes_full`; the earlier contrary finding was an incomplete extraction. Correct status: the CSV files are public by inventory metadata but their numeric contents remain unread; the source fit helper remains unresolved. Keep the 114.48/29.05 pS/µm² preset untraced and the spike model exploratory.
+The 65-file inventory lists all three unrestricted current-clamp CSVs and the three source scripts. The CSV contents and helper have since been retrieved through the signed object-store redirect, checksums verified, and exact all-human grid-corner mapping established. See the final provenance section below.
 
 
 ### Wilbers current-clamp provenance resolved (2026-11-12)
