@@ -167,6 +167,53 @@ def validate_mouse_model_prefit_check() -> None:
     )
 
 
+def validate_recovery_model_replay() -> None:
+    filename = "HUMAN-L23-WILBERS-FIG-S5-MN-RECOVERY-MODEL-REPLAY.csv"
+    _, rows = read_rows(filename)
+    expected = [
+        (-90.0, 115.73075979, 2791.29666336),
+        (-85.0, 155.66825752, 2794.57789332),
+        (-80.0, 235.14906691, 2803.29195806),
+        (-75.0, 376.90997245, 2816.54937565),
+        (-70.0, 332.21621839, 2814.89062697),
+    ]
+    if len(rows) != len(expected):
+        raise SystemExit(f"{filename}: expected five recovery-voltage model references")
+    pooled_fast = (228.52749381071555 + 245.12119700268607) / 2.0
+    pooled_slow = (1999.7294967866596 + 3579.8563888349777) / 2.0
+    for row, (voltage, tau1, tau2) in zip(rows, expected):
+        if float(row["recovery_voltage_mV"]) != voltage:
+            raise SystemExit(f"{filename}: recovery voltage grid mismatch: {row}")
+        if abs(float(row["model_tau1_ms_scipy_reference"]) - tau1) > 1.0e-8:
+            raise SystemExit(f"{filename}: fast current-fit reference mismatch: {row}")
+        if abs(float(row["model_tau2_ms_scipy_reference"]) - tau2) > 1.0e-8:
+            raise SystemExit(f"{filename}: slow current-fit reference mismatch: {row}")
+        if abs(float(row["pooled_fast_mean_ms"]) - pooled_fast) > 1.0e-9:
+            raise SystemExit(f"{filename}: pooled fast-recovery mean mismatch: {row}")
+        if abs(float(row["pooled_slow_mean_ms"]) - pooled_slow) > 1.0e-9:
+            raise SystemExit(f"{filename}: pooled slow-recovery mean mismatch: {row}")
+        if voltage == -80.0:
+            source_values = {
+                "experimental_human_fast_at_minus80_ms": 228.52749381071555,
+                "experimental_mouse_fast_at_minus80_ms": 245.12119700268607,
+                "experimental_human_slow_at_minus80_ms": 1999.7294967866596,
+                "experimental_mouse_slow_at_minus80_ms": 3579.8563888349777,
+            }
+            for column, value in source_values.items():
+                if abs(float(row[column]) - value) > 1.0e-9:
+                    raise SystemExit(f"{filename}: experimental source value mismatch: {row}")
+        else:
+            for column in (
+                "experimental_human_fast_at_minus80_ms",
+                "experimental_mouse_fast_at_minus80_ms",
+                "experimental_human_slow_at_minus80_ms",
+                "experimental_mouse_slow_at_minus80_ms",
+            ):
+                if row[column] != "":
+                    raise SystemExit(f"{filename}: experimental marker incorrectly assigned away from -80 mV: {row}")
+    print(f"{filename}: five current-fit recovery model references and pooled source means verified")
+
+
 def main() -> int:
     panels = {
         "I activation": {
@@ -253,10 +300,12 @@ def main() -> int:
         },
     )
     validate_mouse_model_prefit_check()
+    validate_recovery_model_replay()
     print(
         f"Figure S5 evidence record passed: {total} experimental group-mean markers "
         "(46 manually digitized, 4 transcribed from source-script constants); "
-        "source provenance, species markers, point grids, and axis calibration verified. "
+        "seven research CSVs preserve marker and model-replay evidence. "
+        "Source provenance, species markers, point grids, and axis calibration verified. "
         "Plot-digitization uncertainty is not biological SD."
     )
     return 0
