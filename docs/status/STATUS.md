@@ -42,7 +42,7 @@ Parameter/evidence boundaries:
 - Na+ gates use values transcribed from the pure Wilbers human `na_human.mod`.
 - K+ gates use the pure `k_human.mod` values that match Table S2 and the first optimizer result. The deposited fit script's later final six-parameter dictionary differs; the code's selection is provisional, not a resolution.
 - The script assigns `h12factor_k_human=10.5`, while the pure K+ mechanism declares `inact_rate_factor=1` and does not declare that script variable. The relationship is unresolved.
-- The paper's stated 14 sodium fitting parameters remain unreconciled with the visible staged fitting/assignment variables.
+- The paper's stated 14 sodium fitting parameters remain unreconciled with the visible staged fitting/assignment variables. The article Discussion also acknowledges that its HH channel models did not accurately reproduce potassium inactivation and that this likely contributed to poor K+ current and AP-fall fits.
 - Current-clamp maximum conductance densities (114.48 pS/μm² Na+, 29.05 pS/μm² K+) are fitted against cross-species mean AP features, not direct human channel-density measurements.
 - The 10 μm cylindrical geometry, 34°C, −10 mV channel shift, +15 mV reversal offsets, 1 μF/cm² capacitance, leak corresponding to Rm=10,000 Ω·cm², and 20 μs step follow the authors' current-clamp helper.
 - The Rust `trap0` function uses a stable analytic limit at the mathematical singularity. It does not reproduce the problematic source branch logic exactly.
