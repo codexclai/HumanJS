@@ -1065,6 +1065,166 @@ mod tests {
         Some((log_tau.exp(), r_squared))
     }
 
+    fn replay_k_recovery_peak_currents(
+        model: HumanL23SingleCompartmentModel,
+        recovery_voltage_mv: f64,
+        recovery_delays_ms: &[f64],
+    ) -> Vec<f64> {
+        let reversal_mv = model.potassium_reversal.as_volts() * 1_000.0;
+        recovery_delays_ms
+            .iter()
+            .map(|delay_ms| {
+                let mut gates = initial_potassium_clamp_gates(model, -120.0);
+                advance_k_clamp(model, &mut gates, -120.0, 2.0, 0.5);
+                advance_k_clamp(model, &mut gates, 40.0, 5_000.0, 0.5);
+                advance_k_clamp(model, &mut gates, recovery_voltage_mv, *delay_ms, 0.5);
+                let mut peak_current = 0.0_f64;
+                for _ in 0..10 {
+                    let conductance = advance_k_clamp_step(model, &mut gates, 40.0, 0.5);
+                    peak_current = peak_current.max(conductance * (40.0 - reversal_mv));
+                }
+                peak_current
+            })
+            .collect()
+    }
+
+    fn recovery_biexponential_sse(
+        log_tau1: f64,
+        log_tau2: f64,
+        times_ms: &[f64],
+        values: &[f64],
+    ) -> f64 {
+        let tau1_ms = log_tau1.exp();
+        let tau2_ms = log_tau2.exp();
+        let mut sum_e1_squared = 0.0;
+        let mut sum_e2_squared = 0.0;
+        let mut sum_e1_e2 = 0.0;
+        let mut sum_e1 = 0.0;
+        let mut sum_e2 = 0.0;
+        let mut sum_y = 0.0;
+        let mut sum_e1_y = 0.0;
+        let mut sum_e2_y = 0.0;
+        for (time, value) in times_ms.iter().zip(values) {
+            let e1 = (-time / tau1_ms).exp();
+            let e2 = (-time / tau2_ms).exp();
+            sum_e1_squared += e1 * e1;
+            sum_e2_squared += e2 * e2;
+            sum_e1_e2 += e1 * e2;
+            sum_e1 += e1;
+            sum_e2 += e2;
+            sum_y += value;
+            sum_e1_y += e1 * value;
+            sum_e2_y += e2 * value;
+        }
+        let coefficients = solve_three_coefficients([
+            [sum_e1_squared, sum_e1_e2, sum_e1, sum_e1_y],
+            [sum_e1_e2, sum_e2_squared, sum_e2, sum_e2_y],
+            [sum_e1, sum_e2, values.len() as f64, sum_y],
+        ]);
+        let Some([amplitude1, amplitude2, offset]) = coefficients else {
+            return f64::INFINITY;
+        };
+        if amplitude1 > 0.0 || amplitude2 > 0.0 || offset > values[values.len() - 1] * 2.0 {
+            return f64::INFINITY;
+        }
+        times_ms
+            .iter()
+            .zip(values)
+            .map(|(time, value)| {
+                let prediction = amplitude1 * (-time / tau1_ms).exp()
+                    + amplitude2 * (-time / tau2_ms).exp()
+                    + offset;
+                (value - prediction).powi(2)
+            })
+            .sum()
+    }
+
+    fn golden_section_minimize<F>(mut left: f64, mut right: f64, mut objective: F) -> f64
+    where
+        F: FnMut(f64) -> f64,
+    {
+        let golden_ratio = (5.0_f64.sqrt() - 1.0) / 2.0;
+        let mut c = right - golden_ratio * (right - left);
+        let mut d = left + golden_ratio * (right - left);
+        let mut fc = objective(c);
+        let mut fd = objective(d);
+        for _ in 0..80 {
+            if fc < fd {
+                right = d;
+                d = c;
+                fd = fc;
+                c = right - golden_ratio * (right - left);
+                fc = objective(c);
+            } else {
+                left = c;
+                c = d;
+                fc = fd;
+                d = left + golden_ratio * (right - left);
+                fd = objective(d);
+            }
+        }
+        (left + right) * 0.5
+    }
+
+    fn fit_recovery_biexponential(
+        times_ms: &[f64],
+        values: &[f64],
+    ) -> Option<(f64, f64, f64)> {
+        if times_ms.len() != values.len() || values.len() < 5 {
+            return None;
+        }
+        let mean_value = values.iter().sum::<f64>() / values.len() as f64;
+        let total_sum_squares = values
+            .iter()
+            .map(|value| (value - mean_value).powi(2))
+            .sum::<f64>();
+        if total_sum_squares <= f64::EPSILON {
+            return None;
+        }
+
+        const TAU1_GRID_STEPS: usize = 128;
+        const TAU2_GRID_STEPS: usize = 64;
+        let min_log_tau1 = 0.1_f64.ln();
+        let max_log_tau1 = 1_000.0_f64.ln();
+        let min_log_tau2 = 1_000.0_f64.ln();
+        let max_log_tau2 = 5_000.0_f64.ln();
+        let tau1_step = (max_log_tau1 - min_log_tau1) / TAU1_GRID_STEPS as f64;
+        let tau2_step = (max_log_tau2 - min_log_tau2) / TAU2_GRID_STEPS as f64;
+        let mut best_log_tau1 = min_log_tau1;
+        let mut best_log_tau2 = min_log_tau2;
+        let mut best_error = f64::INFINITY;
+        for tau1_index in 0..=TAU1_GRID_STEPS {
+            let log_tau1 = min_log_tau1 + tau1_index as f64 * tau1_step;
+            for tau2_index in 0..=TAU2_GRID_STEPS {
+                let log_tau2 = min_log_tau2 + tau2_index as f64 * tau2_step;
+                let error = recovery_biexponential_sse(log_tau1, log_tau2, times_ms, values);
+                if error < best_error {
+                    best_error = error;
+                    best_log_tau1 = log_tau1;
+                    best_log_tau2 = log_tau2;
+                }
+            }
+        }
+
+        for _ in 0..4 {
+            let left1 = (best_log_tau1 - 2.0 * tau1_step).max(min_log_tau1);
+            let right1 = (best_log_tau1 + 2.0 * tau1_step).min(max_log_tau1);
+            best_log_tau1 = golden_section_minimize(left1, right1, |candidate| {
+                recovery_biexponential_sse(candidate, best_log_tau2, times_ms, values)
+            });
+            let left2 = (best_log_tau2 - 2.0 * tau2_step).max(min_log_tau2);
+            let right2 = (best_log_tau2 + 2.0 * tau2_step).min(max_log_tau2);
+            best_log_tau2 = golden_section_minimize(left2, right2, |candidate| {
+                recovery_biexponential_sse(best_log_tau1, candidate, times_ms, values)
+            });
+        }
+
+        let residual_sum_squares =
+            recovery_biexponential_sse(best_log_tau1, best_log_tau2, times_ms, values);
+        let r_squared = 1.0 - residual_sum_squares / total_sum_squares;
+        Some((best_log_tau1.exp(), best_log_tau2.exp(), r_squared))
+    }
+
     fn fit_k_inactivation_current_tau1(
         current: &[f64],
         step_ms: f64,
@@ -1162,6 +1322,51 @@ mod tests {
                 "K_IV fast inactivation tau mismatch at {voltage_mv} mV: {tau1_ms} ms"
             );
             assert!(r_squared > 0.99);
+        }
+    }
+
+    #[test]
+    fn deposited_k_recovery_current_protocol_replays_human_figure_s5_curves() {
+        let model = wilbers_voltage_clamp_model();
+        let recovery_delays_ms = [
+            4.0, 144.0, 484.0, 1_024.0, 1_764.0, 2_704.0, 3_844.0, 5_184.0, 6_724.0, 8_464.0,
+        ];
+        let recovery_voltages_mv = [-90.0, -85.0, -80.0, -75.0, -70.0];
+        // Independent SciPy references for the source K_recovery protocol:
+        // -120 mV for 2 ms, +40 mV for 5 s, recovery at each voltage/delay,
+        // then a 5-ms +40-mV test pulse sampled at dt=0.5 ms.
+        let expected_fast_tau_ms = [
+            115.730_759_79,
+            155.668_257_52,
+            235.149_066_91,
+            376.909_972_45,
+            332.216_218_39,
+        ];
+        let expected_slow_tau_ms = [
+            2_791.296_663_36,
+            2_794.577_893_32,
+            2_803.291_958_06,
+            2_816.549_375_65,
+            2_814.890_626_97,
+        ];
+
+        for (index, recovery_voltage_mv) in recovery_voltages_mv.into_iter().enumerate() {
+            let pulse_peaks = replay_k_recovery_peak_currents(
+                model,
+                recovery_voltage_mv,
+                &recovery_delays_ms,
+            );
+            let (fast_tau_ms, slow_tau_ms, r_squared) =
+                fit_recovery_biexponential(&recovery_delays_ms, &pulse_peaks).unwrap();
+            assert!(
+                (fast_tau_ms - expected_fast_tau_ms[index]).abs() < 3.0,
+                "K_recovery fast tau mismatch at {recovery_voltage_mv} mV: {fast_tau_ms} ms"
+            );
+            assert!(
+                (slow_tau_ms - expected_slow_tau_ms[index]).abs() < 8.0,
+                "K_recovery slow tau mismatch at {recovery_voltage_mv} mV: {slow_tau_ms} ms"
+            );
+            assert!(r_squared > 0.999);
         }
     }
 
