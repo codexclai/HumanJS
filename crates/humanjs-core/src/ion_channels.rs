@@ -1,7 +1,7 @@
 use crate::error::{require_finite, require_positive};
 use crate::{
-    Amperes, FaradsPerSquareMeter, SimDuration, SimTime, SimulationError,
-    SiemensPerSquareMeter, SquareMeters, Volts,
+    Amperes, FaradsPerSquareMeter, SiemensPerSquareMeter, SimDuration, SimTime, SimulationError,
+    SquareMeters, Volts,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -285,8 +285,7 @@ impl HumanL23SingleCompartmentModel {
         )?;
         let tau_m = 1.0 / (factor * (alpha_m + beta_m));
         let m_inf = sigmoid(
-            (vm - self.sodium.activation_half_voltage_mv)
-                / self.sodium.activation_slope_mv,
+            (vm - self.sodium.activation_half_voltage_mv) / self.sodium.activation_slope_mv,
         );
 
         let alpha_h = trap0(
@@ -303,8 +302,7 @@ impl HumanL23SingleCompartmentModel {
         )?;
         let tau_h = 1.0 / (factor * (alpha_h + beta_h));
         let h_inf = sigmoid(
-            (self.sodium.inactivation_half_voltage_mv - vs)
-                / self.sodium.inactivation_slope_mv,
+            (self.sodium.inactivation_half_voltage_mv - vs) / self.sodium.inactivation_slope_mv,
         );
 
         positive_time_constant("human sodium activation tau (ms)", tau_m)?;
@@ -344,8 +342,7 @@ impl HumanL23SingleCompartmentModel {
         )?;
         let tau_m = 1.0 / (factor * (alpha_m + beta_m));
         let m_inf = sigmoid(
-            (vm - self.potassium.activation_half_voltage_mv)
-                / self.potassium.activation_slope_mv,
+            (vm - self.potassium.activation_half_voltage_mv) / self.potassium.activation_slope_mv,
         );
 
         let alpha_h = trap0(
@@ -400,7 +397,9 @@ impl HumanL23SingleCompartmentModel {
         let sodium = self.sodium_rates(voltage_mv)?;
         let potassium = self.potassium_rates(voltage_mv, state[5])?;
 
-        let g_na = self.sodium_max_conductance_density.as_siemens_per_square_meter()
+        let g_na = self
+            .sodium_max_conductance_density
+            .as_siemens_per_square_meter()
             * sodium.temperature_factor
             * state[1].powi(3)
             * state[2];
@@ -411,12 +410,13 @@ impl HumanL23SingleCompartmentModel {
             * self.potassium.inactivating_fraction
             * self.potassium.slow_fraction_of_inactivating;
         let k_non_inactivating = 1.0 - self.potassium.inactivating_fraction;
-        let g_k = self.potassium_max_conductance_density.as_siemens_per_square_meter()
+        let g_k = self
+            .potassium_max_conductance_density
+            .as_siemens_per_square_meter()
             * state[3].powi(2)
             * (k_fast + k_slow + k_non_inactivating);
 
-        let ionic_current_density = g_na
-            * (voltage_v - self.sodium_reversal.as_volts())
+        let ionic_current_density = g_na * (voltage_v - self.sodium_reversal.as_volts())
             + g_k * (voltage_v - self.potassium_reversal.as_volts())
             + self.leak_conductance_density.as_siemens_per_square_meter()
                 * (voltage_v - self.leak_reversal.as_volts());
@@ -624,13 +624,11 @@ impl HumanL23SingleCompartmentSimulation {
             .model
             .derivatives(add_scaled(y, k3, dt), injected_current)?;
 
-        let mut next = [0.0; 6];
-        for index in 0..6 {
-            next[index] = y[index]
-                + dt
-                    * (k1[index] + 2.0 * k2[index] + 2.0 * k3[index] + k4[index])
-                    / 6.0;
-            require_finite("single-compartment integrated state", next[index])
+        let next = std::array::from_fn(|index| {
+            y[index] + dt * (k1[index] + 2.0 * k2[index] + 2.0 * k3[index] + k4[index]) / 6.0
+        });
+        for value in next {
+            require_finite("single-compartment integrated state", value)
                 .map_err(|_| SimulationError::NumericalOverflow)?;
         }
         let next_state = HumanL23SingleCompartmentRuntimeState::from_array(next_time, next)?;
@@ -715,7 +713,8 @@ fn trap0(
 #[cfg(test)]
 mod tests {
     use super::{
-        trap0, HumanL23SingleCompartmentInitialConditions, HumanL23SingleCompartmentSimulation, RatePrefactor,
+        trap0, HumanL23SingleCompartmentInitialConditions, HumanL23SingleCompartmentSimulation,
+        RatePrefactor,
     };
     use crate::{Amperes, SimDuration, SimTime, SimulationError, Volts};
 
@@ -781,7 +780,11 @@ mod tests {
         let mut trace = Vec::new();
 
         for index in 0..500 {
-            let injected = if (50..200).contains(&index) { current } else { zero };
+            let injected = if (50..200).contains(&index) {
+                current
+            } else {
+                zero
+            };
             let state = simulation.step(dt, injected).unwrap();
             trace.push(state.voltage().as_volts() * 1_000.0);
         }
@@ -819,9 +822,7 @@ mod tests {
             .rposition(|voltage| *voltage < threshold + (peak - threshold) * 0.7)
             .unwrap()
             + 1;
-        let upstroke = derivatives[upstroke_30..upstroke_70]
-            .iter()
-            .sum::<f64>()
+        let upstroke = derivatives[upstroke_30..upstroke_70].iter().sum::<f64>()
             / (upstroke_70 - upstroke_30) as f64;
 
         let downstroke_30 = trace[peak_index..]
@@ -871,12 +872,15 @@ mod tests {
         for index in 0..500 {
             let injected = if (50..200).contains(&index) { current } else { zero };
             coarse_peak = coarse_peak.max(
-                coarse.step(coarse_dt, injected).unwrap().voltage().as_volts(),
+                coarse
+                    .step(coarse_dt, injected)
+                    .unwrap()
+                    .voltage()
+                    .as_volts(),
             );
             for _ in 0..2 {
-                fine_peak = fine_peak.max(
-                    fine.step(fine_dt, injected).unwrap().voltage().as_volts(),
-                );
+                fine_peak =
+                    fine_peak.max(fine.step(fine_dt, injected).unwrap().voltage().as_volts());
             }
         }
 

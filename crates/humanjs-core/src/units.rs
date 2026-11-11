@@ -173,7 +173,6 @@ mod tests {
     }
 }
 
-
 /// Surface area, in square metres.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct SquareMeters(f64);

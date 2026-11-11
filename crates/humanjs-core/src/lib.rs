@@ -29,6 +29,6 @@ pub use synapse::{
 };
 pub use time::{SimDuration, SimTime};
 pub use units::{
-    Amperes, Farads, FaradsPerSquareMeter, Ohms, Siemens, SiemensPerSquareMeter,
-    SquareMeters, TimeConstant, Volts,
+    Amperes, Farads, FaradsPerSquareMeter, Ohms, Siemens, SiemensPerSquareMeter, SquareMeters,
+    TimeConstant, Volts,
 };
