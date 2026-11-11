@@ -1,6 +1,6 @@
 # HumanJS — target system architecture
 
-**Status:** accepted direction, with two bounded CPU mechanisms implemented.  
+**Status:** accepted direction, with two foundational CPU mechanisms and one exploratory spike-capable CPU mechanism present.  
 **Updated:** 2026-11-10.
 
 This document defines architectural boundaries and responsibilities. The full biological and functional scope is enumerated separately in ../spec/BRAIN-SCOPE-AND-COMPLETENESS.md. The target architecture is not a claim that all listed mechanisms, interfaces, GPU paths, or persistence formats already exist.
@@ -110,23 +110,32 @@ This is not a complete biological synapse. Explicitly unmodeled are presynaptic 
 The current Rust tests validate SI input handling, time arithmetic, exact passive RC integration, normalized conductance kernels, voltage-dependent magnesium unblock, fitted-scale short-term resource dynamics, depolarizing synaptic current, approximate step-size convergence, and atomic failure behavior. GitHub Actions runs formatting, Clippy, workspace tests, and repository policy checks. These are software-level checks only; they do not establish biological validation or whole-brain functionality.
 
 
-## 13. Intrinsic spike-initiation boundary — evidence review and external reproduction, not HumanJS implementation
+## 13. Intrinsic spike-initiation boundary — exploratory code, not scientific acceptance
 
-The current HumanJS CPU mechanisms remain subthreshold; the Rust core does not yet generate action potentials. The targeted evidence review is in \`research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md\`; the canonical Eyal reproduction is documented in \`experiments/HUMAN-L23-SPIKE-MODEL-REPRODUCTION.md\` and driven by \`experiments/reproduce_eyal_figure7a.py\`.
+The Rust core now contains `HumanL23SingleCompartmentModel`, an exploratory single-compartment Na+/K+ conductance model that can generate an action potential under a specified current-clamp pulse. Its presence supersedes earlier documentation stating that no spike-generating code exists. It does **not** supersede ADR-014's scientific acceptance gate: the implementation is provisional, its source choices are not fully reconciled, and its tests establish software behavior rather than biological validity.
 
-- **Somatic nucleated-patch equivalent:** a single electrical compartment constrained by human L2/L3 somatic voltage-clamp data. It is a preparation-equivalent model, not an anatomical soma/AIS neuron. The Wilbers fitted Na+ conductance differs substantially from directly measured nucleated-patch conductance and must remain separately tagged.
-- **Anatomical soma/AIS model:** requires AIS geometry and functional channel-density/gating evidence. Human NaV1.2/NaV1.6 immunolocalization is spatial subtype evidence only; it does not supply functional conductance or gating parameters. Eyal et al. provides human AP targets and fitted soma/axon conductances, but assumes rodent-like kinetics and does not fit active dendritic conductances.
+The model uses:
+- Human Na+ activation/inactivation gate parameters transcribed from the pure Wilbers `na_human.mod` source.
+- Human K+ activation and fast/slow inactivation parameters from the pure Wilbers `k_human.mod` file and the matching Table S2 / first optimizer result.
+- The current-clamp fitted maximum conductance densities (114.48 pS/μm² Na+ and 29.05 pS/μm² K+), which are optimization outputs against cross-species mean AP features, not direct human channel-density measurements.
+- The deposited current-clamp setup: a 10 μm × 10 μm cylindrical compartment, 34°C, −10 mV channel voltage shift, +15 mV reversal-potential offsets, 1 μF/cm² capacitance, leak density corresponding to Rm=10,000 Ω·cm², and a 20 μs maximum integration step.
+- A fixed-step RK4 integrator, explicit gate states, finite/bounded state checks, and transactional state updates.
 
-### Wilbers human Na+/K+ mechanism runtime audit
+The Rust `trap0` implementation uses a stable expression with the analytic limit at the mathematical singularity. This is a deliberate numerical reinterpretation of a problematic source function, not an exact reproduction of its branch behavior. The potassium fit-script's later six-parameter dictionary differs from the pure mechanism and Table S2 / first optimizer result. The script also assigns `h12factor_k_human=10.5`, while the pure mechanism uses its own `inact_rate_factor=1` and does not declare that script variable. The paper's 14-parameter sodium methods count remains unresolved against the visible staged fit variables. The implementation currently chooses the pure-file / Table S2 values; that is a provisional engineering choice, not a resolution of the evidence.
 
-The original pure human \`na_human.mod\` and \`k_human.mod\` files were retrieved from the CC0 DataverseNL deposit and compiled unchanged in NEURON 9.0.2. Direct compiled calls at exact \`trap0\` singularities return non-finite values. The active Na+ lookup table has 200 nodes over −120 to +100 mV; all nodes were finite, but disabling that table exposes non-finite rates at the exact singular voltages. The K+ mechanism has no active table; its direct singularities are non-finite and two opposite-sign branch triggers produce negative inactivation time constants. No source correction was applied.
+The model is a single electrically lumped compartment. It has no spatially resolved soma, AIS, axon, dendrites, cable propagation, channel subtype gradients, or neuron-population interactions. Do not describe it as an intact human pyramidal neuron, an anatomical soma/AIS model, or a biological reproduction. The test pulse and waveform-scale assertions are software regression fixtures, not independent validation against the full human voltage-clamp protocols.
 
-The K+ pure mechanism matches Table S2 and the first optimizer result, but the fitting script's later final dictionary differs; it also assigns an undeclared \`h12factor_k_human\`. The paper's 14-parameter methods count remains unreconciled with the visible staged fit variables. The full Wilbers voltage-clamp fitting workflow was not rerun from raw traces; the deposited per-cell workbooks are fit summaries and the original NWB traces were not present in the Dataverse listing examined.
+The original evidence review remains in `research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md`; the external Eyal source/model reproduction remains in `experiments/HUMAN-L23-SPIKE-MODEL-REPRODUCTION.md`. Eyal's six-cell soma/60 μm axon models use transferred rodent-like kinetics and are not a human gating-parameter source.
 
-### Eyal canonical model source and execution audit
+## 14. Validation status and acceptance gate for the exploratory spike model
 
-The official 139,316,573-byte ModelDB 238347 archive was retrieved and audited (SHA-256 \`12dfd8b8fb38b28136d6904da69aaf5e200fa5fb64cd03d845a96d972057354b\`). All six original HOC templates map to Table S4 parameter sets. The six spike models insert nine conductance mechanisms in soma/axon plus CaDynamics_E2. Ca_HVA is in the archive but not inserted by those six templates; NMDA.mod is used in separate synaptic workflows. The HOC templates replace the axon with a two-section 60 μm stub and leave dendrites passive. Table S4's fitted values are not direct measurements of channel abundance.
+Before this mechanism is promoted from exploratory code:
+1. Resolve or bound the K+ fit-script/Table S2 discrepancy, including the unused `h12factor_k_human` assignment and the provenance of the selected fast/slow inactivation parameters.
+2. Reconcile the paper's stated 14 free sodium parameters with the deposited fitting sequence and source mechanism.
+3. Audit every transcribed parameter's unit and temperature convention against the original NMODL source, including rate-prefactor dimensional interpretation and the difference between pure voltage-clamp and hybrid current-clamp variants.
+4. Compare Na+ and K+ steady-state curves and time constants over the published voltage ranges against the deposited mechanisms and human experimental summaries, including singularity neighborhoods and the full K+ fast/slow recovery behavior.
+5. Reproduce the authors' voltage-clamp protocols at their stated temperatures and time steps, or clearly state why the available public summary data cannot support a full trace-level reproduction.
+6. Verify the current-clamp conductance-fit setup, including the human/mouse averaging objective, geometry, reversal offsets, leak, channel shifts, and the relationship between reported AP targets and the Rust fixture.
+7. Add independent tests for gate steady states, time constants, recovery trajectories, current balance, pulse timing, step-size convergence, and comparison with published human targets. Keep software verification distinct from biological validation.
 
-The ten mechanisms actually inserted by the six templates compiled with NEURON 9.0.2. A Python 3 runner reproduced the Figure 7A morphology, section construction, channel insertion, temperature, time-step, initial-voltage, current-step and recording procedure for all six cells, and compared first-spike metrics to released current-clamp repetitions. Several model/data metrics differ. This is a selected-stimulus source/model reproduction, not a model refit, exact trace match, or biological validation.
-
-No AP-capable HumanJS mechanism should be added by copying the external model wholesale. The next admissible step is an independently specified, numerically stable human somatic-patch-equivalent mechanism using clearly tagged human measurements, fitted model values, and transferred functions. Validate voltage-clamp behavior and AP waveform features separately. AIS-resolved modeling remains a stricter separate evidence gate. Software tests and execution of published models do not establish biological validity or whole-brain functionality.
+The current code's tests cover selected rate-function stability, positive finite time constants over a bounded voltage scan, Q10 factors, one-spike waveform scale, approximate step-size convergence, reset, and transactional failure. They do not yet satisfy the above validation gate. No AIS conductance may be inferred from immunostaining. No biological validation, clinical validity, whole-brain functionality, or consciousness claim is made.
