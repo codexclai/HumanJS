@@ -775,22 +775,32 @@ mod tests {
     fn human_gate_steady_states_reproduce_the_deposited_half_voltage_parameters() {
         let model = wilbers_model();
         let na_m = model
-            .sodium_rates(model.sodium.activation_half_voltage_mv - model.voltage_shift_mv)
+            .sodium_rates(
+                model.sodium.activation_half_voltage_mv - model.voltage_shift_mv,
+            )
             .unwrap()
             .activation
             .steady_state;
         let na_h = model
-            .sodium_rates(model.sodium.inactivation_half_voltage_mv - model.voltage_shift_mv)
+            .sodium_rates(
+                model.sodium.inactivation_half_voltage_mv - model.voltage_shift_mv,
+            )
             .unwrap()
             .inactivation
             .steady_state;
         let k_m = model
-            .potassium_rates(model.potassium.activation_half_voltage_mv - model.voltage_shift_mv, 0.5)
+            .potassium_rates(
+                model.potassium.activation_half_voltage_mv - model.voltage_shift_mv,
+                0.5,
+            )
             .unwrap()
             .activation
             .steady_state;
         let k_h = model
-            .potassium_rates(model.potassium.inactivation_half_voltage_mv - model.voltage_shift_mv, 0.5)
+            .potassium_rates(
+                model.potassium.inactivation_half_voltage_mv - model.voltage_shift_mv,
+                0.5,
+            )
             .unwrap()
             .fast_inactivation
             .steady_state;
