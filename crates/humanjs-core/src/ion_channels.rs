@@ -810,6 +810,7 @@ mod tests {
         let mut current = Vec::with_capacity(4_995);
         let mut time_ms = 20.0;
         for _ in 1..=5_000 {
+            // Accumulate like NEURON's h.t; nominal 20.4 ms rounds above the strict source mask.
             time_ms += 0.1;
             let conductance = advance_k_clamp_step(model, &mut gates, test_voltage_mv, 0.1);
             if time_ms > 20.4 && time_ms < 520.0 {
@@ -902,6 +903,7 @@ mod tests {
     }
 
     fn fit_k_activation_current_tau(current: &[f64], step_ms: f64) -> Option<(f64, f64)> {
+        // Match numpy.argmax: choose the first sample when the peak is tied.
         let mut peak_index = 0;
         for (index, value) in current.iter().enumerate().skip(1) {
             if value > &current[peak_index] {
