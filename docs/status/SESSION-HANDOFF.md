@@ -2,8 +2,8 @@
 
 **Updated:** 2026-11-11  
 **Canonical repository:** `codexclai/HumanJS`, branch `main` only.  
-**Latest implementation/CI change:** `6e1842579113ddb1542628e033107b07db20a526`.  
-**Latest research-data record:** `3a13199d21c58377dbd3517ab47c4984267d6753`.  
+**Latest implementation/CI change:** `a5d9e3c640c0f04a2ef9ce5d925553afde869de2`.  
+**Latest research record:** `768bc0e0e313883576cbb7469cda7de6478637f0`.  
 Verify the live HEAD and newest workflow before relying on this handoff.  
 **Documentation reconciliation:** subsequent commits on `main`; verify the live HEAD and workflow before using this handoff in a later session.
 
@@ -80,16 +80,18 @@ Runner: `experiments/reproduce_eyal_figure7a.py`.
 - The original NMODL is therefore not a unit-checked reference implementation. HumanJS's Rust rate units and analytic singularity handling are equation-consistent corrections, not exact reproduction of the source branch.
 
 
-### Supplementary Figure S5: verified legend and first calibrated digitization
+### Supplementary Figure S5: verified legend and five-panel digitization
 
 - Retrieved the official 13-page supplement from the new PMC AWS Article Dataset object: https://pmc-oa-opendata.s3.amazonaws.com/PMC10569700.1/sciadv.ade3300_sm.pdf. Size 1,468,232 bytes; SHA-256 `dfa1daaf4dd0e3979bac84b9cb8b1874c4514d40588969a21d7766a7f12f2a1d`.
 - Rendered Figure S5 page 7 and visually verified the legend: red model line/human open-circle experimental means; blue model line/mouse cross experimental means. The caption duplicates “(I)” for fast inactivation; the actual plotted panel is labelled J.
-- Digitized panel K slow-inactivation group means: 10 red human open-circle points and 10 blue mouse cross points at −30 to +60 mV. The checked-in CSV records pixel centers, axis calibration, source checksum, and conservative ±2.5 mV / ±25 ms plot-reading uncertainty. These uncertainties are not biological SD.
-- Added `experiments/validate_wilbers_fig_s5_digitization.py` and a CI step checking provenance, marker mapping, counts, and axis-derived values. This validates the transcription/calibration, not the biology.
-- The panel's two model curves are visually near the fixed 450-ms slow-inactivation setting. Experimental markers vary substantially with voltage and between group means, consistent with the authors' statement that their HH models did not accurately reproduce K+ inactivation.
-- Main-text summary values: activation V1/2 human −3.0 ± 5.9 mV (n=13), mouse −7.9 ± 6.0 mV (n=29), P=0.02; inactivation V1/2 human −52.7 ± 6.0 mV (n=11), mouse −65.0 ± 5.3 mV (n=26), P<10⁻⁶; resting-potential availability human 0.94 ± 0.05, mouse 0.86 ± 0.06. Human K+ currents activate faster at lower voltages; fast/slow inactivation and recovery time constants were described as similar between species, although human currents recover to a larger proportion.
-- Remaining: digitize panels I, J, M, and N. The exact Dataverse `Experimental means/k_tau_*.csv` files and raw per-cell K+ voltage-clamp traces remain absent. No raw-trace reproduction or biological validation is claimed.
-
+- Digitized 50 experimental marker centers across panels I, J, K, M, and N, separately identifying human and mouse. Five CSVs preserve source hash, raster coordinates, axis calibration, marker identity, and panel-specific uncertainty. These are approximate group means, not raw data; digitization uncertainty is not biological SD.
+- Panel I activation has seven voltages per species from −10 to +50 mV; human/mouse means at −10 mV are approximately 3.36/7.76 ms, and at +50 mV 0.58/0.93 ms.
+- Panel J fast inactivation has six voltages per species from 0 to +50 mV. Panel K slow inactivation has ten voltages per species from −30 to +60 mV; its model lines are near the fixed 450-ms setting while experimental means vary broadly.
+- Panel M fast recovery at −80 mV is approximately 228.8 ms human and 245.6 ms mouse; their mean 237.2 ms agrees within digitization uncertainty with the source optimizer's pooled target 236.824345 ms.
+- Panel N slow recovery at −80 mV is approximately 2.00 s human and 3.58 s mouse; the model line is near the fixed 2.7898-s parameter. One marker per species is not a statistical comparison.
+- Added `experiments/validate_wilbers_fig_s5_digitization.py`; it passed in a clean temporary workspace for all 50 markers, source hash, species/marker mapping, voltage grids, and axis calibrations. CI executes the same validator.
+- Panel I exposes a voltage-shift question: the source K voltage-clamp helper uses zero shift, while the separate current-clamp helper applies −10 mV. The source activation equation has RMSE ≈0.44 ms against digitized human panel-I markers at zero shift and ≈0.15 ms at −10 mV. This is a sensitivity finding; trace the exact Figure S5 generation path before claiming which convention was used.
+- Exact Dataverse `Experimental means/k_tau_*.csv` files and raw per-cell K+ voltage-clamp traces remain absent. No raw-trace reproduction or biological validation is claimed.
 ## Corrective documentation work completed in this continuation
 
 - Updated `docs/BOOT.md` to describe the three current CPU mechanisms and classify the spike model as exploratory.
@@ -99,8 +101,8 @@ Runner: `experiments/reproduce_eyal_figure7a.py`.
 - Added regression tests for potassium slow inactivation/recovery constants, the three-component conductance fractions, and human gate half-voltage steady states. The half-voltage test accounts for the current-clamp −10 mV channel shift.
 - Corrected the `RatePrefactor` dimensional name and error label to `mV^-1 ms^-1`; no channel parameter values were changed.
 - Updated `docs/roadmap/MASTER-ROADMAP.md` to keep the accepted somatic-patch milestone unchecked and classify existing code as provisional.
-- Retrieved and rendered the official PMC AWS supplement; visually mapped the Figure S5 series and added an uncertainty-qualified panel K digitization.
-- Added a stdlib-only validator for the Figure S5 CSV and wired it into `.github/workflows/repository-policy.yml`.
+- Retrieved and rendered the official PMC AWS supplement; visually mapped the Figure S5 series and added uncertainty-qualified experimental-marker digitizations for panels I, J, K, M, and N (50 points total).
+- Added a stdlib-only validator for all five Figure S5 CSVs and wired it into `.github/workflows/repository-policy.yml`.
 - Updated `docs/BOOT.md`, `docs/status/STATUS.md`, `docs/REPOSITORY-STRUCTURE.md`, and `docs/roadmap/MASTER-ROADMAP.md` with the new research state.
 - This handoff is the final documentation file to update after this commit.
 
