@@ -129,3 +129,11 @@ No biological validation, clinical validity, whole-brain functionality, or consc
 - Exact provenance of HumanJS's 114.48/29.05 pS/µm² values remains unresolved; do not equate them with the all-human fit. A targeted extraction still did not recover get_outcomes_full, so the feature windows/thresholds remain unknown.
 - Next: recover AP1comparison.csv, both gbar interpolation CSVs, and the complete outcome helper; map the exact source table entry to the Rust preset before considering any parameter changes.
 
+### Current-clamp source completeness finding (2026-11-11)
+
+- Targeted live search of the retrieved complete Dataverse `cc_tools.py` (file 318557) finds `get_outcomes_full`, `get_outcomes`, and any amp/up/down feature extraction function all absent.
+- `fit_densities` nevertheless calls `get_outcomes_full` inside the Powell objective and again after fitting. The retrieved source set is therefore incomplete as an executable fitting workflow unless an additional, unverified import/source dependency supplies the helper.
+- Exact AP amplitude/upstroke/downstroke definitions, counting logic, thresholds, and windows remain unknown. Do not infer them from feature labels or claim independent optimizer reproduction.
+- The 20×20 calibration-grid structure is visible, but numerical CSV outputs and the outcome helper are still unavailable. The HumanJS 114.48/29.05 pS/µm² values remain untraceable to a source table entry.
+- Next: inspect the full Dataverse v3.0 file inventory and identify any alternate source file containing the missing helper; retrieve the exact calibration CSVs and compare the all-human table cell with the Rust preset before changing parameters.
+
