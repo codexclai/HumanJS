@@ -772,6 +772,35 @@ mod tests {
     }
 
     #[test]
+    fn human_gate_steady_states_reproduce_the_deposited_half_voltage_parameters() {
+        let model = wilbers_model();
+        let na_m = model
+            .sodium_rates(model.sodium.activation_half_voltage_mv)
+            .unwrap()
+            .activation
+            .steady_state;
+        let na_h = model
+            .sodium_rates(model.sodium.inactivation_half_voltage_mv)
+            .unwrap()
+            .inactivation
+            .steady_state;
+        let k_m = model
+            .potassium_rates(model.potassium.activation_half_voltage_mv, 0.5)
+            .unwrap()
+            .activation
+            .steady_state;
+        let k_h = model
+            .potassium_rates(model.potassium.inactivation_half_voltage_mv, 0.5)
+            .unwrap()
+            .fast_inactivation
+            .steady_state;
+
+        for steady_state in [na_m, na_h, k_m, k_h] {
+            assert!((steady_state - 0.5).abs() < 1.0e-14);
+        }
+    }
+
+    #[test]
     fn channel_time_constants_are_finite_and_positive_across_source_voltage_range() {
         let model = wilbers_model();
         for voltage_mv in -120..=100 {
