@@ -26,11 +26,11 @@ struct PotassiumRates {
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 struct RatePrefactor {
-    // The NMODL files declare these values as /ms, while trap0 multiplies
-    // them by a voltage-valued ratio. Their dimensional interpretation in
-    // this implementation is therefore /mV/ms; the published numeric values
-    // are retained without rescaling.
-    per_millivolt_per_ms: f64,
+    // In the source expression, (V - th) / (1 - exp(-(V - th) / q))
+    // is dimensionless because both numerator and denominator are voltages.
+    // Therefore the published NMODL prefactor retains its declared ms^-1
+    // dimension; no extra inverse-millivolt factor is introduced.
+    per_ms: f64,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -60,7 +60,7 @@ impl SodiumChannelParameters {
         activation_rate_half_voltage_mv: -58.59235606617833,
         activation_rate_slope_mv: 9.21455371864071,
         activation_rate: RatePrefactor {
-            per_millivolt_per_ms: 0.2139849270413559,
+            per_ms: 0.2139849270413559,
         },
         inactivation_half_voltage_mv: -64.48,
         inactivation_slope_mv: 11.02,
@@ -69,10 +69,10 @@ impl SodiumChannelParameters {
         inactivation_rate_slope_mv: 7.21636386592805,
         recovery_rate_slope_mv: 4.749450048393884,
         inactivation_rate: RatePrefactor {
-            per_millivolt_per_ms: 0.0476391878313753,
+            per_ms: 0.0476391878313753,
         },
         recovery_rate: RatePrefactor {
-            per_millivolt_per_ms: 0.011951655023359499,
+            per_ms: 0.011951655023359499,
         },
         reference_temperature_celsius: 25.0,
         q10: 2.3,
@@ -111,7 +111,7 @@ impl PotassiumChannelParameters {
         activation_rate_half_voltage_mv: -29.961798016904638,
         activation_rate_slope_mv: 6.590405688881463,
         activation_rate: RatePrefactor {
-            per_millivolt_per_ms: 0.018459250585411965,
+            per_ms: 0.018459250585411965,
         },
         inactivation_half_voltage_mv: -52.61,
         inactivation_slope_mv: 13.09,
@@ -120,10 +120,10 @@ impl PotassiumChannelParameters {
         inactivation_rate_slope_mv: 26.773929244740913,
         recovery_rate_slope_mv: 0.40183382749400054,
         inactivation_rate: RatePrefactor {
-            per_millivolt_per_ms: 0.0016901435659310753,
+            per_ms: 0.0016901435659310753,
         },
         recovery_rate: RatePrefactor {
-            per_millivolt_per_ms: 0.0004968791312639546,
+            per_ms: 0.0004968791312639546,
         },
         slow_inactivation_time_constant_ms: 450.0,
         slow_recovery_time_constant_ms: 2789.7929428108187,
@@ -691,7 +691,7 @@ fn trap0(
     require_positive("trap0 slope (mV)", slope_mv)?;
     require_positive(
         "trap0 rate prefactor (/mV/ms)",
-        prefactor.per_millivolt_per_ms,
+        prefactor.per_ms,
     )?;
 
     let x = (voltage_mv - half_voltage_mv) / slope_mv;
@@ -704,7 +704,7 @@ fn trap0(
     } else {
         x / -(-x).exp_m1()
     };
-    let rate = prefactor.per_millivolt_per_ms * slope_mv * ratio;
+    let rate = prefactor.per_ms * slope_mv * ratio;
     require_positive("trap0 transition rate (ms^-1)", rate)
         .map_err(|_| SimulationError::NumericalOverflow)?;
     Ok(rate)
@@ -725,7 +725,7 @@ mod tests {
     #[test]
     fn trap0_uses_the_analytic_limit_and_is_continuous() {
         let prefactor = RatePrefactor {
-            per_millivolt_per_ms: 0.2,
+            per_ms: 0.2,
         };
         let slope = 10.0;
         let half_voltage = -40.0;
