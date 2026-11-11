@@ -69,6 +69,14 @@ Runner: `experiments/reproduce_eyal_figure7a.py`.
 - Added Rust unit tests in `crates/humanjs-core/src/ion_channels.rs` that replay activation, inactivation, and recovery command sequences with exact first-order gate updates. A full `K_IV_ss` series uses the deposited −110 to +50 mV, 10-mV grid. Transparent half-range interpolation gives −3.25 mV activation midpoint, −51.48 mV inactivation midpoint, and 0.936 availability at −80 mV; all fall within the published human group mean ± SD. This is a coarse summary comparison, not the source nonlinear fit or raw-trace validation.
 - The source-protocol/optimizer audit and the first Rust model-side replay are complete. The replay's independent reference conductance fractions and recovery ordering passed the Rust workspace test. The next step is to extend the replay across the full voltage series and compare only against published group-level K+ summary targets, while preserving the missing raw-trace/CSV limitation. Do not claim raw-trace reproduction or biological validation.
 
+
+### NEURON 9.0.2 unit-check result
+
+- Original `k_human.mod` and `na_human.mod` compile unchanged with `nrnivmodl`, but the compiler warns that GLOBAL `tadj` assignment is not thread-safe.
+- Original `modlunit` runs stop at the untyped `trates(v+vshift)` call (K line 82; Na line 80). Temporary diagnostic copies with typed signatures expose the declared `/ms` versus equation-required `mV^-1 ms^-1` mismatch, the fallback's missing prefactor/wrong dimensions, the wrong-sign branch predicate, the dimensionful Q10 exponent, and missing mV units on activation midpoint/slope parameters.
+- Temporary typed K/Na copies pass `modlunit` 9.0.2 only after those unit corrections and replacing the active fallback with the source's commented-out `a*q` limit. No Dataverse source was modified.
+- The original NMODL is therefore not a unit-checked reference implementation. HumanJS's Rust rate units and analytic singularity handling are equation-consistent corrections, not exact reproduction of the source branch.
+
 ## Corrective documentation work completed in this continuation
 
 - Updated `docs/BOOT.md` to describe the three current CPU mechanisms and classify the spike model as exploratory.
