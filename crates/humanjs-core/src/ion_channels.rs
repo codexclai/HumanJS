@@ -733,6 +733,8 @@ mod tests {
         let mut model = wilbers_model();
         // The deposited K+ voltage-clamp fitting cell leaves vshift at its NMODL default (0 mV).
         model.voltage_shift_mv = 0.0;
+        // The deposited voltage-clamp helper initializes EK to -101 mV.
+        model.potassium_reversal = Volts::from_millivolts(-101.0).unwrap();
         model
     }
 
@@ -748,6 +750,41 @@ mod tests {
         }
     }
 
+    fn advance_k_clamp_step(
+        model: HumanL23SingleCompartmentModel,
+        gates: &mut PotassiumClampGates,
+        voltage_mv: f64,
+        step_ms: f64,
+    ) -> f64 {
+        let rates = model
+            .potassium_rates(voltage_mv, gates.slow_inactivation)
+            .unwrap();
+        let advance_gate = |gate: f64, gate_rates: GateRates| {
+            gate_rates.steady_state
+                + (gate - gate_rates.steady_state)
+                    * (-step_ms / gate_rates.time_constant_ms).exp()
+        };
+        gates.activation = advance_gate(gates.activation, rates.activation);
+        gates.fast_inactivation = advance_gate(gates.fast_inactivation, rates.fast_inactivation);
+        gates.slow_inactivation = advance_gate(
+            gates.slow_inactivation,
+            GateRates {
+                steady_state: rates.fast_inactivation.steady_state,
+                time_constant_ms: rates.slow_inactivation_time_constant_ms,
+            },
+        );
+
+        let fast_fraction = model.potassium.inactivating_fraction
+            * (1.0 - model.potassium.slow_fraction_of_inactivating);
+        let slow_fraction =
+            model.potassium.inactivating_fraction * model.potassium.slow_fraction_of_inactivating;
+        let non_inactivating_fraction = 1.0 - model.potassium.inactivating_fraction;
+        gates.activation.powi(2)
+            * (gates.fast_inactivation * fast_fraction
+                + gates.slow_inactivation * slow_fraction
+                + non_inactivating_fraction)
+    }
+
     fn advance_k_clamp(
         model: HumanL23SingleCompartmentModel,
         gates: &mut PotassiumClampGates,
@@ -758,37 +795,149 @@ mod tests {
         let steps = (duration_ms / step_ms).round() as usize;
         let mut peak_conductance = 0.0_f64;
         for _ in 0..steps {
-            let rates = model
-                .potassium_rates(voltage_mv, gates.slow_inactivation)
-                .unwrap();
-            let advance_gate = |gate: f64, gate_rates: GateRates| {
-                gate_rates.steady_state
-                    + (gate - gate_rates.steady_state)
-                        * (-step_ms / gate_rates.time_constant_ms).exp()
-            };
-            gates.activation = advance_gate(gates.activation, rates.activation);
-            gates.fast_inactivation =
-                advance_gate(gates.fast_inactivation, rates.fast_inactivation);
-            gates.slow_inactivation = advance_gate(
-                gates.slow_inactivation,
-                GateRates {
-                    steady_state: rates.fast_inactivation.steady_state,
-                    time_constant_ms: rates.slow_inactivation_time_constant_ms,
-                },
-            );
-
-            let fast_fraction = model.potassium.inactivating_fraction
-                * (1.0 - model.potassium.slow_fraction_of_inactivating);
-            let slow_fraction = model.potassium.inactivating_fraction
-                * model.potassium.slow_fraction_of_inactivating;
-            let non_inactivating_fraction = 1.0 - model.potassium.inactivating_fraction;
-            let conductance = gates.activation.powi(2)
-                * (gates.fast_inactivation * fast_fraction
-                    + gates.slow_inactivation * slow_fraction
-                    + non_inactivating_fraction);
-            peak_conductance = peak_conductance.max(conductance);
+            peak_conductance = peak_conductance.max(advance_k_clamp_step(
+                model, gates, voltage_mv, step_ms,
+            ));
         }
         peak_conductance
+    }
+
+    fn replay_k_activation_current(
+        model: HumanL23SingleCompartmentModel,
+        test_voltage_mv: f64,
+    ) -> Vec<f64> {
+        let mut gates = initial_potassium_clamp_gates(model, -140.0);
+        advance_k_clamp(model, &mut gates, -140.0, 20.0, 0.1);
+        let reversal_mv = model.potassium_reversal.as_volts() * 1_000.0;
+        let mut current = Vec::with_capacity(4_995);
+        for step in 1..=5_000 {
+            let conductance =
+                advance_k_clamp_step(model, &mut gates, test_voltage_mv, 0.1);
+            let time_ms = 20.0 + step as f64 * 0.1;
+            if time_ms > 20.4 && time_ms < 520.0 {
+                current.push(conductance * (test_voltage_mv - reversal_mv));
+            }
+        }
+        current
+    }
+
+    fn exponential_fit_sse(
+        log_tau: f64,
+        times_ms: &[f64],
+        values: &[f64],
+        mean_value: f64,
+    ) -> f64 {
+        let tau_ms = log_tau.exp();
+        let exponentials: Vec<f64> = times_ms
+            .iter()
+            .map(|time| (-time / tau_ms).exp())
+            .collect();
+        let mean_exponential =
+            exponentials.iter().sum::<f64>() / exponentials.len() as f64;
+        let variance = exponentials
+            .iter()
+            .map(|value| (value - mean_exponential).powi(2))
+            .sum::<f64>();
+        if variance <= f64::EPSILON {
+            return f64::INFINITY;
+        }
+        let covariance = exponentials
+            .iter()
+            .zip(values)
+            .map(|(exponential, value)| {
+                (exponential - mean_exponential) * (value - mean_value)
+            })
+            .sum::<f64>();
+        let amplitude = covariance / variance;
+        let offset = mean_value - amplitude * mean_exponential;
+        exponentials
+            .iter()
+            .zip(values)
+            .map(|(exponential, value)| {
+                (value - (amplitude * exponential + offset)).powi(2)
+            })
+            .sum()
+    }
+
+    fn fit_exponential_offset_tau(
+        times_ms: &[f64],
+        values: &[f64],
+    ) -> Option<(f64, f64)> {
+        if times_ms.len() != values.len() || times_ms.len() < 4 {
+            return None;
+        }
+        let mean_value = values.iter().sum::<f64>() / values.len() as f64;
+        let total_sum_squares = values
+            .iter()
+            .map(|value| (value - mean_value).powi(2))
+            .sum::<f64>();
+        if total_sum_squares <= f64::EPSILON {
+            return None;
+        }
+
+        const GRID_STEPS: usize = 256;
+        let minimum_log_tau = 0.01_f64.ln();
+        let maximum_log_tau = 100.0_f64.ln();
+        let log_step = (maximum_log_tau - minimum_log_tau) / GRID_STEPS as f64;
+        let mut best_index = 0;
+        let mut best_error = f64::INFINITY;
+        for index in 0..=GRID_STEPS {
+            let log_tau = minimum_log_tau + index as f64 * log_step;
+            let error =
+                exponential_fit_sse(log_tau, times_ms, values, mean_value);
+            if error < best_error {
+                best_error = error;
+                best_index = index;
+            }
+        }
+
+        let mut left = minimum_log_tau + best_index.saturating_sub(1) as f64 * log_step;
+        let mut right = minimum_log_tau
+            + (best_index + 1).min(GRID_STEPS) as f64 * log_step;
+        let golden_ratio = (5.0_f64.sqrt() - 1.0) / 2.0;
+        let mut c = right - golden_ratio * (right - left);
+        let mut d = left + golden_ratio * (right - left);
+        let mut fc = exponential_fit_sse(c, times_ms, values, mean_value);
+        let mut fd = exponential_fit_sse(d, times_ms, values, mean_value);
+        for _ in 0..80 {
+            if fc < fd {
+                right = d;
+                d = c;
+                fd = fc;
+                c = right - golden_ratio * (right - left);
+                fc = exponential_fit_sse(c, times_ms, values, mean_value);
+            } else {
+                left = c;
+                c = d;
+                fc = fd;
+                d = left + golden_ratio * (right - left);
+                fd = exponential_fit_sse(d, times_ms, values, mean_value);
+            }
+        }
+
+        let log_tau = (left + right) * 0.5;
+        let residual_sum_squares =
+            exponential_fit_sse(log_tau, times_ms, values, mean_value);
+        let r_squared = 1.0 - residual_sum_squares / total_sum_squares;
+        Some((log_tau.exp(), r_squared))
+    }
+
+    fn fit_k_activation_current_tau(current: &[f64], step_ms: f64) -> Option<(f64, f64)> {
+        let peak_index = current
+            .iter()
+            .enumerate()
+            .max_by(|left, right| left.1.total_cmp(right.1))?
+            .0;
+        if peak_index < 4 {
+            return None;
+        }
+        let last_before_peak = current[peak_index - 1];
+        let times: Vec<f64> = (0..peak_index).map(|index| index as f64 * step_ms).collect();
+        let values: Vec<f64> = current[..peak_index]
+            .iter()
+            .map(|value| value - last_before_peak)
+            .collect();
+        fit_exponential_offset_tau(&times, &values)
     }
 
     fn replay_k_activation(model: HumanL23SingleCompartmentModel, test_voltage_mv: f64) -> f64 {
@@ -842,6 +991,53 @@ mod tests {
             }
         }
         panic!("voltage-clamp curve did not cross half range");
+    }
+
+    #[test]
+    fn exponential_offset_fit_recovers_a_known_time_constant() {
+        let times: Vec<f64> = (0..100).map(|index| index as f64 * 0.1).collect();
+        let values: Vec<f64> = times
+            .iter()
+            .map(|time| -2.5 * (-time / 3.5).exp() + 0.2)
+            .collect();
+        let (tau_ms, r_squared) = fit_exponential_offset_tau(&times, &values).unwrap();
+        assert!((tau_ms - 3.5).abs() < 1.0e-6);
+        assert!(r_squared > 0.999_999);
+    }
+
+    #[test]
+    fn deposited_k_iv_current_activation_fit_replays_human_figure_s5_curve() {
+        let model = wilbers_voltage_clamp_model();
+        let voltages_mv = [-10.0, 0.0, 10.0, 20.0, 30.0, 40.0, 50.0];
+        // Independent SciPy curve_fit references for the deposited K_IV protocol:
+        // 20 ms at -140 mV; 500 ms test pulse; dt=0.1 ms; fit the rising
+        // current before its peak with a*exp(-t/tau)+offset, as get_tau_act does.
+        let expected_tau_ms = [
+            3.284_746_40,
+            2.298_529_85,
+            1.700_318_83,
+            1.330_597_10,
+            1.082_613_13,
+            0.902_015_07,
+            0.771_108_13,
+        ];
+        let experimental_means_ms = [3.36, 2.41, 1.68, 1.25, 0.88, 0.69, 0.58];
+        let mut squared_error = 0.0;
+        for (index, voltage_mv) in voltages_mv.into_iter().enumerate() {
+            let current = replay_k_activation_current(model, voltage_mv);
+            let (tau_ms, r_squared) = fit_k_activation_current_tau(&current, 0.1).unwrap();
+            assert!(
+                (tau_ms - expected_tau_ms[index]).abs() < 0.01,
+                "K_IV current activation tau mismatch at {voltage_mv} mV: {tau_ms} ms"
+            );
+            assert!(r_squared > 0.99);
+            squared_error += (tau_ms - experimental_means_ms[index]).powi(2);
+        }
+        let rmse_ms = (squared_error / voltages_mv.len() as f64).sqrt();
+        assert!(
+            rmse_ms < 0.20,
+            "source-equivalent human K_IV activation RMSE {rmse_ms} ms exceeds digitized Figure S5 tolerance"
+        );
     }
 
     #[test]
