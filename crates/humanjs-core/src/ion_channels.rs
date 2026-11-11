@@ -690,7 +690,7 @@ fn trap0(
     require_finite("trap0 half-voltage (mV)", half_voltage_mv)?;
     require_positive("trap0 slope (mV)", slope_mv)?;
     require_positive(
-        "trap0 rate prefactor (/mV/ms)",
+        "trap0 rate prefactor (ms^-1)",
         prefactor.per_ms,
     )?;
 
@@ -736,6 +736,39 @@ mod tests {
         assert!((limit - 2.0).abs() < 1.0e-14);
         assert!((below - limit).abs() < 1.0e-7);
         assert!((above - limit).abs() < 1.0e-7);
+    }
+
+    #[test]
+    fn potassium_slow_inactivation_uses_distinct_inactivation_and_recovery_constants() {
+        let model = wilbers_model();
+        let depolarized = model.potassium_rates(30.0, 0.5).unwrap();
+        let hyperpolarized = model.potassium_rates(-70.0, 0.5).unwrap();
+
+        assert_eq!(depolarized.slow_inactivation_time_constant_ms, 450.0);
+        assert_eq!(
+            hyperpolarized.slow_inactivation_time_constant_ms,
+            2789.7929428108187
+        );
+        assert!(depolarized.fast_inactivation.time_constant_ms > 0.0);
+        assert!(hyperpolarized.fast_inactivation.time_constant_ms > 0.0);
+    }
+
+    #[test]
+    fn potassium_inactivation_fraction_matches_the_three_component_source_decomposition() {
+        let model = wilbers_model();
+        let fast_fraction = model.potassium.inactivating_fraction
+            * (1.0 - model.potassium.slow_fraction_of_inactivating);
+        let slow_fraction = model.potassium.inactivating_fraction
+            * model.potassium.slow_fraction_of_inactivating;
+        let non_inactivating_fraction = 1.0 - model.potassium.inactivating_fraction;
+
+        assert!((fast_fraction - 0.51).abs() < f64::EPSILON);
+        assert!((slow_fraction - 0.34).abs() < f64::EPSILON);
+        assert!((non_inactivating_fraction - 0.15).abs() < f64::EPSILON);
+        assert!(
+            (fast_fraction + slow_fraction + non_inactivating_fraction - 1.0).abs()
+                < f64::EPSILON
+        );
     }
 
     #[test]
