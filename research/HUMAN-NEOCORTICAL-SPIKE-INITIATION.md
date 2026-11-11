@@ -567,3 +567,11 @@ A second live retrieval of the public Dataverse v3.0 source recovered the comple
 
 Retrieval details: the Dataverse dataset metadata endpoint returned the released v3.0 inventory and stable file/storage identifiers. The cc_tools.py, fit_gbar_na_k.py, and currentclamp.py source files were retrieved through the Dataverse access API's signed object-store response. Attempts to retrieve AP1comparison.csv and the conductance interpolation CSVs continued to encounter the Dataverse BotStopper/anti-bot response. No deposited file was modified or copied into HumanJS.
 
+#### Current-clamp outcome-extractor dependency audit (2026-11-11)
+
+A targeted search of the complete deposited `cc_tools.py` object (Dataverse file 318557, retrieved through its signed object-store response) searched for `get_outcomes_full`, `get_outcomes`, and any function computing the `amp`, `up`, and `down` features. All are absent from that file. This is stronger than merely failing to extract a function from a truncated response: the live source search explicitly reports all three absent.
+
+The deposited `fit_densities` implementation nevertheless calls `get_outcomes_full(t, v)` both inside its Powell objective and again after optimization, while `fit_gbar_na_k.py` imports `cc_tools` with `from cc_tools import *`. The retrieved `cc_tools.py` therefore does not, by itself, define a required runtime dependency of the fitting workflow. Another imported module, an omitted/unpublished source file, or an incomplete deposited source set would be needed for the scripts to run as written. Which explanation applies is not established by the available evidence. The actual definitions of amplitude, upstroke, downstroke, AP counting, and their analysis windows remain unknown.
+
+This also means the cross-species midpoint objective is only partially reproducible from the deposited files: the target aggregation and normalized squared-error expression are visible in `fit_densities`, but the feature extractor that produces the compared values is not. Do not reconstruct it from labels, and do not claim a complete reproduction of the optimizer. The calibration-grid scripts describe intended workflow structure, not independently reproducible fitted density results. The 114.48/29.05 pS/µm² HumanJS values remain untraceable to an exact source output.
+
