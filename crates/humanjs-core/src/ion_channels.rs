@@ -829,14 +829,14 @@ mod tests {
         assert!((inactivation_after_minus_80 - 0.805_281_859_671_567_1).abs() < 1.0e-9);
 
         let delays_ms = [
-            4.0, 100.0, 400.0, 900.0, 1_600.0, 2_500.0, 3_600.0, 4_900.0, 6_400.0, 8_464.0,
+            4.0, 144.0, 484.0, 1_024.0, 1_764.0, 2_704.0, 3_844.0, 5_184.0, 6_724.0, 8_464.0,
         ];
         let recovered: Vec<f64> = delays_ms
             .into_iter()
             .map(|delay| replay_k_recovery(model, delay))
             .collect();
         assert!(recovered.windows(2).all(|pair| pair[1] > pair[0]));
-        assert!((recovered[2] - 0.454_162_406_500_040_97).abs() < 1.0e-9);
+        assert!((recovered[2] - 0.479_816_410_714_972_83).abs() < 1.0e-9);
         assert!((recovered[9] - 0.735_092_972_795_100_9).abs() < 1.0e-9);
     }
 
