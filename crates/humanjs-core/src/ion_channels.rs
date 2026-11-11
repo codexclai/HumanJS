@@ -815,7 +815,6 @@ mod tests {
         advance_k_clamp(model, &mut gates, 40.0, 5.0, 0.5)
     }
 
-
     fn half_range_voltage(volts: &[f64], values: &[f64], increasing: bool) -> f64 {
         let minimum = values.iter().copied().fold(f64::INFINITY, f64::min);
         let maximum = values.iter().copied().fold(f64::NEG_INFINITY, f64::max);
@@ -858,7 +857,6 @@ mod tests {
         assert!((recovered[9] - 0.735_092_972_795_100_9).abs() < 1.0e-9);
     }
 
-
     #[test]
     fn potassium_clamp_curves_are_consistent_with_published_human_group_summaries() {
         let model = wilbers_voltage_clamp_model();
@@ -885,10 +883,12 @@ mod tests {
             .zip(voltages.iter())
             .filter_map(|(value, voltage)| (*voltage <= 0.0).then_some(value))
             .collect();
-        let inactivation_half =
-            half_range_voltage(&fit_voltages, &fit_inactivation, false);
+        let inactivation_half = half_range_voltage(&fit_voltages, &fit_inactivation, false);
         let inactivation_max = inactivation.iter().copied().fold(0.0_f64, f64::max);
-        let minus_80_index = voltages.iter().position(|voltage| *voltage == -80.0).unwrap();
+        let minus_80_index = voltages
+            .iter()
+            .position(|voltage| *voltage == -80.0)
+            .unwrap();
         let availability_at_minus_80 = inactivation[minus_80_index] / inactivation_max;
 
         // The half-range crossing is a transparent interpolation, not the
