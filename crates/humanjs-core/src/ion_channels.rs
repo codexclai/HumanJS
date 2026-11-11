@@ -924,6 +924,168 @@ mod tests {
         fit_exponential_offset_tau(&times, &values)
     }
 
+    fn solve_three_coefficients(mut matrix: [[f64; 4]; 3]) -> Option<[f64; 3]> {
+        for column in 0..3 {
+            let pivot = (column..3).max_by(|left, right| {
+                matrix[*left][column]
+                    .abs()
+                    .total_cmp(&matrix[*right][column].abs())
+            })?;
+            if matrix[pivot][column].abs() <= 1.0e-14 {
+                return None;
+            }
+            matrix.swap(column, pivot);
+            let divisor = matrix[column][column];
+            for entry in column..4 {
+                matrix[column][entry] /= divisor;
+            }
+            for row in 0..3 {
+                if row == column {
+                    continue;
+                }
+                let factor = matrix[row][column];
+                for entry in column..4 {
+                    matrix[row][entry] -= factor * matrix[column][entry];
+                }
+            }
+        }
+        Some([matrix[0][3], matrix[1][3], matrix[2][3]])
+    }
+
+    fn biexponential_fixed_tau2_sse(
+        log_tau1: f64,
+        times_ms: &[f64],
+        values: &[f64],
+        tau2_ms: f64,
+    ) -> f64 {
+        let tau1_ms = log_tau1.exp();
+        let mut sum_e1_squared = 0.0;
+        let mut sum_e2_squared = 0.0;
+        let mut sum_e1_e2 = 0.0;
+        let mut sum_e1 = 0.0;
+        let mut sum_e2 = 0.0;
+        let mut sum_y = 0.0;
+        let mut sum_e1_y = 0.0;
+        let mut sum_e2_y = 0.0;
+        for (time, value) in times_ms.iter().zip(values) {
+            let e1 = (-time / tau1_ms).exp();
+            let e2 = (-time / tau2_ms).exp();
+            sum_e1_squared += e1 * e1;
+            sum_e2_squared += e2 * e2;
+            sum_e1_e2 += e1 * e2;
+            sum_e1 += e1;
+            sum_e2 += e2;
+            sum_y += value;
+            sum_e1_y += e1 * value;
+            sum_e2_y += e2 * value;
+        }
+        let count = values.len() as f64;
+        let coefficients = solve_three_coefficients([
+            [sum_e1_squared, sum_e1_e2, sum_e1, sum_e1_y],
+            [sum_e1_e2, sum_e2_squared, sum_e2, sum_e2_y],
+            [sum_e1, sum_e2, count, sum_y],
+        ]);
+        let Some([amplitude1, amplitude2, offset]) = coefficients else {
+            return f64::INFINITY;
+        };
+        if amplitude1 < 0.0 || amplitude2 < 0.0 || offset < 0.0 {
+            return f64::INFINITY;
+        }
+        times_ms
+            .iter()
+            .zip(values)
+            .map(|(time, value)| {
+                let prediction = amplitude1 * (-time / tau1_ms).exp()
+                    + amplitude2 * (-time / tau2_ms).exp()
+                    + offset;
+                (value - prediction).powi(2)
+            })
+            .sum()
+    }
+
+    fn fit_biexponential_fixed_tau2(
+        times_ms: &[f64],
+        values: &[f64],
+        tau2_ms: f64,
+    ) -> Option<(f64, f64)> {
+        if times_ms.len() != values.len() || values.len() < 5 || tau2_ms <= 0.0 {
+            return None;
+        }
+        let mean_value = values.iter().sum::<f64>() / values.len() as f64;
+        let total_sum_squares = values
+            .iter()
+            .map(|value| (value - mean_value).powi(2))
+            .sum::<f64>();
+        if total_sum_squares <= f64::EPSILON {
+            return None;
+        }
+
+        const GRID_STEPS: usize = 256;
+        let minimum_log_tau = 0.01_f64.ln();
+        let maximum_log_tau = 300.0_f64.ln();
+        let log_step = (maximum_log_tau - minimum_log_tau) / GRID_STEPS as f64;
+        let mut best_index = 0;
+        let mut best_error = f64::INFINITY;
+        for index in 0..=GRID_STEPS {
+            let log_tau = minimum_log_tau + index as f64 * log_step;
+            let error = biexponential_fixed_tau2_sse(log_tau, times_ms, values, tau2_ms);
+            if error < best_error {
+                best_error = error;
+                best_index = index;
+            }
+        }
+
+        let mut left = minimum_log_tau + best_index.saturating_sub(1) as f64 * log_step;
+        let mut right = minimum_log_tau + (best_index + 1).min(GRID_STEPS) as f64 * log_step;
+        let golden_ratio = (5.0_f64.sqrt() - 1.0) / 2.0;
+        let mut c = right - golden_ratio * (right - left);
+        let mut d = left + golden_ratio * (right - left);
+        let mut fc = biexponential_fixed_tau2_sse(c, times_ms, values, tau2_ms);
+        let mut fd = biexponential_fixed_tau2_sse(d, times_ms, values, tau2_ms);
+        for _ in 0..80 {
+            if fc < fd {
+                right = d;
+                d = c;
+                fd = fc;
+                c = right - golden_ratio * (right - left);
+                fc = biexponential_fixed_tau2_sse(c, times_ms, values, tau2_ms);
+            } else {
+                left = c;
+                c = d;
+                fc = fd;
+                d = left + golden_ratio * (right - left);
+                fd = biexponential_fixed_tau2_sse(d, times_ms, values, tau2_ms);
+            }
+        }
+
+        let log_tau = (left + right) * 0.5;
+        let residual_sum_squares =
+            biexponential_fixed_tau2_sse(log_tau, times_ms, values, tau2_ms);
+        let r_squared = 1.0 - residual_sum_squares / total_sum_squares;
+        Some((log_tau.exp(), r_squared))
+    }
+
+    fn fit_k_inactivation_current_tau1(
+        current: &[f64],
+        step_ms: f64,
+        fixed_slow_tau_ms: f64,
+    ) -> Option<(f64, f64)> {
+        let mut peak_index = 0;
+        for (index, value) in current.iter().enumerate().skip(1) {
+            if value > &current[peak_index] {
+                peak_index = index;
+            }
+        }
+        if peak_index + 5 >= current.len() {
+            return None;
+        }
+        let decay = &current[peak_index..current.len() - 1];
+        let times: Vec<f64> = (0..decay.len())
+            .map(|index| index as f64 * step_ms)
+            .collect();
+        fit_biexponential_fixed_tau2(&times, decay, fixed_slow_tau_ms)
+    }
+
     fn replay_k_activation(model: HumanL23SingleCompartmentModel, test_voltage_mv: f64) -> f64 {
         let mut gates = initial_potassium_clamp_gates(model, -140.0);
         advance_k_clamp(model, &mut gates, -140.0, 20.0, 0.1);
@@ -975,6 +1137,32 @@ mod tests {
             }
         }
         panic!("voltage-clamp curve did not cross half range");
+    }
+
+    #[test]
+    fn deposited_k_iv_fixed_slow_tau_fit_replays_human_fast_inactivation_curve() {
+        let model = wilbers_voltage_clamp_model();
+        let voltages_mv = [0.0, 10.0, 20.0, 30.0, 40.0, 50.0];
+        // Independent SciPy references for K_IV's post-peak current fit:
+        // a1*exp(-t/tau1) + a2*exp(-t/450 ms) + offset, with tau1 in [0, 300] ms.
+        let expected_fast_tau_ms = [
+            52.280_407_80,
+            41.563_484_62,
+            33.463_646_61,
+            27.264_606_91,
+            22.469_336_83,
+            18.745_079_68,
+        ];
+        for (index, voltage_mv) in voltages_mv.into_iter().enumerate() {
+            let current = replay_k_activation_current(model, voltage_mv);
+            let (tau1_ms, r_squared) =
+                fit_k_inactivation_current_tau1(&current, 0.1, 450.0).unwrap();
+            assert!(
+                (tau1_ms - expected_fast_tau_ms[index]).abs() < 0.1,
+                "K_IV fast inactivation tau mismatch at {voltage_mv} mV: {tau1_ms} ms"
+            );
+            assert!(r_squared > 0.99);
+        }
     }
 
     #[test]
