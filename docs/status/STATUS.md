@@ -8,9 +8,8 @@
 - Repository: `codexclai/HumanJS`, public, default branch `main`.
 - `main` is the only branch; the live branch listing returned exactly `main`.
 - No open issues or pull requests were returned by live checks.
-- Latest implementation commit: `ecebdfade5f14639b839d39f8e34c7769ca69726` (corrected channel-prefactor dimensional metadata and added/adjusted gate regression tests).
-- Earlier GitHub Actions run `42971014142` passed on documentation head `6007494b9c5bdffd47821931be65a8fc0234418e`: https://github.com/codexclai/HumanJS/actions/runs/42971014142. Its Rust formatting, Clippy, workspace tests, Python AST syntax validation, and repository policy steps all passed.
-- Current code/documentation head `ecebdfade5f14639b839d39f8e34c7769ca69726` has workflow run `42972168530` pending: https://github.com/codexclai/HumanJS/actions/runs/42972168530. GitHub returned no job records yet. An older run `42971760205` remained `in_progress` without started steps, so the current run has not provided verification yet.
+- Latest implementation commit: `621664411ec0c089c3fdc7bbb2e8a9d51961606a` (corrected channel-prefactor dimensional metadata and added/adjusted gate regression tests).
+- GitHub Actions run `42972854292` passed on exact code commit `621664411ec0c089c3fdc7bbb2e8a9d51961606a`: https://github.com/codexclai/HumanJS/actions/runs/42972854292. Rust formatting, Clippy, Rust workspace tests, Python syntax validation, and repository policy all passed.
 - This chat did not complete a fresh local clone because network DNS resolution failed. No local Rust test run is claimed.
 - A fresh local clone in this chat was not completed because network DNS resolution failed. No local cargo test run is claimed.
 
