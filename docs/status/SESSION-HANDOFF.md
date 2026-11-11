@@ -2,7 +2,7 @@
 
 **Updated:** 2026-11-11  
 **Canonical repository:** `codexclai/HumanJS`, branch `main` only.  
-**Implementation baseline audited:** `92e3b4357755dec271dbc23020da87b3b858c074`.  
+**Current code head at handoff update:** `ecebdfade5f14639b839d39f8e34c7769ca69726`.  
 **Documentation reconciliation:** subsequent commits on `main`; verify the live HEAD and workflow before using this handoff in a later session.
 
 ## Verified repository state at start of this continuation
@@ -11,10 +11,9 @@
 - Full tree retrieved: 55 entries, not truncated.
 - Live branch listing contained exactly `main`.
 - No open issues or pull requests were returned.
-- Latest workflow at the implementation baseline: run `42969235743`, success on `92e3b4357755dec271dbc23020da87b3b858c074`: https://github.com/codexclai/HumanJS/actions/runs/42969235743.
-- Its steps passed Rust toolchain verification, `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo test --workspace --locked`, Python AST syntax validation, and repository policy.
+- Earlier workflow run `42971014142` passed on `6007494b9c5bdffd47821931be65a8fc0234418e`: https://github.com/codexclai/HumanJS/actions/runs/42971014142. Formatting, Clippy, Rust workspace tests, Python syntax, and repository policy passed there.
+- Current code head `ecebdfade5f14639b839d39f8e34c7769ca69726` has workflow run `42972168530` pending: https://github.com/codexclai/HumanJS/actions/runs/42972168530. GitHub returned no job records. Older run `42971760205` remained in progress without started steps; do not claim current code verification until the current run finishes.
 - This chat did not complete a fresh local clone because DNS resolution failed. Do not claim a local Rust test run.
-- The workflow is triggered on every push to `main`; the documentation commits made after the implementation baseline require their own current workflow result to be checked.
 
 ## Current HumanJS implementation
 
@@ -57,7 +56,7 @@ Runner: `experiments/reproduce_eyal_figure7a.py`.
 
 - Pure human `na_human.mod` and `k_human.mod` retrieved from the CC0 DataverseNL deposit, checksum-verified, compiled unchanged, and probed in NEURON 9.0.2.
 - Exact-singularity probes exposed non-finite `trap0` values. The active Na+ table's 200 nodes were finite; direct Na+ rates with table disabled were non-finite at exact singularities. K+ has no active table; exact singularities return non-finite values and two opposite-sign branch triggers produce negative inactivation time constants.
-- The K+ source matches the parameter values actually applied by the script; the alternate dictionary is not applied. The 14-versus-11 parameter count is explained by fixed inactivation steady states and `Rb = Ra`.
+- The K+ source matches the parameter values actually applied by the script; its alternate dictionary is a bare literal and is not applied. The 14-versus-11 parameter count is explained by fixed inactivation steady states and `Rb = Ra`. The fit script's `h12factor_k_human` assignment is not declared in the pure mechanism or read by `channel_tools.py`. The source's printed Table S2 rate-prefactor unit (`ms^-1`) is dimensionally incomplete for the voltage-valued `trap0` numerator; the code interprets the coefficient as `mV^-1 ms^-1`.
 - Full Wilbers voltage-clamp fitting was not reproduced from raw NWB traces; public workbooks are summary fits and original NWB traces were not present in the 65-file Dataverse listing examined.
 
 ## Corrective documentation work completed in this continuation
@@ -65,7 +64,9 @@ Runner: `experiments/reproduce_eyal_figure7a.py`.
 - Updated `docs/BOOT.md` to describe the three current CPU mechanisms and classify the spike model as exploratory.
 - Updated `docs/architecture/SYSTEM-ARCHITECTURE.md` with the model's actual equations/parameter provenance boundary and an explicit scientific acceptance checklist.
 - Updated `docs/decisions/DECISIONS.md`: ADR-014 remains the evidence gate; ADR-016 records the exploratory implementation and its unaccepted status.
-- Updated `research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md` to remove the obsolete claim that no spike code exists.
+- Updated `research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md` to remove the obsolete claim that no spike code exists and reconcile the K+ applied fit dictionary, the article's 14-parameter description versus the deposited 11-variable optimizer, the unused `h12factor_k_human` assignment, and the `trap0` prefactor dimensional convention.
+- Added regression tests for potassium slow inactivation/recovery constants, the three-component conductance fractions, and human gate half-voltage steady states. The half-voltage test accounts for the current-clamp −10 mV channel shift.
+- Corrected the `RatePrefactor` dimensional name and error label to `mV^-1 ms^-1`; no channel parameter values were changed.
 - Updated `docs/roadmap/MASTER-ROADMAP.md` to keep the accepted somatic-patch milestone unchecked and classify existing code as provisional.
 - Replaced `docs/status/STATUS.md` with a live, accurate implementation and verification summary.
 - This handoff is the final documentation file to update after this commit.
@@ -73,10 +74,9 @@ Runner: `experiments/reproduce_eyal_figure7a.py`.
 ## Next concrete work
 
 1. Verify the live main HEAD and the latest workflow after documentation updates.
-2. Independently reproduce the Wilbers K+ fast/slow inactivation and recovery protocols from the source equations; confirm no separate hybrid mechanism variant changes the `h12factor_k_human` interpretation.
-3. Keep the article's 14-parameter description distinct from the deposited 11-variable optimizer sequence (fixed inactivation steady states; `Rb = Ra`) and verify the constraints against protocol outputs.
-4. Audit units and temperature semantics for all Na+/K+ rate prefactors and current-clamp fitted conductances.
-5. Build independent numerical comparisons for Na+/K+ steady states, time constants, fast/slow recovery and source-singularity neighborhoods; reproduce published voltage-clamp protocols where raw data permit.
+2. Independently reproduce the Wilbers K+ fast/slow inactivation and recovery protocols from the source equations; inspect any alternate mechanism variants separately from the pure fit path.
+3. Verify the equation-level `trap0` prefactor units against the NMODL unit declarations and NEURON's unit checker; preserve the discrepancy between the printed Table S2 label and dimensional analysis until resolved from the source's unit contract.
+4. Build independent numerical comparisons for Na+/K+ steady states, time constants, fast/slow recovery and source-singularity neighborhoods; reproduce published voltage-clamp protocols where raw data permit.
 6. Verify the cross-species current-clamp fit target and geometry/reversal/channel-shift setup before promoting the model.
 7. Keep AIS-resolved modeling separate. Human NaV1.2/NaV1.6 immunostaining does not provide functional conductance densities or gating parameters.
 
