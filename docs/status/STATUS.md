@@ -1,30 +1,24 @@
 # HumanJS — current status
 
-**As of:** 2026-11-11
-**Stage:** two integrated Rust CPU mechanisms; canonical human pyramidal-model source audit and a six-cell NEURON reproduction are recorded. No intrinsic spike generator is implemented.
+**As of:** 2026-11-11  
+**Stage:** two foundational Rust CPU mechanisms plus one exploratory, unaccepted human L2/L3 single-compartment spike-capable mechanism. HumanJS is not a whole-brain simulator.
 
-## Canonical repository and verification
+## Canonical repository and live state
 
-- Repository: \`codexclai/HumanJS\`, public, default branch \`main\`.
-- \`main\` is the sole project branch; the live branch list returned exactly \`main\`.
-- No open issues or pull requests were returned by the live checks.
-- The latest verified implementation/experiment commit before this documentation refresh was \`38caae89b44782c4631e81c5765ab47c4cde4129\`.
-- GitHub Actions run \`42891382380\` passed on that exact commit: https://github.com/codexclai/HumanJS/actions/runs/42891382380.
+- Repository: `codexclai/HumanJS`, public, default branch `main`.
+- `main` is the only branch; the live branch listing returned exactly `main`.
+- No open issues or pull requests were returned by live checks.
+- Latest implementation commit: `92e3b4357755dec271dbc23020da87b3b858c074` (exploratory Na+/K+ single-compartment model and follow-up formatting/test corrections).
+- GitHub Actions run `42969235743` passed on that exact implementation commit: https://github.com/codexclai/HumanJS/actions/runs/42969235743.
+- The workflow ran `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo test --workspace --locked`, Python AST syntax validation for the Eyal runner, and `python3 .github/scripts/repository_policy.py`. Every step passed.
+- That workflow ran on the implementation commit before the current documentation-only reconciliation commits. A fresh workflow for the final documentation head must be checked separately.
+- A fresh local clone in this chat was not completed because network DNS resolution failed. No local cargo test run is claimed.
 
-The workflow verified:
-- \`cargo fmt --all -- --check\`
-- \`cargo clippy --workspace --all-targets -- -D warnings\`
-- \`cargo test --workspace --locked\` — 10 unit tests and 9 integration tests passed; 0 failed.
-- Python syntax parsing of \`experiments/reproduce_eyal_figure7a.py\`.
-- \`python3 .github/scripts/repository_policy.py\` — passed (16 required files; no JSON files; no prohibited archives or generated output).
+## Implemented Rust CPU mechanisms
 
-The new commit added experiment/research tooling and no Rust simulation code. The existing Rust tests were not modified or weakened.
+### 1. Passive membrane
 
-## Implemented HumanJS CPU mechanisms
-
-### Passive membrane
-
-The Rust workspace \`crates/humanjs-core\` contains:
+The Rust workspace `crates/humanjs-core` contains:
 - Validated SI wrappers for voltage, current, capacitance, conductance, input resistance, and membrane time constant.
 - Integer-nanosecond simulation time and positive step durations.
 - Separate passive model parameters, initial conditions, and live runtime state.
@@ -32,45 +26,52 @@ The Rust workspace \`crates/humanjs-core\` contains:
 - Derivation of lumped capacitance and leak conductance from supplied input resistance and time constant.
 - Failed-step handling that does not partially update membrane state.
 
-### Glutamatergic synapse
+### 2. Glutamatergic synapse
 
 The CPU synapse contains independent AMPA-like and NMDA-like normalized biexponential conductance kernels, voltage-dependent NMDA magnesium unblock, and deterministic presynaptic availability/depression/recovery. The membrane step uses interval-mean conductances and midpoint NMDA unblock. The membrane and synapse states update transactionally.
 
-The mechanism is an effective conductance abstraction for an adult human L2/L3 pyramidal-to-pyramidal evidence context, not a complete molecular or ultrastructural synapse. It excludes stochastic vesicle fusion, presynaptic calcium/release-site machinery, cleft glutamate dynamics/uptake, receptor Markov/desensitization states, dendritic spines/cable, and inhibitory inputs.
+This is an effective conductance abstraction for an adult human L2/L3 pyramidal-to-pyramidal evidence context, not a complete molecular or ultrastructural synapse. It excludes stochastic vesicle fusion, presynaptic calcium/release-site machinery, cleft glutamate dynamics/uptake, receptor Markov/desensitization states, dendritic spines/cable, and inhibitory inputs.
+
+### 3. Exploratory human L2/L3 single-compartment Na+/K+ spike model
+
+`crates/humanjs-core/src/ion_channels.rs` adds `HumanL23SingleCompartmentModel`, its initial conditions, runtime state, and CPU simulation. It integrates voltage plus five channel gates using fixed-step RK4, explicit SI surface/capacitance/conductance quantities, finite/bounded gate checks, and transactional state updates. The checked-in software fixture generates one spike for a 25 pA current pulse and checks selected waveform-scale values.
+
+**Classification: exploratory, not scientifically accepted or biologically validated.** It is one electrically lumped compartment, not a spatial soma/AIS neuron, intact pyramidal neuron, axon, dendritic tree, or propagating neural system.
+
+Parameter/evidence boundaries:
+- Na+ gates use values transcribed from the pure Wilbers human `na_human.mod`.
+- K+ gates use the pure `k_human.mod` values that match Table S2 and the first optimizer result. The deposited fit script's later final six-parameter dictionary differs; the code's selection is provisional, not a resolution.
+- The script assigns `h12factor_k_human=10.5`, while the pure K+ mechanism declares `inact_rate_factor=1` and does not declare that script variable. The relationship is unresolved.
+- The paper's stated 14 sodium fitting parameters remain unreconciled with the visible staged fitting/assignment variables.
+- Current-clamp maximum conductance densities (114.48 pS/μm² Na+, 29.05 pS/μm² K+) are fitted against cross-species mean AP features, not direct human channel-density measurements.
+- The 10 μm cylindrical geometry, 34°C, −10 mV channel shift, +15 mV reversal offsets, 1 μF/cm² capacitance, leak corresponding to Rm=10,000 Ω·cm², and 20 μs step follow the authors' current-clamp helper.
+- The Rust `trap0` function uses a stable analytic limit at the mathematical singularity. It does not reproduce the problematic source branch logic exactly.
+
+Current software tests cover the analytic rate limit/continuity, positive finite time constants over a bounded voltage scan, Q10 scaling, one-spike waveform scale, approximate step-size convergence, reset, and transactional failure. They do not reproduce the full published voltage-clamp protocols or resolve the source discrepancies. See ADR-014, ADR-016, `docs/architecture/SYSTEM-ARCHITECTURE.md`, and `research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md`.
 
 ## Human spike-initiation evidence and external model reproduction
 
-The canonical evidence record is \`research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md\`. The reproducible external model audit is \`experiments/HUMAN-L23-SPIKE-MODEL-REPRODUCTION.md\`, with runner \`experiments/reproduce_eyal_figure7a.py\`.
+The canonical evidence record is `research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md`. The Eyal external reproduction protocol/results are in `experiments/HUMAN-L23-SPIKE-MODEL-REPRODUCTION.md`, with runner `experiments/reproduce_eyal_figure7a.py`.
 
-### Eyal et al. (2018) canonical source audit
+### Eyal et al. (2018)
 
-The official 139,316,573-byte ModelDB archive for model 238347 was retrieved, integrity-tested, and audited. SHA-256: \`12dfd8b8fb38b28136d6904da69aaf5e200fa5fb64cd03d845a96d972057354b\`. The archive is not stored in this repository.
+The official 139,316,573-byte ModelDB archive for model 238347 was retrieved, integrity-tested, and audited. SHA-256: `12dfd8b8fb38b28136d6904da69aaf5e200fa5fb64cd03d845a96d972057354b`. It is not stored in this repository.
 
-The six HOC models map directly to the six Table S4 cell parameter sets. The active spike-model templates insert nine conductance mechanisms in soma and axon plus \`CaDynamics_E2\`; \`Ca_HVA\` is present in the archive but is not inserted by those six templates, and \`NMDA.mod\` is a separate synaptic mechanism. The HOC parameter assignments confirm the 29-parameter organization: nine maximum conductances, three NaTg parameters and two Ca-dynamics parameters per compartment, plus shared \`e_pas\`. The six models use a two-section, 60 μm axon stub; dendritic branches remain passive. The models assume rodent-like channel kinetic forms, so fitted conductances and transferred kinetics remain distinct evidence classes.
+The six HOC models map to Table S4. The active spike-model templates insert nine conductance mechanisms in soma and axon plus `CaDynamics_E2`; `Ca_HVA` is present in the archive but is not inserted by those six templates, and `NMDA.mod` is a separate synaptic mechanism. The six models use a two-section 60 μm axon stub; dendritic branches remain passive. The model uses rodent-like channel kinetic forms, so fitted conductances and transferred kinetics remain distinct evidence classes.
 
-The ten mechanisms actually inserted by those six templates were compiled from the original archive with NEURON 9.0.2. A Python 3 reproduction of the Figure 7A model-construction and stimulus sequence ran all six cells and compared first-spike metrics with the released repeated human current-clamp traces. The checked-in runner was executed successfully against the canonical archive in the cloud VM (Python 3.10.12, NEURON 9.0.2). The result table and methodological details are recorded in the experiment report.
+The ten mechanisms actually inserted by those six templates compiled in NEURON 9.0.2. A Python 3 reproduction of the Figure 7A construction/stimulus sequence ran all six cells and compared first-spike metrics with released human current-clamp traces. Some model/data timing, width, and peak differences remain. This is a selected model-execution audit, not an independent refit, exact trace match, HumanJS implementation, or biological validation.
 
-The comparison showed some close matches and visible timing/width/peak differences for several cells. It verifies source availability, HOC-to-Table-S4 mapping, channel compilation, and model execution; it is not an independent model refit, exact trace match, or biological validation.
+### Wilbers et al. (2023)
 
-### Wilbers et al. (2023) human Na+/K+ mechanism audit
+The pure human `na_human.mod` and `k_human.mod` files were retrieved from the CC0 DataverseNL deposit, checksum-verified, compiled unchanged, and probed in NEURON 9.0.2. Direct exact-singularity probes exposed non-finite `trap0` values. The active Na+ table's 200 nodes were finite; with the table disabled, exact-singularity rates were non-finite. K+ has no active table; exact singularities are non-finite and two opposite-sign branch triggers produce negative inactivation time constants.
 
-The pure human \`na_human.mod\` and \`k_human.mod\` files were retrieved from the CC0 DataverseNL deposit, checksum-verified, compiled unchanged, and probed in NEURON 9.0.2. Both explicitly set \`Rb = Ra\`. The K+ file matches Table S2 and its first optimizer result, while the fit script's later final dictionary differs; the script also assigns \`h12factor_k_human\`, which is not declared in the pure K+ mechanism. The paper's 14-parameter methods count remains unreconciled with the visible staged fit/assignment variables.
-
-A direct compiled \`trap0\` call at each stored gate singularity returns a non-finite value. In the Na+ mechanism, all 200 nodes of its active −120 to +100 mV lookup table were finite; the exact singularities are off-grid. With the Na+ table disabled, exact-singularity rates are non-finite. The K+ mechanism's table is commented out; exact gate singularities are non-finite, and two opposite-sign branch triggers produced negative inactivation time constants. This numerical issue is documented; the original source has not been modified, and HumanJS does not silently claim a patched source is an exact reproduction.
-
-The full Wilbers voltage-clamp fitting workflow was not rerun from raw traces. The public per-cell workbook summaries are not raw current recordings, and the NWB traces were absent from the 65-file Dataverse version examined.
-
-## Implementation boundary — no AP code
-
-HumanJS still does not generate action potentials. The Wilbers mechanisms represent human somatic nucleated-patch voltage-clamp behavior and exclude the AIS. Eyal's six-cell models include soma and a 60 μm axon stub but use rodent-like channel kinetics and passive dendrites. Human NaV1.2/NaV1.6 AIS immunolocalization supplies subtype-location evidence, not functional conductance or gating values.
-
-A future somatic nucleated-patch-equivalent model must be explicitly distinguished from an anatomical soma/AIS neuron. Its gate equations must handle the source's numerical edge cases intentionally and be checked against human voltage-clamp targets. The K+ parameter discrepancy and the methods parameter-count discrepancy remain unresolved. No threshold-only event, generic rodent Hodgkin–Huxley set, or AIS conductance inferred from immunostaining has been added.
+The K+ file matches Table S2 and the first optimizer result, while the fit script's later final dictionary differs and assigns an undeclared `h12factor_k_human`. The methods-level 14-parameter sodium count remains unreconciled. The full Wilbers voltage-clamp fitting workflow was not rerun from raw traces; public workbooks are summary fits and the original NWB traces were absent from the 65-file Dataverse version examined.
 
 ## Not yet implemented
 
-- A configurable default of 10,000 spiking neuron units or any AP-generating mechanism.
-- An evidence-bounded somatic-patch-equivalent model or anatomical AIS model.
-- Explicit presynaptic calcium/release machinery, stochastic vesicle fusion, glutamate-cleft dynamics/uptake, and molecular receptor-state kinetics.
+- A scientifically accepted/validated somatic-patch-equivalent or anatomical soma/AIS spike model.
+- A configurable default of 10,000 spiking neuron units or any population/network runtime.
+- Explicit presynaptic calcium/release machinery, stochastic vesicle fusion, glutamate-cleft dynamics/uptake, molecular receptor-state kinetics, and inhibitory synapses.
 - Dendritic morphology/spines/cable filtering, multicompartment integration, populations, and connected networks.
 - Long-term synaptic plasticity or learning.
 - Runtime save/restore/checkpointing or safe interruption/resumption.
@@ -80,6 +81,6 @@ A future somatic nucleated-patch-equivalent model must be explicitly distinguish
 
 These remain requirements or future objectives, not current capabilities.
 
-## Next implementation milestone
+## Next milestone
 
-Resolve the remaining Wilbers K+ fit/parameter-count discrepancies and define an independently specified, numerically stable human somatic-patch-equivalent Na+/K+ model. Validate its gate responses against published human voltage-clamp summaries and its action-potential waveform against the available human current-clamp targets. Keep this preparation-equivalent model separate from an anatomical soma/AIS model. Do not claim biological validation from software or external model reproduction tests.
+Keep the spike-capable code provisional. Resolve or explicitly bound the Wilbers K+ fit/dictionary and sodium parameter-count discrepancies; audit units and temperature conventions; compare gate curves/time constants/recovery behavior against the published voltage-clamp protocols and human summaries; and verify the current-clamp conductance-fit objective and setup. Add independent validation tests before considering promotion. Keep the single-compartment preparation-equivalent distinct from any anatomical soma/AIS model. Do not claim biological validation from software tests or external model reproduction.
