@@ -2,16 +2,16 @@
 
 **Updated:** 2026-11-11  
 **Canonical repository:** `codexclai/HumanJS`, branch `main` only.  
-**Latest implementation/CI change:** `3c28de63c8a953c85084ff7c6731caae144b4ee6` (no later Rust code changes in this continuation).  
+**Latest implementation change:** `3c28de63c8a953c85084ff7c6731caae144b4ee6` (no later Rust code changes in this continuation).  
 **Latest research record:** `7df2bb1e25021fe454b9c18979e5a54602dd3272`.  
 Verify the live HEAD and newest workflow before relying on this handoff.  
 **Documentation reconciliation:** subsequent commits on `main`; verify the live HEAD and workflow before using this handoff in a later session.
 
 ## Verified repository state at handoff
 
-- Public repository; default branch `main`; live baseline HEAD before this documentation refresh: `73311b47fb18e768f15f8b1f678bced91117cf98`.
+- Public repository; default branch `main`; verified live HEAD `65fb7d37e410a2eedc44b1f29e1f528956c8d535`.
 - Full tree: 63 entries, not truncated. Live branch listing: exactly `main`. No open issues or pull requests.
-- GitHub Actions run `43024354498` passed on that exact baseline: https://github.com/codexclai/HumanJS/actions/runs/43024354498. Formatting, Clippy, workspace tests (27 core, 3 passive, 6 synapse), Python syntax, seven-CSV Figure S5 validation, and repository policy passed.
+- GitHub Actions run `43070078342` passed on that exact HEAD: https://github.com/codexclai/HumanJS/actions/runs/43070078342. The `policy-and-rust` job passed formatting, Clippy, workspace tests, Python syntax, seven-CSV Figure S5 validation, and repository policy.
 - Fresh independent NEURON 9.0.2 `modlunit` invocation on unmodified `k_human.mod` and `k_mouse.mod` again failed at the untyped `trates(v+vshift)` call, line 82. Both species' repeated diagnostics are now recorded in `research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md`. The original files still compile with `nrnivmodl`; see ADR-014 for the temporary typed-probe findings. No source file was changed. The same research record clarifies that the article's public Dataverse data statement is satisfied by deposited summary/model files; it does not mean the missing per-cell K kinetic CSVs or raw voltage-clamp traces occur in the inspected 65-file v3.0 inventory.
 - No fresh local Rust test run is claimed; the Rust checks above were run in GitHub Actions.
 
@@ -111,8 +111,7 @@ Runner: `experiments/reproduce_eyal_figure7a.py`.
 
 ## Next concrete work
 
-1. Verify the live `main` HEAD and the workflow that executes the new Figure S5 digitization validator.
-2. Quantitatively digitize the model lines in panels J/K/M/N and compare them with the reproduced source current-fit outputs; the current raster checks for M/N are qualitative only.
+1. Quantitatively digitize the model lines in panels J/K/M/N and compare them with the reproduced source current-fit outputs; the current raster checks cover the mouse panel-I pre-fit comparison, while recovery model comparisons are equation-side references rather than direct raster line digitization.
 3. Obtain the missing per-cell human K tau CSVs and raw voltage-clamp traces. Assess human-only recovery parameters separately; the deposited 236.824345-ms fast and 2789.7929-ms slow values are pooled human/mouse source parameters, not human-only targets.
 4. Preserve the absence of the exact Dataverse K tau CSVs and raw voltage-clamp NWB traces; no fitting or biological-validation claim is justified without them.
 5. Independently verify the cross-species current-clamp fit objective, geometry, reversal/channel shifts, temperature handling, and source rate-prefactor dimensional convention.
