@@ -69,7 +69,7 @@ This third mechanism is **not yet an accepted or biologically validated human ne
 
 The research record `research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md` documents human somatic patch evidence, AIS localization limits, the Wilbers source/runtime discrepancies, and the separate Eyal six-cell soma/axon reproduction. Eyal's transferred rodent-like kinetics are not a source of human channel gating parameters. External model execution is not HumanJS implementation or biological validation.
 
-The latest verified main workflow is `43070078342` on HEAD `65fb7d37e410a2eedc44b1f29e1f528956c8d535`; all job steps passed, including formatting, Clippy, Rust workspace tests, Python syntax, seven-CSV Figure S5 validation, and repository policy. These are software checks only; no fresh local Rust run is claimed.
+The latest verified main workflow at the previous session end was `43071024916` on HEAD `d2dc71d4c99c9d399aa9747348e8bceb849c5115`; all job steps passed, including formatting, Clippy, Rust workspace tests, Python syntax, seven-CSV Figure S5 validation, and repository policy. This session adds a CI-checked quantitative comparison of panel-J human fast-inactivation model outputs (RMSE 5.914 ms; 3/6 residuals within ±2-ms plot-reading estimate) and panel-K fixed 450-ms slow component (RMSE 148.967 ms human, 166.385 ms mouse; 2/10 and 3/10 within ±25-ms plot-reading estimate). These are model-versus-group-mean comparisons, not model-line pixel digitization or biological validation. Recheck the latest workflow and HEAD live.
 
 Checkpointing, Rust-native concurrency, the configurable 10,000-unit default, Python package, C/C++, JSON model loading, and WGSL remain future work. Do not claim these capabilities until implemented and tested.
 
