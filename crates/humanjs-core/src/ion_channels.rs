@@ -807,11 +807,15 @@ mod tests {
         advance_k_clamp(model, &mut gates, 60.0, 50.0, 0.1)
     }
 
-    fn replay_k_recovery(model: HumanL23SingleCompartmentModel, recovery_delay_ms: f64) -> f64 {
+    fn replay_k_recovery(
+        model: HumanL23SingleCompartmentModel,
+        recovery_voltage_mv: f64,
+        recovery_delay_ms: f64,
+    ) -> f64 {
         let mut gates = initial_potassium_clamp_gates(model, -120.0);
         advance_k_clamp(model, &mut gates, -120.0, 2.0, 0.5);
         advance_k_clamp(model, &mut gates, 40.0, 5_000.0, 0.5);
-        advance_k_clamp(model, &mut gates, -80.0, recovery_delay_ms, 0.5);
+        advance_k_clamp(model, &mut gates, recovery_voltage_mv, recovery_delay_ms, 0.5);
         advance_k_clamp(model, &mut gates, 40.0, 5.0, 0.5)
     }
 
@@ -845,18 +849,93 @@ mod tests {
         assert!((activation_at_zero - 0.471_306_108_091_782).abs() < 1.0e-9);
         assert!((inactivation_after_minus_80 - 0.805_281_859_671_567_1).abs() < 1.0e-9);
 
+        // The deposited recovery protocol crosses all five recovery voltages
+        // at each of its ten delays; testing only -80 mV misses 40 of 50
+        // command-condition combinations.
+        let recovery_voltages_mv = [-90.0, -85.0, -80.0, -75.0, -70.0];
         let delays_ms = [
-            4.0, 144.0, 484.0, 1_024.0, 1_764.0, 2_704.0, 3_844.0, 5_184.0, 6_724.0, 8_464.0,
+            4.0, 144.0, 484.0, 1_024.0, 1_764.0, 2_704.0, 3_844.0, 5_184.0, 6_724.0,
+            8_464.0,
         ];
-        let recovered: Vec<f64> = delays_ms
-            .into_iter()
-            .map(|delay| replay_k_recovery(model, delay))
-            .collect();
-        assert!(recovered.windows(2).all(|pair| pair[1] > pair[0]));
-        assert!((recovered[2] - 0.479_816_410_714_972_83).abs() < 1.0e-9);
-        assert!((recovered[9] - 0.735_092_972_795_100_9).abs() < 1.0e-9);
-    }
+        let expected = [
+            [
+                0.291_082_989_815_785_7,
+                0.412_419_236_965_238,
+                0.443_856_715_493_229_75,
+                0.486_541_747_034_953_9,
+                0.533_108_691_260_371_2,
+                0.576_960_635_982_883_8,
+                0.613_674_597_815_942,
+                0.641_417_156_682_703_3,
+                0.660_503_691_691_283_3,
+                0.672_525_476_198_488,
+            ],
+            [
+                0.283_809_702_546_915_57,
+                0.405_627_536_896_452_7,
+                0.436_289_754_973_531_84,
+                0.477_922_157_031_274_94,
+                0.523_340_742_295_714_6,
+                0.566_111_281_001_233_1,
+                0.601_919_862_252_309_5,
+                0.628_978_278_824_466_6,
+                0.647_594_132_454_319_6,
+                0.659_319_455_078_628_5,
+            ],
+            [
+                0.275_245_011_134_798_16,
+                0.396_258_974_887_334,
+                0.425_851_823_941_902_1,
+                0.466_032_263_164_397_16,
+                0.509_866_839_470_092_5,
+                0.551_145_721_927_724_6,
+                0.585_705_450_684_356_2,
+                0.611_820_183_651_877_8,
+                0.629_786_794_713_899_8,
+                0.641_103_187_470_116_9,
+            ],
+            [
+                0.265_378_216_947_361_97,
+                0.383_653_399_207_948_33,
+                0.411_807_425_212_215_4,
+                0.450_034_266_049_494_87,
+                0.491_737_577_512_283_86,
+                0.531_009_454_579_402_5,
+                0.563_888_867_451_018_4,
+                0.588_733_885_573_633_9,
+                0.605_826_948_634_744_2,
+                0.616_593_131_213_003_3,
+            ],
+            [
+                0.254_615_378_927_694_3,
+                0.367_248_215_344_183_17,
+                0.393_529_745_369_294_86,
+                0.429_214_157_434_335_3,
+                0.468_143_823_556_878_95,
+                0.504_803_767_542_205_1,
+                0.535_496_403_702_269_1,
+                0.558_689_004_634_811_2,
+                0.574_645_225_247_516_3,
+                0.584_695_359_840_783_8,
+            ],
+        ];
 
+        for (voltage_index, recovery_voltage_mv) in recovery_voltages_mv.into_iter().enumerate() {
+            let recovered: Vec<f64> = delays_ms
+                .into_iter()
+                .map(|delay| replay_k_recovery(model, recovery_voltage_mv, delay))
+                .collect();
+            assert!(recovered.windows(2).all(|pair| pair[1] > pair[0]));
+            for (delay_index, value) in recovered.into_iter().enumerate() {
+                assert!(
+                    (value - expected[voltage_index][delay_index]).abs() < 1.0e-9,
+                    "recovery mismatch at {} mV after {} ms: {value}",
+                    recovery_voltage_mv,
+                    delays_ms[delay_index]
+                );
+            }
+        }
+    }
     #[test]
     fn potassium_clamp_curves_are_consistent_with_published_human_group_summaries() {
         let model = wilbers_voltage_clamp_model();
