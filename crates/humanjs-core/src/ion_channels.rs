@@ -808,9 +808,10 @@ mod tests {
         advance_k_clamp(model, &mut gates, -140.0, 20.0, 0.1);
         let reversal_mv = model.potassium_reversal.as_volts() * 1_000.0;
         let mut current = Vec::with_capacity(4_995);
-        for step in 1..=5_000 {
+        let mut time_ms = 20.0;
+        for _ in 1..=5_000 {
+            time_ms += 0.1;
             let conductance = advance_k_clamp_step(model, &mut gates, test_voltage_mv, 0.1);
-            let time_ms = 20.0 + step as f64 * 0.1;
             if time_ms > 20.4 && time_ms < 520.0 {
                 current.push(conductance * (test_voltage_mv - reversal_mv));
             }
@@ -1009,9 +1010,7 @@ mod tests {
             let (tau_ms, r_squared) = fit_k_activation_current_tau(&current, 0.1).unwrap();
             assert!(
                 (tau_ms - expected_tau_ms[index]).abs() < 0.01,
-                "K_IV current activation tau mismatch at {voltage_mv} mV: {tau_ms} ms; current head {:?}; current tail {:?}",
-                &current[..10],
-                &current[current.len().saturating_sub(5)..]
+                "K_IV current activation tau mismatch at {voltage_mv} mV: {tau_ms} ms"
             );
             assert!(r_squared > 0.99);
             squared_error += (tau_ms - experimental_means_ms[index]).powi(2);
