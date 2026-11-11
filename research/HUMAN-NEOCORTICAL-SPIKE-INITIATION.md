@@ -470,6 +470,23 @@ Consequently, the model-side clamp waveforms and optimizer logic are source-audi
 
 
 
+
+
+#### Publisher supplementary Figure S5 kinetic data availability
+
+A follow-up search of the publisher-hosted [supplementary PDF](https://www.science.org/doi/suppl/10.1126/sciadv.ade3300/suppl_file/sciadv.ade3300_sm.pdf) found Figure S5 panels H–N, which include K+ activation, fast/slow inactivation, and fast/slow recovery time-constant plots. The caption states that these panels compare experimentally recorded and model K+ currents, with human (open-circle) and mouse (cross) experimental means. The article's data-availability statement says that data needed to evaluate the conclusions are in the paper and/or supplementary materials.
+
+The PDF text extraction exposes table-like numerical series for:
+- Panel I: activation time constants over −10 to +55 mV (two extracted, unlabelled series).
+- Panel J: fast inactivation time constants (repeated voltage/value entries; series structure not preserved).
+- Panel K: slow inactivation time constants (21 extracted voltage/value pairs).
+- Panel M: fast recovery time constants (five extracted voltage/value pairs; some voltage labels may be OCR-ambiguous).
+- Panel N: slow recovery time constants (three extracted voltage/value pairs).
+
+**These are not yet approved as quantitative targets.** The PDF extraction labels the series as unlabelled and does not preserve the legend-to-series mapping. It is therefore not possible to determine reliably which extracted values are the model curve, human experimental means, or mouse experimental means. Some voltage labels in the fast-recovery table are also inconsistent with the deposited recovery protocol. The OCR output is useful as a locator and transcription aid, but it is not a verified digitization of the plotted data and does not replace the absent Dataverse `Experimental means/k_tau_*.csv` files or per-cell voltage-clamp traces.
+
+The evidence inventory is therefore refined: exact K+ kinetic CSVs and raw traces remain absent from the inspected Dataverse version, but the publisher supplement does contain group-level plotted kinetic information that may be digitized after the panel legend and plotted series are visually verified. The next data-validation step is to map Figure S5's model line and human/mouse markers, then independently digitize the curves with uncertainty; do not fit to the OCR series until that mapping is established.
+
 #### NEURON 9.0.2 unit-checker diagnostic
 
 The original pure `k_human.mod` and `na_human.mod` were checked with NEURON 9.0.2's own `modlunit`, separately from compilation. Both mechanisms compile unchanged with `nrnivmodl`; compilation emits a warning that assignment to the GLOBAL variable `tadj` is not thread-safe. Compilation does **not** establish dimensional consistency.
