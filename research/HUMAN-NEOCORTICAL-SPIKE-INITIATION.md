@@ -589,3 +589,66 @@ A fresh live query of the released DataverseNL dataset DOI `10.34894/L5J0SD`, ve
 The complete inventory lists only three Python source files in `Figures5_6/Current_clamp`: `cc_tools.py` (318557), `currentclamp.py` (318553), and `fit_gbar_na_k.py` (318556). It contains no separately named outcome-extractor Python module in that directory. The retrieved `cc_tools.py` source still lacks `get_outcomes_full` while calling it from `fit_densities`; the 65-file inventory does not identify an alternate current-clamp source module that resolves this missing symbol. This makes the published current-clamp fit workflow's executable source dependency incomplete in the released inventory examined, although an externally installed/unlisted dependency cannot be ruled out.
 
 Content retrieval for the three unrestricted CSVs was blocked during this recheck by Dataverse's BotStopper/anti-bot service (the metadata inventory itself succeeded). Thus the files are **present and public by metadata**, but their numeric contents were not read in this session. Do not describe them as missing from the dataset, and do not claim their values or the HumanJS preset mapping has been independently verified. The next step is to obtain the CSV bytes through a legitimate alternate Dataverse access route and validate their checksums before parsing; no parameter retuning is justified yet.
+
+
+## 3. Complete current-clamp conductance-fit provenance (2026-11-12 correction)
+
+**Canonical dataset:** Wilbers et al. (2023), DataverseNL DOI [10.34894/L5J0SD](https://doi.org/10.34894/L5J0SD), version 3.0. The current-clamp source files and three calibration CSVs are unrestricted (Dataverse metadata `restricted=false`). They were retrieved from the documented Dataverse access API through its signed SURF object-store redirect. Downloaded byte counts and SHA-1 digests match the independent Dataverse file metadata:
+
+| File | Dataverse ID | Bytes | SHA-1 |
+|---|---:|---:|---|
+| `AP1comparison.csv` | 318555 | 846 | `85fea00fea374ed0595d032180a798371d96aa4d` |
+| `gbar_na.csv` | 318551 | 8,224 | `ac2f1b3ae108e8f256e53b0d85c4e0b353eb173a` |
+| `gbar_k.csv` | 318552 | 8,037 | `6867798db8a5a2a77a66bb72b7cae77590ff0247` |
+| `cc_tools.py` | 318557 | 10,448 | `f64162577fa5dd86892b46570d597e58e083a02b` |
+| `currentclamp.py` | 318553 | 3,070 | `fffbe589889ae552c29b96dd2eb1dafd90e1c69e` |
+| `fit_gbar_na_k.py` | 318556 | 1,472 | `708babaafe09090828978b366e4c6193fe982421` |
+
+The three CSV files are preserved verbatim in HumanJS under `research/WILBERS-CURRENT-CLAMP-*.csv` (CC0 source data). The stdlib-only validator `experiments/validate_wilbers_current_clamp_grid.py` checks their byte counts, SHA-1 values, target medians, grid shape/orientation, optimizer bounds, and both endpoint values; CI runs it on every main push.
+
+### The outcome extractor is present in the complete helper
+
+The full 10,448-byte `cc_tools.py` was retrieved and checksum-verified. Contrary to the earlier incomplete extraction, the file **does define** both `get_outcomes(t, v)` and `get_outcomes_full(t, v)` at its end (the latter begins at source line 283). The prior “missing helper” conclusion was an extraction/search error and is superseded.
+
+The exact `get_outcomes_full` definitions used by `fit_densities` are now known:
+
+1. Detect AP peaks with `scipy.signal.find_peaks(v, prominence=50)`; the returned peak voltages are called `amp`. This is absolute peak voltage, not peak-to-threshold amplitude.
+2. For each peak, take samples in the open interval from 1 ms before to 3 ms after that peak and calculate discrete `dvdt = diff(v)/diff(t)`.
+3. Define threshold as the voltage sample immediately after the last pre-maximum-slope derivative sample below 40 mV/ms. The source comment notes this criterion was changed from 23.
+4. Define AP amplitude for fractional windows as peak voltage minus this threshold. Upstroke is the mean `dvdt` between the 30% and 70% levels on the rising phase. Downstroke is the mean `dvdt` between the 70% and 30% levels on the falling phase.
+5. Also calculate AHP as the minimum voltage between this peak and the next detected peak, or within 25 ms after the final peak. AHP and threshold are returned but are not optimizer targets in `fit_densities`.
+
+The separate `get_outcomes` helper detects peaks with the same 50-mV prominence and returns the maximum and minimum derivative within the same −1/+3-ms windows. It is used by accommodation analysis, not by the three-feature density objective.
+
+### Exact optimizer target and current-clamp protocol
+
+`fit_densities` reads `AP1comparison.csv` and selects median rows in this order: `[5, 0, 1]`, corresponding to peak voltage (`amplitude`), upstroke, and downstroke. It forms each target as the arithmetic mean of the human and mouse medians:
+
+| Feature | Human median | Mouse median | Optimizer target |
+|---|---:|---:|---:|
+| AP peak voltage (mV) | 46.1861495972 | 50.5402011871 | 48.3631753922 |
+| Upstroke (mV/ms) | 378.1895103072 | 461.7445706513 | 419.9670404793 |
+| Downstroke (mV/ms) | −76.0721557507 | −70.1367784282 | −73.1044670895 |
+
+The objective is the equally weighted sum of the three squared relative residuals, `((model - target) / target)^2`. It is optimized with SciPy `minimize(method="Powell")`, initial conductances [95, 65], and independent bounds [20, 150] pS/μm². If the simulation does not contain exactly one detected AP, the objective is multiplied by four. Any exception in feature extraction is caught and converted to NaN. The code runs the objective again at the selected optimizer result and prints the extracted features.
+
+The current-clamp cell uses one 10 μm-long, 10 μm-diameter section at 34°C; axial resistance 200 Ω·cm; specific capacitance 1 μF/cm²; passive membrane resistance 10,000 Ω·cm²; (E_K=-86) mV, (E_{Na}=+68) mV, and (E_{leak}=-70) mV. The human and mouse Na/K mechanisms are inserted together. All four mechanism voltage shifts are −10 mV. The one-AP runner finds rheobase using a 3-ms pulse, an APCount threshold of −20 mV, and coarse-to-fine current increments 0.1, 0.01, and 0.001 nA; it then applies 1.5× rheobase for 3 ms after a 1-ms delay, records for 29 ms, and uses (dt=0.02) ms.
+
+### Exact source mapping of the HumanJS conductance preset
+
+`fit_gbar_na_k.py` evaluates 20 Na kinetic ratios and 20 K kinetic ratios, each from 0 to 1 inclusive, for 400 calls to `fit_densities`. The outer loop is Na ratio and the inner loop is K ratio. The exported matrices reverse the Na rows for plotting: CSV row labels descend from 1 to 0, while K columns ascend from 0 to 1. The downstream interpolation explicitly reverses the rows again and treats K ratio as x and Na ratio as y.
+
+The all-human kinetic condition is therefore the top-right cell (Na ratio=1, K ratio=1). Its exact deposited fitted conductance values are:
+
+- Na: **114.47654963753565 pS/μm²**
+- K: **29.045736151752504 pS/μm²**
+
+Rounded to two decimals, these are **114.48 and 29.05 pS/μm²**, exactly the values in `HumanL23SingleCompartmentModel::wilbers_2023_human_l23_current_clamp_fit()`. This resolves the previously open provenance question: the HumanJS preset maps to the all-human-kinetics corner of the published 20×20 fitted-density grid, rather than an unidentified table entry.
+
+The all-mouse (0,0) bottom-left corner is 148.61916853685673 pS/μm² Na and 64.99989629764137 pS/μm² K. The source `currentclamp.py` independently calls `fit_densities` at all-human ratios (1,1), all-mouse ratios (0,0), and mixed ratios (0.5,0.5), confirming the grid endpoints' intended interpretation.
+
+**Important interpretation:** “all-human” describes the channel kinetic ratios used in the model, not the experimental target population. The optimizer still fits the all-human kinetic model against the 50:50 human/mouse median AP feature targets shown above. The preset is not a human-only AP fit and its conductances are not direct measurements of human channel density. It remains a fitted single-compartment model parameterization, not biological validation.
+
+### Reproduction boundary
+
+This session verified all six downloaded files against the Dataverse SHA-1 metadata and parsed the complete source helper and calibration tables. The original NEURON/SciPy optimization was **not rerun**: the available execution environment does not have NEURON, SciPy, or NumPy installed. The source grid is a deposited result, not a fresh independent optimization. The HumanJS 114.48/29.05 mapping is nevertheless directly verified by the exact grid corner and its matching source checksums. Do not claim an independently rerun optimizer, raw-trace reproduction, or biological validation.
