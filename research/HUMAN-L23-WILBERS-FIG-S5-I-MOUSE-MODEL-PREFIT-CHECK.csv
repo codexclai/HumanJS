@@ -1,0 +1,19 @@
+# Source: Wilbers et al. (2023), Science Advances 9, eade3300, Supplementary Figure S5, panel I.
+# DOI: https://doi.org/10.1126/sciadv.ade3300
+# Official PMC AWS object: https://pmc-oa-opendata.s3.amazonaws.com/PMC10569700.1/sciadv.ade3300_sm.pdf
+# PDF SHA-256: dfa1daaf4dd0e3979bac84b9cb8b1874c4514d40588969a21d7766a7f12f2a1d
+# This is a source-provenance comparison, not an experimental dataset.
+# Observed blue model-line pixel centers were read from the 6x page-7 raster at voltages without overlaid experimental markers.
+# x-axis: -10 mV at crop x=50 px; 50 mV at x=662 px; 10.2 px/mV.
+# y-axis: 7.5 ms at crop y=104 px; 2.5 ms at y=336 px.
+# Predicted taus come from an independent Python/SciPy implementation of the deposited NMODL equations and K_IV current-fit protocol; NEURON itself was not executed.
+# The deposited mouse MOD default Ra=0.0167/ms; fit_k_hh_cma_mouse.py later reports optimized Ra=0.020746083599133762/ms.
+# Model-line pixel-reading uncertainty is conservatively estimated at +/-5 px; this is not biological uncertainty.
+voltage_mV,observed_blue_model_line_y_pixel,default_Ra_per_ms,default_model_tau_ms,default_model_y_pixel,postfit_Ra_per_ms,postfit_model_tau_ms,postfit_model_y_pixel
+-5,153,0.0167,6.244293,162.265,0.020746083599133762,4.995447,220.211
+5,280,0.0167,3.573022,286.212,0.020746083599133762,2.841366,320.161
+15,336,0.0167,2.406695,340.329,0.020746083599133762,1.905511,363.584
+25,366,0.0167,1.779006,369.454,0.020746083599133762,1.402726,386.913
+35,384,0.0167,1.399158,387.079,0.020746083599133762,1.107950,400.591
+45,396,0.0167,1.149666,398.656,0.020746083599133762,0.904239,410.043
+# Pixel RMSE: pre-fit default Ra=5.348 px; post-fit Ra=36.058 px.
