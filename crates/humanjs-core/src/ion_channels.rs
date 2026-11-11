@@ -1009,7 +1009,9 @@ mod tests {
             let (tau_ms, r_squared) = fit_k_activation_current_tau(&current, 0.1).unwrap();
             assert!(
                 (tau_ms - expected_tau_ms[index]).abs() < 0.01,
-                "K_IV current activation tau mismatch at {voltage_mv} mV: {tau_ms} ms"
+                "K_IV current activation tau mismatch at {voltage_mv} mV: {tau_ms} ms; current head {:?}; current tail {:?}",
+                &current[..10],
+                &current[current.len().saturating_sub(5)..]
             );
             assert!(r_squared > 0.99);
             squared_error += (tau_ms - experimental_means_ms[index]).powi(2);
