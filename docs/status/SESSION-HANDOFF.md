@@ -2,7 +2,7 @@
 
 **Updated:** 2026-11-11  
 **Canonical repository:** `codexclai/HumanJS`, branch `main` only.  
-**Verified source/code commit:** `46ed2817758e6dcf36cc15a57e11a32f96085342`.  
+**Verified source/code commit:** `660dee7287376720d37d96dac939941fe26df7d6`.  
 **Documentation reconciliation:** subsequent commits on `main`; verify the live HEAD and workflow before using this handoff in a later session.
 
 ## Verified repository state at start of this continuation
@@ -11,7 +11,7 @@
 - Full tree retrieved: 55 entries, not truncated.
 - Live branch listing contained exactly `main`.
 - No open issues or pull requests were returned.
-- GitHub Actions run `42975907351` passed on exact code head `46ed2817758e6dcf36cc15a57e11a32f96085342`: https://github.com/codexclai/HumanJS/actions/runs/42975907351. Rust formatting, Clippy, workspace tests (including the full K+ clamp-series comparison), Python syntax validation, and repository policy all passed.
+- GitHub Actions run `43016424733` passed on exact code head `660dee7287376720d37d96dac939941fe26df7d6`: https://github.com/codexclai/HumanJS/actions/runs/43016424733. Rust formatting, Clippy, workspace tests (including all 50 conditions in the K+ recovery protocol), Python syntax validation, and repository policy all passed.
 - This chat did not complete a fresh local clone because DNS resolution failed. Do not claim a local Rust test run.
 
 ## Current HumanJS implementation
@@ -34,7 +34,7 @@ The third mechanism was committed before the scientific evidence gate in ADR-014
 - The 10 μm cylindrical geometry, 34°C, −10 mV channel shift, +15 mV reversal offsets, 1 μF/cm² capacitance, Rm=10,000 Ω·cm² leak, and 20 μs maximum step follow the deposited current-clamp helper.
 - The Rust `trap0` uses a stable analytic limit at the mathematical singularity. This is not an exact reproduction of the source's branch behavior. The pure NMODL files declare its prefactor as `/ms`, but the voltage-valued numerator requires `mV⁻¹·ms⁻¹`; HumanJS keeps numeric values and uses the equation-consistent internal unit pending verification against the original NEURON unit contract.
 
-Current code tests cover the analytic `trap0` limit/continuity, half-voltage steady states, potassium fast/slow inactivation branch constants and conductance fractions, positive finite time constants over a bounded voltage scan, Q10 scaling, one-spike waveform scale, approximate step-size convergence, reset, and transactional failure. These are software tests, not biological validation.
+Current code tests cover the analytic `trap0` limit/continuity, half-voltage steady states, potassium fast/slow inactivation branch constants and conductance fractions, positive finite time constants over a bounded voltage scan, Q10 scaling, the K+ activation/inactivation clamp replay, all 50 combinations of five recovery voltages and ten recovery delays against independent model-side gate references, one-spike waveform scale, approximate step-size convergence, reset, and transactional failure. These are software tests, not biological validation.
 
 ## Human spike-initiation source audit and external reproduction
 
@@ -66,8 +66,8 @@ Runner: `experiments/reproduce_eyal_figure7a.py`.
 - Recovery model clamp: −120 mV for 2 ms, +40 mV for 5,000 ms, recovery at −90/−85/−80/−75/−70 mV for 4, 144, 484, 1,024, 1,764, 2,704, 3,844, 5,184, 6,724, and 8,464 ms, then +40 mV for 5 ms. Temperature is 34°C. Deactivation protocol exists in the helper but is not used by the optimizer.
 - The human optimizer fits six inactivation/recovery parameters, then activation kinetics, then activation steady state. Its fast-recovery target is hard-coded to 236.824345 ms, commented as the mean of human and mouse values. Slow inactivation (450 ms) and slow recovery (2,789.7929 ms) are fixed mechanism settings, not fitted variables. Reported inactivation/recovery component scores are fast 0.0721, slow 2.4386, and fast recovery 0.00235; the slow component has 0.05 relative weight.
 - The public 65-file Dataverse inventory lacks the `Experimental means/k_tau_*.csv` files read by the fitting helper, the `data_fig5.xlsx` referenced by the K plotting script, and raw K voltage-clamp NWB current traces. `K_data_fig2.xlsx` is AP-clamp repeated-waveform amplitude data, not the missing voltage-step kinetic dataset.
-- Added Rust unit tests in `crates/humanjs-core/src/ion_channels.rs` that replay activation, inactivation, and recovery command sequences with exact first-order gate updates. A full `K_IV_ss` series uses the deposited −110 to +50 mV, 10-mV grid. Transparent half-range interpolation gives −3.25 mV activation midpoint, −51.48 mV inactivation midpoint, and 0.936 availability at −80 mV; all fall within the published human group mean ± SD. This is a coarse summary comparison, not the source nonlinear fit or raw-trace validation.
-- The source-protocol/optimizer audit and the first Rust model-side replay are complete. The replay's independent reference conductance fractions and recovery ordering passed the Rust workspace test. The next step is to extend the replay across the full voltage series and compare only against published group-level K+ summary targets, while preserving the missing raw-trace/CSV limitation. Do not claim raw-trace reproduction or biological validation.
+- Rust unit tests in `crates/humanjs-core/src/ion_channels.rs` replay activation, inactivation, and recovery command sequences with exact first-order gate updates. The recovery regression now covers all five deposited recovery voltages × all ten delays (50 combinations) and checks independent model-side reference conductance values plus monotonic recovery at each voltage. A full `K_IV_ss` series uses the deposited −110 to +50 mV, 10-mV grid. Transparent half-range interpolation gives −3.25 mV activation midpoint, −51.48 mV inactivation midpoint, and 0.936 availability at −80 mV; all fall within the published human group mean ± SD. This is a coarse summary comparison and software regression, not the source nonlinear fit or raw-trace validation.
+- Workflow `43016424733` passed formatting, Clippy, Rust workspace tests, Python syntax validation, and repository policy on code commit `660dee7287376720d37d96dac939941fe26df7d6`. The local clone attempt still fails because GitHub DNS cannot be resolved in this environment; no local Rust test run is claimed.
 
 
 ### NEURON 9.0.2 unit-check result
@@ -80,8 +80,8 @@ Runner: `experiments/reproduce_eyal_figure7a.py`.
 
 ### Supplementary K+ kinetic curves located
 
-- The publisher-hosted Supplementary Figure S5 (panels I–N) includes K+ activation, fast/slow inactivation, and fast/slow recovery time-constant plots. The PDF parser exposes numeric point tables, but series names are unlabelled and the legend mapping to model/human/mouse is not preserved. Some fast-recovery voltage labels may be OCR-ambiguous.
-- Do not use those OCR tables as fit targets yet. Next step: visually inspect the actual Figure S5 page, map the model curve and human/mouse markers, then digitize the group-level curves with uncertainty. The exact Dataverse CSVs and raw per-cell K+ voltage-clamp traces remain absent.
+- The publisher-hosted 13-page Supplementary Figure S5 (panels I–N) includes K+ activation, fast/slow inactivation, and fast/slow recovery time-constant plots. PDF text extraction exposes numeric point tables, but series names are unlabelled and the legend mapping to model/human/mouse is not preserved. Some fast-recovery voltage labels may be OCR-ambiguous.
+- The PDF was retrieved successfully through the publisher endpoint, but the available screenshot renderer did not return page images and direct browser rendering was challenged. Visual legend mapping and digitization have not been completed. Do not use the OCR tables as fit targets. The exact Dataverse CSVs and raw per-cell K+ voltage-clamp traces remain absent.
 
 ## Corrective documentation work completed in this continuation
 
@@ -92,14 +92,14 @@ Runner: `experiments/reproduce_eyal_figure7a.py`.
 - Added regression tests for potassium slow inactivation/recovery constants, the three-component conductance fractions, and human gate half-voltage steady states. The half-voltage test accounts for the current-clamp −10 mV channel shift.
 - Corrected the `RatePrefactor` dimensional name and error label to `mV^-1 ms^-1`; no channel parameter values were changed.
 - Updated `docs/roadmap/MASTER-ROADMAP.md` to keep the accepted somatic-patch milestone unchecked and classify existing code as provisional.
-- Reconciled `docs/status/STATUS.md` with the current implementation and passing verification run.
+- Reconciled `docs/status/STATUS.md` and `docs/BOOT.md` with the expanded K+ recovery regression and passing workflow `43016424733`.
 - This handoff is the final documentation file to update after this commit.
 
 ## Next concrete work
 
-1. Verify the live main HEAD and latest workflow after these documentation updates.
-2. Extend the Rust-side voltage-clamp replay across the full deposited voltage series, preserving source gate equations and the distinction between fixed and fitted constants; compare conductance activation/inactivation curves and availability at −80 mV with the published human summary.
-3. Compare model output with published K+ group-level activation/inactivation and recovery summaries; label the absence of the source CSV targets and raw K+ traces.
+1. Verify the live `main` HEAD and workflow after this handoff commit.
+2. Obtain a visually inspectable rendering of publisher Supplementary Figure S5, map the model line and human open-circle/mouse cross series, then digitize the K+ kinetic curves with axis calibration and uncertainty. The ordinary PDF parser output is not enough to identify series.
+3. Compare the newly exposed group-level K+ kinetic targets against the deposited model equations without treating the optimizer's pooled human/mouse recovery target as human-only evidence. Keep missing Dataverse CSVs and raw traces explicit.
 4. Resolve the `trap0` prefactor unit discrepancy against NEURON's original unit-checking contract and verify temperature handling.
 5. Verify the cross-species current-clamp fit target and geometry/reversal/channel-shift setup before promoting the model.
 6. Keep AIS-resolved modeling separate. Human NaV1.2/NaV1.6 immunostaining does not provide functional conductance densities or gating parameters.
