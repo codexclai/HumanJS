@@ -1166,10 +1166,7 @@ mod tests {
         (left + right) * 0.5
     }
 
-    fn fit_recovery_biexponential(
-        times_ms: &[f64],
-        values: &[f64],
-    ) -> Option<(f64, f64, f64)> {
+    fn fit_recovery_biexponential(times_ms: &[f64], values: &[f64]) -> Option<(f64, f64, f64)> {
         if times_ms.len() != values.len() || values.len() < 5 {
             return None;
         }
@@ -1351,11 +1348,8 @@ mod tests {
         ];
 
         for (index, recovery_voltage_mv) in recovery_voltages_mv.into_iter().enumerate() {
-            let pulse_peaks = replay_k_recovery_peak_currents(
-                model,
-                recovery_voltage_mv,
-                &recovery_delays_ms,
-            );
+            let pulse_peaks =
+                replay_k_recovery_peak_currents(model, recovery_voltage_mv, &recovery_delays_ms);
             let (fast_tau_ms, slow_tau_ms, r_squared) =
                 fit_recovery_biexponential(&recovery_delays_ms, &pulse_peaks).unwrap();
             assert!(
