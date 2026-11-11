@@ -427,3 +427,45 @@ Exploratory AP-generating code now exists in `crates/humanjs-core/src/ion_channe
 4. Tian C. et al. (2014). Molecular identity of axonal sodium channels in human cortical pyramidal cells. *Frontiers in Cellular Neuroscience*. https://doi.org/10.3389/fncel.2014.00297
 5. Zulaica M. et al. (2026). A Detailed Model for Understanding the Human Neocortex. Preprint. https://doi.org/10.64898/2026.01.29.702592
 6. Secondary code-inspection lead only (not a HumanJS implementation dependency): https://github.com/beaherrera/SEF_error-PCs_theta_ERN — public GPL-3.0 repository containing generated EyalEtAl2018 mechanism C files with embedded NMODL text. No code from this repository is copied into HumanJS; exact original source/redistribution terms must be checked at the canonical ModelDB record before any later port.
+
+
+### Deposited K+ voltage-clamp fitting protocol and objective audit (2026-11-11)
+
+The original public DataverseNL dataset (DOI: https://doi.org/10.34894/L5J0SD, version 3.0, CC0-1.0) was re-enumerated from its live 65-file public inventory. The relevant deposited source files are `fit_k_hh_cma_human.py` (file 326237), `channel_tools.py` (326242), `channel_kinetics.py` (326241), and the pure `k_human.mod` (318647). The pure mechanism and fitting helper were retrieved directly from the Dataverse access API and inspected as source text.
+
+#### Model-side clamp waveforms in `channel_tools.py`
+
+All K+ clamp protocols set `h.celsius = 34` °C. The source helper uses:
+
+- **Activation and inactivation family (`K_IV`):** 20 ms at −140 mV, 500 ms at each test voltage (−110 to +55 mV in 5-mV increments), 50 ms at +60 mV, then 100 ms at −140 mV. The activation conductance is estimated from the peak current during the variable-voltage step. The +60-mV test step after each conditioning voltage estimates steady-state inactivation. The fit helper's coarser `K_IV_ss` version uses 10-mV increments from −110 to +50 mV.
+- **Recovery from inactivation (`K_recovery`):** 2 ms at −120 mV, 5,000 ms at +40 mV to inactivate the channels, a variable recovery step at −90, −85, −80, −75, or −70 mV, then a 5-ms +40-mV test pulse. Recovery delays are `linspace(2, 92, 10)^2`: 4, 100, 400, 900, 1,600, 2,500, 3,600, 4,900, 6,400, and 8,464 ms. The helper fits a double exponential to the recovered test-pulse amplitudes.
+- **Deactivation (`K_deact`):** the helper defines 2 ms at −120 mV, 5 ms at +60 mV, then 200 ms at test voltages −90 to −35 mV. This plotting helper is commented out in `K_IV` and is not one of the three criteria used by the human K+ optimizer.
+
+The `K_IV` simulation uses 0.1-ms time steps; recovery uses 0.5-ms steps. These are the deposited model-evaluation settings, not a claim that the original recording acquisition used those time steps.
+
+#### What the human K+ optimizer actually fits
+
+`fit_k_hh_cma_human.py` runs the following sequence:
+
+1. Fit six inactivation/recovery parameters: `thi1`, `thi2`, `qi1`, `qi2`, `Rd`, and `Rg`, against fast inactivation, slow inactivation, and fast recovery criteria (50 generations).
+2. Apply that result to the cell.
+3. Assign `h12factor_k_human = 10.5`; this remains unused by the inspected pure/hybrid mechanisms.
+4. Fit activation-rate parameters `tha`, `qa`, and `Ra`.
+5. Fit the activation steady-state parameters `th_act_inf` and `q_act_inf`.
+
+The inactivation/recovery fit reports component scores of 0.0721 (fast inactivation), 2.4386 (slow inactivation), and 0.00235 (fast recovery). The helper's score is the mean squared deviation normalized by the experimental standard deviation. The fit weights are −1, −0.05, and −1 respectively, so the slow-inactivation component has one-twentieth the weight of fast inactivation and fast recovery. This is a source-reported optimizer score, not a new independent fit.
+
+Two important provenance limitations are now explicit:
+
+- The fast-recovery objective uses a hard-coded target of 236.824345 ms, commented in the source as the **mean of human and mouse values**, even when `species='H'` is passed for the human fit. Thus this objective is pooled across species rather than a human-only recovery target.
+- The mechanism fixes `h2tau_inact = 450 ms` and `h2tau_inact_rec = 2789.7929 ms`; these are not among the six inactivation optimizer variables. The slow recovery time constant is therefore a fixed mechanism setting, not an independently optimized human parameter in this fitting script.
+
+The `K_IV_ss` function's default criterion list contains an adjacent-string concatenation typo between `'tau_inact_slow'` and `'tau_inact_rec_fast'`. The actual human fitting script passes its own explicit `crits` list, so this default-list defect does not alter the recorded human optimizer call.
+
+#### Public-data availability boundary
+
+The current version-3 Dataverse inventory contains 65 public files, but it does **not** contain the `Experimental means/k_tau_act.csv`, `k_tau_inact_fast.csv`, `k_tau_inact_slow.csv`, or other `Experimental means` files read by `channel_tools.py`. The K plotting script `plots_fig4.py` references `data_fig5.xlsx`, which is also absent from the public inventory. The available `K_data_fig2.xlsx` is an AP-clamp amplitude workbook (human/mouse current amplitudes over repeated AP waveforms), not the missing voltage-step kinetic dataset. No raw NWB K+ voltage-clamp current traces were present in the inspected 65-file listing.
+
+Consequently, the model-side clamp waveforms and optimizer logic are now source-audited, but a numerical replay against the original per-voltage K+ current traces or the exact experimental-mean CSV targets is still not possible from the public version examined. The paper's published group-level K+ steady-state results (activation V1/2 −3.0 ± 5.9 mV, n=13; inactivation V1/2 −52.7 ± 6.0 mV, n=11) remain available as coarse checks, but they do not replace the missing voltage-resolved kinetic targets. The current HumanJS K+ implementation must therefore remain exploratory and unaccepted.
+
+**Evidence classification:** direct human somatic nucleated-patch recordings in the paper; model-side protocol and parameter fitting in the deposited Python/NMODL source; fixed/pooled fit settings as identified above; no independent reproduction of the missing raw voltage-clamp traces. The patch excludes the AIS, and these findings do not establish AIS channel kinetics or an anatomical soma/AIS model.
