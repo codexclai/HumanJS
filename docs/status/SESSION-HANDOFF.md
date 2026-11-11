@@ -2,7 +2,7 @@
 
 **Updated:** 2026-11-11  
 **Canonical repository:** `codexclai/HumanJS`, branch `main` only.  
-**Verified code commit:** `621664411ec0c089c3fdc7bbb2e8a9d51961606a`.  
+**Verified source/code commit:** `5dfba6257ffb375bf741b8149026f13274600ae5`.  
 **Documentation reconciliation:** subsequent commits on `main`; verify the live HEAD and workflow before using this handoff in a later session.
 
 ## Verified repository state at start of this continuation
@@ -11,7 +11,7 @@
 - Full tree retrieved: 55 entries, not truncated.
 - Live branch listing contained exactly `main`.
 - No open issues or pull requests were returned.
-- GitHub Actions run `42972854292` passed on exact code commit `621664411ec0c089c3fdc7bbb2e8a9d51961606a`: https://github.com/codexclai/HumanJS/actions/runs/42972854292. Rust formatting, Clippy, workspace tests, Python syntax validation, and repository policy all passed.
+- GitHub Actions run `42973247775` passed on exact head `5dfba6257ffb375bf741b8149026f13274600ae5`: https://github.com/codexclai/HumanJS/actions/runs/42973247775. Rust formatting, Clippy, workspace tests, Python syntax validation, and repository policy all passed.
 - This chat did not complete a fresh local clone because DNS resolution failed. Do not claim a local Rust test run.
 
 ## Current HumanJS implementation
