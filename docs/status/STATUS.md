@@ -135,4 +135,20 @@ A targeted search of the retrieved complete Dataverse `cc_tools.py` (file 318557
 
 A live DataverseNL API inventory query for DOI 10.34894/L5J0SD version 3.0 returned all 65 deposited files. It confirms the following unrestricted current-clamp CSV entries are present: `AP1comparison.csv` (file ID 318555, 846 bytes), `gbar_na.csv` (318551, 8,224 bytes), and `gbar_k.csv` (318552, 8,037 bytes). Their contents were not retrieved in this session: direct file-access requests were blocked by Dataverse BotStopper. Earlier status language saying these CSVs were absent/unavailable from the deposit should be read as “contents not retrieved,” not “files absent from the dataset.”
 
-The complete inventory lists only `cc_tools.py`, `currentclamp.py`, and `fit_gbar_na_k.py` as Python source in `Figures5_6/Current_clamp`; no separate outcome-extractor module is listed. The retrieved `cc_tools.py` lacks the `get_outcomes_full` definition called by `fit_densities`. An externally installed or unlisted dependency remains possible, so this is an incomplete released source set, not proof that no such code exists anywhere. Numeric CSV contents and the exact source table entry for the HumanJS 114.48/29.05 pS/µm² preset remain unverified. No parameter change was made; the single-compartment spike mechanism remains exploratory.
+The complete inventory lists only `cc_tools.py`, `currentclamp.py`, and `fit_gbar_na_k.py` as Python source in `Figures5_6/Current_clamp`; no separate outcome-extractor module is listed. The complete retrieved `cc_tools.py` does define `get_outcomes_full`; the earlier conclusion was caused by an incomplete extraction and is superseded by the later resolution entry. Numeric CSV contents and the exact source table entry for the HumanJS 114.48/29.05 pS/µm² preset remain unverified. No parameter change was made; the single-compartment spike mechanism remains exploratory.
+
+
+## 2026-11-12 — Wilbers current-clamp fit provenance resolved
+
+The Dataverse current-clamp source helper and all three unrestricted CSVs were retrieved through the documented access API and verified byte-for-byte against Dataverse SHA-1 metadata:
+
+- `AP1comparison.csv` (318555): 846 bytes, SHA-1 `85fea00fea374ed0595d032180a798371d96aa4d`.
+- `gbar_na.csv` (318551): 8,224 bytes, SHA-1 `ac2f1b3ae108e8f256e53b0d85c4e0b353eb173a`.
+- `gbar_k.csv` (318552): 8,037 bytes, SHA-1 `6867798db8a5a2a77a66bb72b7cae77590ff0247`.
+- `cc_tools.py` (318557): 10,448 bytes, SHA-1 `f64162577fa5dd86892b46570d597e58e083a02b`.
+
+The complete helper **does define** `get_outcomes_full` and `get_outcomes`; the earlier missing-extractor finding was an incomplete-extraction error and is superseded. The source feature extractor uses 50-mV prominence peak detection, a 40-mV/ms pre-maximum-slope threshold criterion, and mean dV/dt over the 30–70% rising and 70–30% falling AP-amplitude windows. The density objective uses equally weighted normalized squared residuals for peak voltage, upstroke, and downstroke, with targets equal to the 50:50 human/mouse median average; Powell starts at [95,65], bounds each conductance to [20,150], and multiplies the objective by four unless exactly one AP is detected.
+
+The all-human kinetic endpoint (Na ratio=1, K ratio=1) is the top-right cell of both 20×20 matrices: Na 114.47654963753565 and K 29.045736151752504 pS/μm². These round exactly to the HumanJS preset 114.48/29.05. This resolves its source-grid provenance. “All-human” refers to kinetic mixture, not human-only fitting targets: the objective remains cross-species midpoint calibrated. The exact source data are preserved as three CC0 research CSVs and validated by `experiments/validate_wilbers_current_clamp_grid.py`, now wired into CI.
+
+The original NEURON/SciPy optimizer was not rerun because NEURON, SciPy, and NumPy are unavailable in the execution environment. The deposited outputs are checksum-verified, but no independent optimizer reproduction, raw-trace reproduction, or biological validation is claimed. The spike mechanism remains a provisional lumped single-compartment model.
