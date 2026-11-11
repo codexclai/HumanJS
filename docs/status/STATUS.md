@@ -8,8 +8,8 @@
 - Repository: `codexclai/HumanJS`, public, default branch `main`.
 - `main` is the only branch; the live branch listing returned exactly `main`. The full tree contained 63 entries and was not truncated.
 - No open issues or pull requests were returned by live checks.
-- Latest source/code commit: `3c28de63c8a953c85084ff7c6731caae144b4ee6`. Latest research audit update: `4d01ec6f7d025ee1e5183b67d43b08bb8de21e32`.
-- GitHub Actions run `43023898904` passed on exact repository head `4e441ce16402cac487d5ee48506458630686b340`: https://github.com/codexclai/HumanJS/actions/runs/43023898904. `cargo fmt --all -- --check`, workspace Clippy with warnings denied, and `cargo test --workspace --locked` passed (27 core, 3 passive, 6 synapse tests); Python syntax, the seven-CSV Figure S5 validator, and repository policy also passed.
+- Latest source/code commit: `3c28de63c8a953c85084ff7c6731caae144b4ee6`. Latest research audit update: `ebb88a8fa1c2b5280aebd27f05976966c0dd8393`.
+- GitHub Actions run `43024172929` passed on exact repository head `7a187e7db0498ee35cbd5d35814c5cebc26aef10`: https://github.com/codexclai/HumanJS/actions/runs/43024172929. `cargo fmt --all -- --check`, workspace Clippy with warnings denied, and `cargo test --workspace --locked` passed (27 core, 3 passive, 6 synapse tests); Python syntax, the seven-CSV Figure S5 validator (including human/mouse model replay references), and repository policy also passed.
 - This chat did not complete a fresh local clone because network DNS resolution failed. No local Rust test run is claimed.
 
 ## Implemented Rust CPU mechanisms
