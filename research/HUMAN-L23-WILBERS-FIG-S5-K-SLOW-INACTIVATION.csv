@@ -1,0 +1,32 @@
+# Source: Wilbers et al. (2023), Science Advances 9, eade3300, Supplementary Figure S5, panel K.
+# DOI: https://doi.org/10.1126/sciadv.ade3300
+# Official PMC AWS object: https://pmc-oa-opendata.s3.amazonaws.com/PMC10569700.1/sciadv.ade3300_sm.pdf
+# PDF size: 1,468,232 bytes; SHA-256: dfa1daaf4dd0e3979bac84b9cb8b1874c4514d40588969a21d7766a7f12f2a1d
+# PDF page: 7. Panel K: slow-inactivation time constant (ms) versus command voltage (mV).
+# Legend: red open circle = human experimental mean; blue cross = mouse experimental mean.
+# Digitization: manual marker-center readout from a 6x raster of the publisher/PMC PDF.
+# x-axis calibration: -20, 0, 20, 40, 60 mV ticks; 7.2 raster px/mV in the cropped panel.
+# y-axis calibration: 200, 400, 600 ms ticks; 283 raster px spans 400 ms.
+# Uncertainties are conservative plot-digitization estimates, NOT biological SD: +/-2.5 mV and +/-25 ms.
+# These are approximate group means digitized from a figure, not raw per-cell values or source CSV data.
+species,voltage_mV,tau_slow_inactivation_ms,voltage_digitization_uncertainty_mV,tau_digitization_uncertainty_ms,x_pixel_crop,y_pixel_crop,marker
+human,-30,429.0,2.5,25,36,325,red_open_circle
+human,-20,541.9,2.5,25,108,245.1,red_open_circle
+human,-10,634.1,2.5,25,180,179.9,red_open_circle
+human,0,530.5,2.5,25,252,253.2,red_open_circle
+human,10,470.7,2.5,25,324,295.5,red_open_circle
+human,20,671.0,2.5,25,396,153.8,red_open_circle
+human,30,332.7,2.5,25,468,393.1,red_open_circle
+human,40,308.3,2.5,25,540,410.4,red_open_circle
+human,50,197.0,2.5,25,612,489.1,red_open_circle
+human,60,290.2,2.5,25,684,423.2,red_open_circle
+mouse,-30,429.0,2.5,25,36,325,blue_cross
+mouse,-20,710.8,2.5,25,108,125.6,blue_cross
+mouse,-10,673.6,2.5,25,180,151.9,blue_cross
+mouse,0,554.5,2.5,25,252,236.2,blue_cross
+mouse,10,719.2,2.5,25,324,119.7,blue_cross
+mouse,20,471.4,2.5,25,396,295.0,blue_cross
+mouse,30,559.4,2.5,25,468,232.7,blue_cross
+mouse,40,579.2,2.5,25,540,218.7,blue_cross
+mouse,50,438.9,2.5,25,612,318.0,blue_cross
+mouse,60,663.9,2.5,25,684,158.8,blue_cross
