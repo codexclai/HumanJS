@@ -10,5 +10,5 @@
 # Uncertainties are conservative plot-digitization estimates, NOT biological SD: +/-1 mV and +/-15 ms.
 # These are approximate group means digitized from a figure, not raw per-cell values or source CSV data.
 species,voltage_mV,tau_fast_recovery_ms,voltage_digitization_uncertainty_mV,tau_digitization_uncertainty_ms,x_pixel_crop,y_pixel_crop,marker
-human,-80,228.2,1.0,15.0,387,299,red_open_circle
-mouse,-80,245.0,1.0,15.0,387,275,blue_cross
+human,-80,228.8,1.0,15.0,387,299,red_open_circle
+mouse,-80,245.6,1.0,15.0,387,275,blue_cross
