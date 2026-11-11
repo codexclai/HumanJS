@@ -472,34 +472,37 @@ Consequently, the model-side clamp waveforms and optimizer logic are source-audi
 
 
 
-#### Publisher supplementary Figure S5: legend mapping and first calibrated digitization
+#### Publisher supplementary Figure S5: verified series mapping and five-panel digitization
 
 The publisher supplement was retrieved from the **new PMC Article Datasets AWS distribution**, rather than the retired PMC FTP/legacy-cloud endpoints. PMC article `PMC10569700.1` is CC BY. The official supplement object is [sciadv.ade3300_sm.pdf](https://pmc-oa-opendata.s3.amazonaws.com/PMC10569700.1/sciadv.ade3300_sm.pdf), 1,468,232 bytes, 13 pages; SHA-256 `dfa1daaf4dd0e3979bac84b9cb8b1874c4514d40588969a21d7766a7f12f2a1d` (JATS-reported MD5 `f12cab61e8f8206001a29cd90a24651b`). The original Figure S5 graphic is on PDF page 7.
 
-The page was rendered locally from the downloaded PDF. The figure legend and caption now visually establish the series identities:
+The page was rendered locally from the downloaded PDF. The figure legend and caption visually establish the series identities:
 - Red continuous line: human model; blue continuous line: mouse model.
 - Red open-circle markers: human experimental group means.
 - Blue cross markers: mouse experimental group means.
-- The caption says the markers represent the means of human (o) and mouse (x) experimental data. The caption repeats panel label “(I)” for fast inactivation; the actual plot is visibly labelled **J**, between activation panel I and slow-inactivation panel K.
+- The caption states that markers represent means of human (o) and mouse (x) experimental data. It repeats panel label “(I)” for fast inactivation; the actual plotted panel is visibly labelled **J**, between activation panel I and slow-inactivation panel K.
 
-This resolves the former series-identity blocker. It does **not** restore the absent Dataverse per-voltage CSV files or raw per-cell current traces.
+**Experimental group-mean marker digitization is now recorded for all five kinetic panels I, J, K, M, and N.** The CSVs preserve source hash, raster pixel centers, axis calibrations, marker/species identity, and conservative plot-reading uncertainties:
+- `research/HUMAN-L23-WILBERS-FIG-S5-I-ACTIVATION.csv`: seven voltages (−10 to +50 mV) for each species. At −10 mV, the digitized means are approximately 3.36 ms (human) and 7.76 ms (mouse); at +50 mV, 0.58 and 0.93 ms, respectively. This reproduces the visual pattern of faster human activation at lower potentials.
+- `research/HUMAN-L23-WILBERS-FIG-S5-J-FAST-INACTIVATION.csv`: six voltages (0 to +50 mV) for each species. Human and mouse points are separately identified; do not infer a statistically significant species effect from the plotted means alone.
+- `research/HUMAN-L23-WILBERS-FIG-S5-K-SLOW-INACTIVATION.csv`: ten voltages (−30 to +60 mV) for each species. The experimental means vary broadly with voltage and species; the model curves are visually near the fixed 450-ms slow-inactivation setting.
+- `research/HUMAN-L23-WILBERS-FIG-S5-M-FAST-RECOVERY.csv`: one marker per species at −80 mV, approximately 228.8 ms (human) and 245.6 ms (mouse). Their mean, 237.2 ms, is within the ±15-ms digitization uncertainty of the optimizer's hard-coded pooled human/mouse target of 236.824345 ms. This is a useful provenance cross-check, not an independent fit.
+- `research/HUMAN-L23-WILBERS-FIG-S5-N-SLOW-RECOVERY.csv`: one marker per species at −80 mV, approximately 2.00 s (human) and 3.58 s (mouse). The two model lines are flat and visually coincide with the fixed 2,789.7929-ms model parameter. One point per species does not support a significance claim.
+
+Uncertainties are panel-specific estimates of plot-reading/calibration error (panel I ±1 mV/±0.25 ms; J ±1 mV/±2 ms; K ±2.5 mV/±25 ms; M ±1 mV/±15 ms; N ±1 mV/±0.10 s). **These are not biological SD or SEM.** These are approximate plotted group means, not raw cell-level observations or the absent Dataverse source CSV values. Model lines are visually mapped, but only the fixed K slow-inactivation and N slow-recovery settings have been directly cross-checked against source parameters; the variable model curves in I, J, and M have not yet been independently digitized.
+
+A stdlib-only validator, `experiments/validate_wilbers_fig_s5_digitization.py`, checks the five CSVs' PDF hash, species/marker identity, point counts, voltage grids, axis calibration, and declared digitization uncertainties. The CI workflow executes this validator. It verifies the reproducibility of the transcription/calibration, not the biological correctness of the authors' model.
+
+**Important voltage-shift question exposed by panel I:** evaluating the deposited human K activation-rate equation at 34°C with the voltage-clamp helper's zero shift gives model `tau_m` values of approximately 2.46 ms at −10 mV and 1.77 ms at 0 mV, versus digitized human markers of 3.36 and 2.41 ms. Applying the separate current-clamp helper's −10-mV voltage shift gives approximately 3.47 and 2.46 ms at those same command voltages and reduces the seven-point human-marker RMSE from about 0.44 ms to 0.15 ms. This is a sensitivity/provenance finding, not proof that Figure S5 used the current-clamp shift. The deposited K voltage-clamp fitting helper uses no shift, whereas the current-clamp helper sets −10 mV. Trace the exact Figure S5 model-generation path and voltage-shift convention before changing Rust parameters or claiming a model-curve match.
 
 **Published human/mouse K+ summary results (main Fig. 4 and Table S1):**
 - Activation midpoint: human −3.0 ± 5.9 mV (`n=13`), mouse −7.9 ± 6.0 mV (`n=29`), unpaired t test `P=0.02`.
 - Steady-state inactivation midpoint: human −52.7 ± 6.0 mV (`n=11`), mouse −65.0 ± 5.3 mV (`n=26`), unpaired t test `P<10^-6`.
 - K+ availability at resting potential: human 0.94 ± 0.05, mouse 0.86 ± 0.06.
-- Human K+ currents activate faster than mouse currents at lower membrane potentials. Fast- and slow-inactivation components were described as similar between species. Recovery time constants were also described as similar, while human currents recovered to a larger proportion of their initial amplitude.
+- Human K+ currents activate faster than mouse currents at lower membrane potentials. Fast- and slow-inactivation components were described as similar between species. Recovery time constants were described as similar, while human currents recovered to a larger proportion of their initial amplitude.
 - The authors explicitly state that their HH conductance models did not accurately reproduce all K+ properties, particularly K+ inactivation, likely contributing to relatively poor fits to K+ currents and AP falling speeds.
 
-**First reproducible pixel digitization — panel K, slow-inactivation time constant:**
-
-The red human open circles and blue mouse crosses were digitized separately from the original page-7 raster. The x axis was calibrated from −20, 0, 20, 40, and 60 mV tick marks; the y axis from 200, 400, and 600 ms. Ten plotted mean markers per species were read at −30 to +60 mV in 10-mV steps. The resulting approximate values, source pixel centers, axis calibration, and conservative digitization uncertainties are stored in `research/HUMAN-L23-WILBERS-FIG-S5-K-SLOW-INACTIVATION.csv`.
-
-These are **plot-digitized group means**, not raw cell-level observations or source CSV values. Estimated digitization uncertainty is ±2.5 mV and ±25 ms; this is not the biological SD reported for the recordings. The model lines are visually near the fixed 450-ms slow-inactivation value used by the deposited mechanisms. The experimental points vary substantially with voltage and across plotted group means. This is consistent with the authors' own warning about limited HH-model reproduction of K+ inactivation. Do not tune the Rust mechanism to these points yet: verify the other panels, assess figure resolution and point-center uncertainty, and preserve the missing raw-trace limitation.
-
-**Remaining Figure S5 work:** digitize panels I (activation), J (fast inactivation), M (fast recovery), and N (slow recovery) with separate model/human/mouse series and uncertainty. For panel N, the fixed model slow-recovery curve is approximately 2.79 s, while the plotted experimental markers at −80 mV visibly differ between species; this is a visual observation, not yet an approved numerical target. Reconcile each panel against the source model equations and the main-text results before any parameter fitting. The fast-recovery optimizer target of 236.824345 ms remains explicitly pooled across human and mouse, not a human-only target.
-
-The evidence classification remains: direct human somatic nucleated-patch recordings; human/mouse group means digitized from a published supplementary figure; model curves from the authors' computational model; and model-side Rust regressions. No raw voltage-clamp trace reproduction or biological validation is claimed.
+**Remaining evidence boundary:** the exact Dataverse `Experimental means/k_tau_*.csv` files and raw per-cell K+ voltage-clamp traces remain absent. The figure digitization does not substitute for those sources. Do not fit/promote the exploratory Rust model on these approximate group means alone; first trace the figure-generation code and voltage shift, independently digitize the model curves, quantify figure-resolution uncertainty, and compare the model against all five panels without treating the pooled fast-recovery target as human-only evidence.
 #### NEURON 9.0.2 unit-checker diagnostic
 
 The original pure `k_human.mod` and `na_human.mod` were checked with NEURON 9.0.2's own `modlunit`, separately from compilation. Both mechanisms compile unchanged with `nrnivmodl`; compilation emits a warning that assignment to the GLOBAL variable `tadj` is not thread-safe. Compilation does **not** establish dimensional consistency.
