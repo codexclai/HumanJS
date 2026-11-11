@@ -713,8 +713,8 @@ fn trap0(
 #[cfg(test)]
 mod tests {
     use super::{
-        HumanL23SingleCompartmentInitialConditions, HumanL23SingleCompartmentSimulation,
-        RatePrefactor, trap0,
+        trap0, HumanL23SingleCompartmentInitialConditions, HumanL23SingleCompartmentSimulation,
+        RatePrefactor,
     };
     use crate::{Amperes, SimDuration, SimTime, SimulationError, Volts};
 
