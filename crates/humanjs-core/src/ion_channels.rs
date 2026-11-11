@@ -722,7 +722,6 @@ mod tests {
         super::HumanL23SingleCompartmentModel::wilbers_2023_human_l23_current_clamp_fit().unwrap()
     }
 
-
     #[derive(Debug, Clone, Copy)]
     struct PotassiumClampGates {
         activation: f64,
@@ -815,7 +814,6 @@ mod tests {
         advance_k_clamp(model, &mut gates, -80.0, recovery_delay_ms, 0.5);
         advance_k_clamp(model, &mut gates, 40.0, 5.0, 0.5)
     }
-
 
     #[test]
     fn deposited_k_voltage_clamp_protocols_replay_with_stable_gate_dynamics() {
