@@ -713,8 +713,8 @@ fn trap0(
 #[cfg(test)]
 mod tests {
     use super::{
-        trap0, HumanL23SingleCompartmentInitialConditions, HumanL23SingleCompartmentSimulation,
-        RatePrefactor,
+        HumanL23SingleCompartmentInitialConditions, HumanL23SingleCompartmentSimulation,
+        RatePrefactor, trap0,
     };
     use crate::{Amperes, SimDuration, SimTime, SimulationError, Volts};
 
@@ -744,20 +744,13 @@ mod tests {
         let depolarized = model.potassium_rates(30.0, 0.5).unwrap();
         let hyperpolarized = model.potassium_rates(-70.0, 0.5).unwrap();
 
-        assert_eq!(
-            depolarized.slow_inactivation_time_constant_ms,
-            450.0
-        );
+        assert_eq!(depolarized.slow_inactivation_time_constant_ms, 450.0);
         assert_eq!(
             hyperpolarized.slow_inactivation_time_constant_ms,
             2789.7929428108187
         );
-        assert!(
-            depolarized.fast_inactivation.time_constant_ms > 0.0
-        );
-        assert!(
-            hyperpolarized.fast_inactivation.time_constant_ms > 0.0
-        );
+        assert!(depolarized.fast_inactivation.time_constant_ms > 0.0);
+        assert!(hyperpolarized.fast_inactivation.time_constant_ms > 0.0);
     }
 
     #[test]
@@ -765,22 +758,15 @@ mod tests {
         let model = wilbers_model();
         let fast_fraction = model.potassium.inactivating_fraction
             * (1.0 - model.potassium.slow_fraction_of_inactivating);
-        let slow_fraction = model.potassium.inactivating_fraction
-            * model.potassium.slow_fraction_of_inactivating;
+        let slow_fraction =
+            model.potassium.inactivating_fraction * model.potassium.slow_fraction_of_inactivating;
         let non_inactivating_fraction = 1.0 - model.potassium.inactivating_fraction;
 
+        assert!((fast_fraction - 0.51).abs() < f64::EPSILON);
+        assert!((slow_fraction - 0.34).abs() < f64::EPSILON);
+        assert!((non_inactivating_fraction - 0.15).abs() < f64::EPSILON);
         assert!(
-            (fast_fraction - 0.51).abs() < f64::EPSILON
-        );
-        assert!(
-            (slow_fraction - 0.34).abs() < f64::EPSILON
-        );
-        assert!(
-            (non_inactivating_fraction - 0.15).abs() < f64::EPSILON
-        );
-        assert!(
-            (fast_fraction + slow_fraction + non_inactivating_fraction - 1.0).abs()
-                < f64::EPSILON
+            (fast_fraction + slow_fraction + non_inactivating_fraction - 1.0).abs() < f64::EPSILON
         );
     }
 
@@ -788,16 +774,12 @@ mod tests {
     fn human_gate_steady_states_reproduce_the_deposited_half_voltage_parameters() {
         let model = wilbers_model();
         let na_m = model
-            .sodium_rates(
-                model.sodium.activation_half_voltage_mv - model.voltage_shift_mv,
-            )
+            .sodium_rates(model.sodium.activation_half_voltage_mv - model.voltage_shift_mv)
             .unwrap()
             .activation
             .steady_state;
         let na_h = model
-            .sodium_rates(
-                model.sodium.inactivation_half_voltage_mv - model.voltage_shift_mv,
-            )
+            .sodium_rates(model.sodium.inactivation_half_voltage_mv - model.voltage_shift_mv)
             .unwrap()
             .inactivation
             .steady_state;
