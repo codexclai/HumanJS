@@ -713,13 +713,132 @@ fn trap0(
 #[cfg(test)]
 mod tests {
     use super::{
-        trap0, HumanL23SingleCompartmentInitialConditions, HumanL23SingleCompartmentSimulation,
-        RatePrefactor,
+        trap0, GateRates, HumanL23SingleCompartmentInitialConditions,
+        HumanL23SingleCompartmentModel, HumanL23SingleCompartmentSimulation, RatePrefactor,
     };
     use crate::{Amperes, SimDuration, SimTime, SimulationError, Volts};
 
     fn wilbers_model() -> super::HumanL23SingleCompartmentModel {
         super::HumanL23SingleCompartmentModel::wilbers_2023_human_l23_current_clamp_fit().unwrap()
+    }
+
+
+    #[derive(Debug, Clone, Copy)]
+    struct PotassiumClampGates {
+        activation: f64,
+        fast_inactivation: f64,
+        slow_inactivation: f64,
+    }
+
+    fn wilbers_voltage_clamp_model() -> HumanL23SingleCompartmentModel {
+        let mut model = wilbers_model();
+        // The deposited K+ voltage-clamp fitting cell leaves vshift at its NMODL default (0 mV).
+        model.voltage_shift_mv = 0.0;
+        model
+    }
+
+    fn initial_potassium_clamp_gates(
+        model: HumanL23SingleCompartmentModel,
+        voltage_mv: f64,
+    ) -> PotassiumClampGates {
+        let rates = model.potassium_rates(voltage_mv, 0.5).unwrap();
+        PotassiumClampGates {
+            activation: rates.activation.steady_state,
+            fast_inactivation: rates.fast_inactivation.steady_state,
+            slow_inactivation: rates.fast_inactivation.steady_state,
+        }
+    }
+
+    fn advance_k_clamp(
+        model: HumanL23SingleCompartmentModel,
+        gates: &mut PotassiumClampGates,
+        voltage_mv: f64,
+        duration_ms: f64,
+        step_ms: f64,
+    ) -> f64 {
+        let steps = (duration_ms / step_ms).round() as usize;
+        let mut peak_conductance = 0.0_f64;
+        for _ in 0..steps {
+            let rates = model
+                .potassium_rates(voltage_mv, gates.slow_inactivation)
+                .unwrap();
+            let advance_gate = |gate: f64, gate_rates: GateRates| {
+                gate_rates.steady_state
+                    + (gate - gate_rates.steady_state)
+                        * (-step_ms / gate_rates.time_constant_ms).exp()
+            };
+            gates.activation = advance_gate(gates.activation, rates.activation);
+            gates.fast_inactivation =
+                advance_gate(gates.fast_inactivation, rates.fast_inactivation);
+            gates.slow_inactivation = advance_gate(
+                gates.slow_inactivation,
+                GateRates {
+                    steady_state: rates.fast_inactivation.steady_state,
+                    time_constant_ms: rates.slow_inactivation_time_constant_ms,
+                },
+            );
+
+            let fast_fraction = model.potassium.inactivating_fraction
+                * (1.0 - model.potassium.slow_fraction_of_inactivating);
+            let slow_fraction = model.potassium.inactivating_fraction
+                * model.potassium.slow_fraction_of_inactivating;
+            let non_inactivating_fraction = 1.0 - model.potassium.inactivating_fraction;
+            let conductance = gates.activation.powi(2)
+                * (gates.fast_inactivation * fast_fraction
+                    + gates.slow_inactivation * slow_fraction
+                    + non_inactivating_fraction);
+            peak_conductance = peak_conductance.max(conductance);
+        }
+        peak_conductance
+    }
+
+    fn replay_k_activation(model: HumanL23SingleCompartmentModel, test_voltage_mv: f64) -> f64 {
+        let mut gates = initial_potassium_clamp_gates(model, -140.0);
+        advance_k_clamp(model, &mut gates, -140.0, 20.0, 0.1);
+        advance_k_clamp(model, &mut gates, test_voltage_mv, 500.0, 0.1)
+    }
+
+    fn replay_k_inactivation(
+        model: HumanL23SingleCompartmentModel,
+        conditioning_voltage_mv: f64,
+    ) -> f64 {
+        let mut gates = initial_potassium_clamp_gates(model, -140.0);
+        advance_k_clamp(model, &mut gates, -140.0, 20.0, 0.1);
+        advance_k_clamp(model, &mut gates, conditioning_voltage_mv, 500.0, 0.1);
+        advance_k_clamp(model, &mut gates, 60.0, 50.0, 0.1)
+    }
+
+    fn replay_k_recovery(
+        model: HumanL23SingleCompartmentModel,
+        recovery_delay_ms: f64,
+    ) -> f64 {
+        let mut gates = initial_potassium_clamp_gates(model, -120.0);
+        advance_k_clamp(model, &mut gates, -120.0, 2.0, 0.5);
+        advance_k_clamp(model, &mut gates, 40.0, 5_000.0, 0.5);
+        advance_k_clamp(model, &mut gates, -80.0, recovery_delay_ms, 0.5);
+        advance_k_clamp(model, &mut gates, 40.0, 5.0, 0.5)
+    }
+
+
+    #[test]
+    fn deposited_k_voltage_clamp_protocols_replay_with_stable_gate_dynamics() {
+        let model = wilbers_voltage_clamp_model();
+
+        // Golden values are from an independent exact first-order gate integration
+        // of the deposited NMODL equations at 34°C, with the source clamp timings.
+        let activation_at_zero = replay_k_activation(model, 0.0);
+        let inactivation_after_minus_80 = replay_k_inactivation(model, -80.0);
+        assert!((activation_at_zero - 0.471_306_108_091_782).abs() < 1.0e-9);
+        assert!((inactivation_after_minus_80 - 0.805_281_859_671_567_1).abs() < 1.0e-9);
+
+        let delays_ms = [4.0, 100.0, 400.0, 900.0, 1_600.0, 2_500.0, 3_600.0, 4_900.0, 6_400.0, 8_464.0];
+        let recovered: Vec<f64> = delays_ms
+            .into_iter()
+            .map(|delay| replay_k_recovery(model, delay))
+            .collect();
+        assert!(recovered.windows(2).all(|pair| pair[1] > pair[0]));
+        assert!((recovered[2] - 0.454_162_406_500_040_97).abs() < 1.0e-9);
+        assert!((recovered[9] - 0.735_092_972_795_100_9).abs() < 1.0e-9);
     }
 
     #[test]
