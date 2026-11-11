@@ -36,5 +36,7 @@ jobs:
       - name: Check Python experiment runner syntax
         run: |
           python3 -c "import ast; from pathlib import Path; ast.parse(Path('experiments/reproduce_eyal_figure7a.py').read_text(encoding='utf-8'))"
+      - name: Validate Wilbers Figure S5 digitization
+        run: python3 experiments/validate_wilbers_fig_s5_digitization.py
       - name: Validate repository policy
         run: python3 .github/scripts/repository_policy.py
