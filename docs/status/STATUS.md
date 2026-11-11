@@ -8,7 +8,7 @@
 - Repository: `codexclai/HumanJS`, public, default branch `main`.
 - `main` is the only branch; the live branch listing returned exactly `main`.
 - No open issues or pull requests were returned by live checks.
-- Latest source/code commit: `46ed2817758e6dcf36cc15a57e11a32f96085342`. Latest K+ protocol/optimizer and NEURON unit audit: `314e3f72738b1c16bcf20f6789716ea36d210c56`.
+- Latest source/code commit: `46ed2817758e6dcf36cc15a57e11a32f96085342`. Latest K+ protocol, NEURON unit, and supplementary-data audit: `24e25e8aaeceeb5867bd2b22a884a8a2d76cb841`.
 - GitHub Actions run `42975907351` passed on exact code head `46ed2817758e6dcf36cc15a57e11a32f96085342`: https://github.com/codexclai/HumanJS/actions/runs/42975907351. Rust formatting, Clippy, Rust workspace tests (including the full K+ clamp-series comparison), Python syntax validation, and repository policy all passed.
 - This chat did not complete a fresh local clone because network DNS resolution failed. No local Rust test run is claimed.
 - A fresh local clone in this chat was not completed because network DNS resolution failed. No local cargo test run is claimed.
@@ -83,6 +83,13 @@ The K+ file matches the parameter values actually applied in the deposited fitti
 - Temporary typed probes show the source `(/ms)` prefactors are incompatible with the voltage numerator in `trap0`; the equation requires `mV^-1 ms^-1`. The same probes expose the fallback's wrong dimensions/missing prefactor, the branch predicate's `v+th` versus the denominator's `v-th` singularity, the missing temperature unit in the Q10 exponent, and missing mV units on activation midpoint/slope parameters.
 - With explicit function/procedure/return units, equation-consistent prefactors, the Q10 temperature interval, activation parameter units, and the commented-out `a*q` limit, temporary K+ and Na+ diagnostic copies pass `modlunit` 9.0.2. No deposited source file was modified.
 - HumanJS already uses the equation-consistent prefactor unit and stable analytic limit. The source's original NMODL is not a unit-checked reference implementation; do not claim exact reproduction of its defective branch.
+
+
+### Publisher supplementary K+ kinetic curves found
+
+- The publisher-hosted Supplementary Figure S5 contains K+ activation, fast/slow inactivation, and fast/slow recovery time-constant plots (panels I–N). PDF extraction exposes table-like numerical series, including 21 slow-inactivation points and five fast-recovery points.
+- The extracted series labels are unlabelled and the legend-to-series mapping is not preserved. Some recovery voltage labels may be OCR-ambiguous. Do not treat the OCR output as validated human targets or use it for fitting yet.
+- The exact Dataverse `Experimental means/k_tau_*.csv` inputs and raw per-cell K+ voltage-clamp traces remain absent from the inspected version, but the supplementary curves may support a careful digitization once the model line and human/mouse markers are visually mapped.
 
 ## Not yet implemented
 
