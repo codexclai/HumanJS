@@ -58,6 +58,16 @@ Runner: `experiments/reproduce_eyal_figure7a.py`.
 - The K+ source matches the parameter values actually applied by the script; its alternate dictionary is a bare literal and is not applied. The 14-versus-11 parameter count is explained by fixed inactivation steady states and `Rb = Ra`. The fit script's `h12factor_k_human` assignment is not declared in the pure mechanism or read by `channel_tools.py`. The source's printed Table S2 rate-prefactor unit (`ms^-1`) is dimensionally incomplete for the voltage-valued `trap0` numerator; the code interprets the coefficient as `mV^-1 ms^-1`.
 - Full Wilbers voltage-clamp fitting was not reproduced from raw NWB traces; public workbooks are summary fits and original NWB traces were not present in the 65-file Dataverse listing examined.
 
+
+### Wilbers K+ voltage-clamp protocol and fitting objective audit
+
+- Directly inspected Dataverse files `fit_k_hh_cma_human.py` (326237), `channel_tools.py` (326242), `channel_kinetics.py` (326241), and pure `k_human.mod` (318647), from dataset DOI 10.34894/L5J0SD version 3.0.
+- Activation/inactivation model clamp: −140 mV for 20 ms, each test voltage for 500 ms, +60 mV for 50 ms, then −140 mV for 100 ms. `K_IV` scans −110 to +55 mV in 5-mV increments; `K_IV_ss` scans −110 to +50 mV in 10-mV increments.
+- Recovery model clamp: −120 mV for 2 ms, +40 mV for 5,000 ms, recovery at −90/−85/−80/−75/−70 mV for 4, 100, 400, 900, 1,600, 2,500, 3,600, 4,900, 6,400, and 8,464 ms, then +40 mV for 5 ms. Temperature is 34°C. Deactivation protocol exists in the helper but is not used by the optimizer.
+- The human optimizer fits six inactivation/recovery parameters, then activation kinetics, then activation steady state. Its fast-recovery target is hard-coded to 236.824345 ms, commented as the mean of human and mouse values. Slow inactivation (450 ms) and slow recovery (2,789.7929 ms) are fixed mechanism settings, not fitted variables. Reported inactivation/recovery component scores are fast 0.0721, slow 2.4386, and fast recovery 0.00235; the slow component has 0.05 relative weight.
+- The public 65-file Dataverse inventory lacks the `Experimental means/k_tau_*.csv` files read by the fitting helper, the `data_fig5.xlsx` referenced by the K plotting script, and raw K voltage-clamp NWB current traces. `K_data_fig2.xlsx` is AP-clamp repeated-waveform amplitude data, not the missing voltage-step kinetic dataset.
+- The source-protocol/optimizer audit is complete; independent Rust replay and comparison against paper-level summary targets remain. Do not claim raw-trace reproduction or biological validation.
+
 ## Corrective documentation work completed in this continuation
 
 - Updated `docs/BOOT.md` to describe the three current CPU mechanisms and classify the spike model as exploratory.
@@ -72,11 +82,11 @@ Runner: `experiments/reproduce_eyal_figure7a.py`.
 
 ## Next concrete work
 
-1. Verify the live main HEAD and the latest workflow after documentation updates.
-2. Independently reproduce the Wilbers K+ fast/slow inactivation and recovery protocols from the source equations; inspect any alternate mechanism variants separately from the pure fit path.
-3. Verify the equation-level `trap0` prefactor units against the NMODL unit declarations and NEURON's unit checker; preserve the discrepancy between the printed Table S2 label and dimensional analysis until resolved from the source's unit contract.
-4. Build independent numerical comparisons for Na+/K+ steady states, time constants, fast/slow recovery and source-singularity neighborhoods; reproduce published voltage-clamp protocols where raw data permit.
-6. Verify the cross-species current-clamp fit target and geometry/reversal/channel-shift setup before promoting the model.
-7. Keep AIS-resolved modeling separate. Human NaV1.2/NaV1.6 immunostaining does not provide functional conductance densities or gating parameters.
+1. Verify the live main HEAD and latest workflow after these documentation updates.
+2. Implement a Rust-side voltage-clamp protocol replay for the deposited K+ waveforms, preserving source gate equations and the distinction between fixed and fitted constants.
+3. Compare model output with published K+ group-level activation/inactivation and recovery summaries; label the absence of the source CSV targets and raw K+ traces.
+4. Resolve the `trap0` prefactor unit discrepancy against NEURON's original unit-checking contract and verify temperature handling.
+5. Verify the cross-species current-clamp fit target and geometry/reversal/channel-shift setup before promoting the model.
+6. Keep AIS-resolved modeling separate. Human NaV1.2/NaV1.6 immunostaining does not provide functional conductance densities or gating parameters.
 
 No biological validation, clinical validity, whole-brain functionality, or consciousness claim is made. Save/restore, Rust-native concurrency, the configurable 10,000-unit default, JSON model loading, Python, C/C++, and WGSL remain unimplemented.
