@@ -77,6 +77,12 @@ Runner: `experiments/reproduce_eyal_figure7a.py`.
 - Temporary typed K/Na copies pass `modlunit` 9.0.2 only after those unit corrections and replacing the active fallback with the source's commented-out `a*q` limit. No Dataverse source was modified.
 - The original NMODL is therefore not a unit-checked reference implementation. HumanJS's Rust rate units and analytic singularity handling are equation-consistent corrections, not exact reproduction of the source branch.
 
+
+### Supplementary K+ kinetic curves located
+
+- The publisher-hosted Supplementary Figure S5 (panels I–N) includes K+ activation, fast/slow inactivation, and fast/slow recovery time-constant plots. The PDF parser exposes numeric point tables, but series names are unlabelled and the legend mapping to model/human/mouse is not preserved. Some fast-recovery voltage labels may be OCR-ambiguous.
+- Do not use those OCR tables as fit targets yet. Next step: visually inspect the actual Figure S5 page, map the model curve and human/mouse markers, then digitize the group-level curves with uncertainty. The exact Dataverse CSVs and raw per-cell K+ voltage-clamp traces remain absent.
+
 ## Corrective documentation work completed in this continuation
 
 - Updated `docs/BOOT.md` to describe the three current CPU mechanisms and classify the spike model as exploratory.
