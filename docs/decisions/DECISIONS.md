@@ -110,10 +110,21 @@ The original Eyal et al. ModelDB archive was retrieved and audited. HOC template
 
 The ten mechanisms actually inserted by the six HOC templates were compiled with NEURON 9.0.2. A Python 3 reproduction followed the Figure 7A construction and selected stimulus protocol for all six cells and compared first-spike metrics against released human current-clamp repetitions. Results and the checked-in runner are documented in \`experiments/HUMAN-L23-SPIKE-MODEL-REPRODUCTION.md\`. This verifies canonical source mapping and selected model execution; it is not an independent refit, exact trace match, or biological validation.
 
-**Implementation gate:** no intrinsic spike-generating code is approved until the Wilbers fit discrepancies are reconciled and a numerically stable, independently specified human somatic-patch model is validated against human voltage-clamp targets. Keep it separate from an anatomical soma/AIS model. No AIS conductance may be inferred from immunostaining. Keep transferred kinetics distinct from human-fit conductances. No spike-generating code has been added, and no biological validation is claimed.
+**Implementation gate:** no intrinsic spike-generating code is accepted as a scientifically defensible HumanJS mechanism until the Wilbers fit discrepancies are reconciled and a numerically stable, independently specified human somatic-patch model is validated against human voltage-clamp targets. Keep it separate from an anatomical soma/AIS model. No AIS conductance may be inferred from immunostaining. Keep transferred kinetics distinct from human-fit conductances. Exploratory spike-capable code was subsequently added; ADR-016 records that it does not satisfy this gate and must remain explicitly provisional. No biological validation is claimed.
 
 ## ADR-015 — Published-model reproduction is evidence, not HumanJS implementation
 
 **Status:** Accepted · **Date:** 2026-11-11
 
 The canonical Eyal et al. 2018 ModelDB archive may be used in a separately documented experiment to verify original source availability, parameter mapping, compilation and selected model behavior. Such an experiment must identify archive integrity, execution environment, model configuration, stimulus, comparison metric, released data, deviations and limitations. External model execution does not implement an AP mechanism in the HumanJS Rust core, does not validate HumanJS biologically, and does not establish whole-brain functionality. Do not copy the external model wholesale into HumanJS or silently describe transferred rodent kinetics as human measurements.
+
+
+## ADR-016 — Exploratory human L2/L3 single-compartment spike code remains unaccepted
+
+**Status:** Accepted classification and corrective action · **Date:** 2026-11-11
+
+The Rust core now contains `HumanL23SingleCompartmentModel` in `crates/humanjs-core/src/ion_channels.rs`. It is capable of generating an action potential in a specified current-clamp software fixture. This code was added before the evidence gate in ADR-014 had been closed. Its existence must be documented accurately, but its presence does not waive or retroactively satisfy that gate.
+
+Classify the implementation as **exploratory and not scientifically accepted** until the remaining source and validation questions are resolved. It uses human Na+ gate parameters from the pure Wilbers source, K+ parameters matching the pure mechanism and Table S2 / first optimizer result, and current-clamp fitted conductance densities and setup. The latter are fitted against cross-species mean AP features, not direct human channel-density measurements. The Rust `trap0` uses the analytic mathematical limit rather than reproducing the source's defective branch behavior. The selected K+ parameter set is provisional because the fitting script's later final dictionary disagrees; the paper's stated 14-parameter sodium count is also unresolved.
+
+Do not remove or extend this exploratory mechanism merely to make the documentation appear consistent. First complete the evidence audit, unit/temperature review, voltage-clamp comparisons, current-clamp setup review, and independent regression tests recorded in the architecture and research documents. Keep all claims limited to software-level behavior until evidence-based validation is complete. The model is one lumped compartment and is not an anatomical soma/AIS neuron, full pyramidal neuron, or biological validation result.
