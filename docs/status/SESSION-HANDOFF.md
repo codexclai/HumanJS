@@ -63,10 +63,11 @@ Runner: `experiments/reproduce_eyal_figure7a.py`.
 
 - Directly inspected Dataverse files `fit_k_hh_cma_human.py` (326237), `channel_tools.py` (326242), `channel_kinetics.py` (326241), and pure `k_human.mod` (318647), from dataset DOI 10.34894/L5J0SD version 3.0.
 - Activation/inactivation model clamp: −140 mV for 20 ms, each test voltage for 500 ms, +60 mV for 50 ms, then −140 mV for 100 ms. `K_IV` scans −110 to +55 mV in 5-mV increments; `K_IV_ss` scans −110 to +50 mV in 10-mV increments.
-- Recovery model clamp: −120 mV for 2 ms, +40 mV for 5,000 ms, recovery at −90/−85/−80/−75/−70 mV for 4, 100, 400, 900, 1,600, 2,500, 3,600, 4,900, 6,400, and 8,464 ms, then +40 mV for 5 ms. Temperature is 34°C. Deactivation protocol exists in the helper but is not used by the optimizer.
+- Recovery model clamp: −120 mV for 2 ms, +40 mV for 5,000 ms, recovery at −90/−85/−80/−75/−70 mV for 4, 144, 484, 1,024, 1,764, 2,704, 3,844, 5,184, 6,724, and 8,464 ms, then +40 mV for 5 ms. Temperature is 34°C. Deactivation protocol exists in the helper but is not used by the optimizer.
 - The human optimizer fits six inactivation/recovery parameters, then activation kinetics, then activation steady state. Its fast-recovery target is hard-coded to 236.824345 ms, commented as the mean of human and mouse values. Slow inactivation (450 ms) and slow recovery (2,789.7929 ms) are fixed mechanism settings, not fitted variables. Reported inactivation/recovery component scores are fast 0.0721, slow 2.4386, and fast recovery 0.00235; the slow component has 0.05 relative weight.
 - The public 65-file Dataverse inventory lacks the `Experimental means/k_tau_*.csv` files read by the fitting helper, the `data_fig5.xlsx` referenced by the K plotting script, and raw K voltage-clamp NWB current traces. `K_data_fig2.xlsx` is AP-clamp repeated-waveform amplitude data, not the missing voltage-step kinetic dataset.
-- The source-protocol/optimizer audit is complete; independent Rust replay and comparison against paper-level summary targets remain. Do not claim raw-trace reproduction or biological validation.
+- Added a Rust unit test in `crates/humanjs-core/src/ion_channels.rs` that replays the activation, inactivation, and recovery command sequences with exact first-order gate updates. Golden conductance fractions were calculated independently from the source equations. This tests model-side protocol/equation regression only; it does not compare against experimental traces.
+- The source-protocol/optimizer audit is complete. The next step is to extend the Rust replay across the full voltage series and compare only against published group-level K+ summary targets, while preserving the missing raw-trace/CSV limitation. Do not claim raw-trace reproduction or biological validation.
 
 ## Corrective documentation work completed in this continuation
 
@@ -83,7 +84,7 @@ Runner: `experiments/reproduce_eyal_figure7a.py`.
 ## Next concrete work
 
 1. Verify the live main HEAD and latest workflow after these documentation updates.
-2. Implement a Rust-side voltage-clamp protocol replay for the deposited K+ waveforms, preserving source gate equations and the distinction between fixed and fitted constants.
+2. Extend the Rust-side voltage-clamp replay across the full deposited voltage series, preserving source gate equations and the distinction between fixed and fitted constants.
 3. Compare model output with published K+ group-level activation/inactivation and recovery summaries; label the absence of the source CSV targets and raw K+ traces.
 4. Resolve the `trap0` prefactor unit discrepancy against NEURON's original unit-checking contract and verify temperature handling.
 5. Verify the cross-species current-clamp fit target and geometry/reversal/channel-shift setup before promoting the model.
