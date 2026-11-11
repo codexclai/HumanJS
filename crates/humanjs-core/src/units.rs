@@ -205,9 +205,7 @@ impl SiemensPerSquareMeter {
     /// Convert picosiemens per square micrometre to S/m^2.
     ///
     /// The numerical value is unchanged because 1 pS/μm² equals 1 S/m².
-    pub fn from_picosiemens_per_square_micrometer(
-        value: f64,
-    ) -> Result<Self, SimulationError> {
+    pub fn from_picosiemens_per_square_micrometer(value: f64) -> Result<Self, SimulationError> {
         Self::from_siemens_per_square_meter(value)
     }
 
@@ -227,9 +225,7 @@ impl FaradsPerSquareMeter {
     }
 
     /// Convert microfarads per square centimetre to F/m^2.
-    pub fn from_microfarads_per_square_centimeter(
-        value: f64,
-    ) -> Result<Self, SimulationError> {
+    pub fn from_microfarads_per_square_centimeter(value: f64) -> Result<Self, SimulationError> {
         Self::from_farads_per_square_meter(value * 1.0e-2)
     }
 

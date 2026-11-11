@@ -870,7 +870,11 @@ mod tests {
         let mut fine_peak: f64 = -100.0;
 
         for index in 0..500 {
-            let injected = if (50..200).contains(&index) { current } else { zero };
+            let injected = if (50..200).contains(&index) {
+                current
+            } else {
+                zero
+            };
             coarse_peak = coarse_peak.max(
                 coarse
                     .step(coarse_dt, injected)
