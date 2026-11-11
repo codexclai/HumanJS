@@ -1350,7 +1350,9 @@ mod tests {
         for (index, recovery_voltage_mv) in recovery_voltages_mv.into_iter().enumerate() {
             let pulse_peaks =
                 replay_k_recovery_peak_currents(model, recovery_voltage_mv, &recovery_delays_ms);
-            assert!(pulse_peaks.iter().all(|peak| peak.is_finite() && *peak > 0.0));
+            assert!(pulse_peaks
+                .iter()
+                .all(|peak| peak.is_finite() && *peak > 0.0));
             assert!(pulse_peaks.windows(2).all(|pair| pair[1] > pair[0]));
             let (fast_tau_ms, slow_tau_ms, r_squared) =
                 fit_recovery_biexponential(&recovery_delays_ms, &pulse_peaks).unwrap();
@@ -1366,10 +1368,8 @@ mod tests {
             );
             assert!(r_squared > 0.999);
             if recovery_voltage_mv == -80.0 {
-                let pooled_fast_mean_ms =
-                    (228.527_493_810_715_55 + 245.121_197_002_686_07) / 2.0;
-                let pooled_slow_mean_ms =
-                    (1_999.729_496_786_659_6 + 3_579.856_388_834_977_7) / 2.0;
+                let pooled_fast_mean_ms = (228.527_493_810_715_55 + 245.121_197_002_686_07) / 2.0;
+                let pooled_slow_mean_ms = (1_999.729_496_786_659_6 + 3_579.856_388_834_977_7) / 2.0;
                 assert!((fast_tau_ms - pooled_fast_mean_ms).abs() < 3.0);
                 assert!((slow_tau_ms - pooled_slow_mean_ms).abs() < 20.0);
             }
