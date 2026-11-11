@@ -936,16 +936,17 @@ mod tests {
             }
             matrix.swap(column, pivot);
             let divisor = matrix[column][column];
-            for entry in column..4 {
-                matrix[column][entry] /= divisor;
+            for value in matrix[column].iter_mut().skip(column) {
+                *value /= divisor;
             }
-            for row in 0..3 {
-                if row == column {
+            let pivot_row = matrix[column];
+            for (row_index, row_values) in matrix.iter_mut().enumerate() {
+                if row_index == column {
                     continue;
                 }
-                let factor = matrix[row][column];
-                for entry in column..4 {
-                    matrix[row][entry] -= factor * matrix[column][entry];
+                let factor = row_values[column];
+                for (value, pivot_value) in row_values.iter_mut().zip(pivot_row).skip(column) {
+                    *value -= factor * pivot_value;
                 }
             }
         }
