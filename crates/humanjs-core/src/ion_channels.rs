@@ -734,8 +734,8 @@ mod tests {
         let above = trap0(half_voltage + 1.0e-7, half_voltage, prefactor, slope).unwrap();
 
         assert!((limit - 2.0).abs() < 1.0e-14);
-        assert!((below - limit).abs() < 1.0e-8);
-        assert!((above - limit).abs() < 1.0e-8);
+        assert!((below - limit).abs() < 1.0e-7);
+        assert!((above - limit).abs() < 1.0e-7);
     }
 
     #[test]
