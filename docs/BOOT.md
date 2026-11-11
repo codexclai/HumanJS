@@ -41,7 +41,7 @@ Do not search for or request old uploads or copied source snapshots. If evidence
 
 `main` is the only branch to use, permanently. Never create, check out, update, merge, or otherwise use another branch. Make authorized changes directly on `main`. Do not create branches, PRs, or automation that opens non-main update branches. No branch protection, rulesets, or deletion-prevention settings are required. Force pushes are permitted but exceptional and must be inspected and verified.
 
-The live repository check on 2026-11-11 verified default branch `main`, HEAD `7a187e7db0498ee35cbd5d35814c5cebc26aef10`, a complete 63-entry tree, exactly one branch (`main`), and no open issues or pull requests. Workflow `43024172929` passed formatting, Clippy, all workspace tests (27 core, 3 passive, 6 synapse), Python syntax, the seven-CSV Figure S5 validator, and repository policy. Recheck the live repository, tree, branch list, and workflow at the start of every session; do not rely on this historical check.
+The live repository check on 2026-11-11 verified default branch `main`, baseline HEAD `73311b47fb18e768f15f8b1f678bced91117cf98`, a complete 63-entry tree, exactly one branch (`main`), and no open issues or pull requests. Workflow `43024354498` passed formatting, Clippy, all workspace tests (27 core, 3 passive, 6 synapse), Python syntax, the seven-CSV Figure S5 validator, and repository policy. A fresh NEURON 9.0.2 check reconfirmed that unmodified `k_human.mod` and `k_mouse.mod` compile but fail `modlunit` at the untyped `trates(v+vshift)` call; ADR-014 documents the typed temporary diagnostics. Recheck the live repository, tree, branch list, and workflow at the start of every session; do not rely on this historical check.
 
 ## Session procedure
 
