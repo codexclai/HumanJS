@@ -17,6 +17,14 @@ def close(actual: float, expected: float, tolerance: float) -> bool:
     return math.isfinite(actual) and abs(actual - expected) <= tolerance
 
 
+def read_rows(filename: str) -> tuple[str, list[dict[str, str]]]:
+    text = (ROOT / "research" / filename).read_text(encoding="utf-8")
+    if EXPECTED_SHA256 not in text:
+        raise SystemExit(f"{filename}: source PDF SHA-256 provenance is missing")
+    rows = list(csv.DictReader(line for line in text.splitlines() if not line.startswith("#")))
+    return text, rows
+
+
 def validate_panel(
     *,
     filename: str,
@@ -36,15 +44,10 @@ def validate_panel(
     tau_tolerance: float,
     tau_bounds: tuple[float, float],
 ) -> tuple[float, float, int]:
-    path = ROOT / "research" / filename
-    text = path.read_text(encoding="utf-8")
-    if EXPECTED_SHA256 not in text:
-        raise SystemExit(f"{filename}: source PDF SHA-256 provenance is missing")
-    rows = list(csv.DictReader(line for line in text.splitlines() if not line.startswith("#")))
+    _, rows = read_rows(filename)
     expected_count = len(expected_voltages) * len(SPECIES_MARKERS)
     if len(rows) != expected_count:
         raise SystemExit(f"{filename}: expected {expected_count} markers, found {len(rows)}")
-
     counts = Counter(row["species"] for row in rows)
     expected_counts = Counter({species: len(expected_voltages) for species in SPECIES_MARKERS})
     if counts != expected_counts:
@@ -84,8 +87,39 @@ def validate_panel(
                 raise SystemExit(f"{filename}: time-constant uncertainty missing or changed: {row}")
             if not (tau_bounds[0] < tau < tau_bounds[1]):
                 raise SystemExit(f"{filename}: implausible plotted time constant: {row}")
-
     return max_voltage_error, max_tau_error, len(rows)
+
+
+def validate_source_marker_values(
+    *,
+    filename: str,
+    tau_column: str,
+    tau_uncertainty_column: str,
+    expected_values: dict[str, float],
+) -> int:
+    _, rows = read_rows(filename)
+    if len(rows) != len(expected_values):
+        raise SystemExit(f"{filename}: expected {len(expected_values)} source marker values, found {len(rows)}")
+    for row in rows:
+        species = row["species"]
+        if species not in expected_values:
+            raise SystemExit(f"{filename}: unexpected species: {species}")
+        if float(row["voltage_mV"]) != -80.0:
+            raise SystemExit(f"{filename}: recovery marker voltage is not -80 mV: {row}")
+        if row["marker"] != SPECIES_MARKERS[species]:
+            raise SystemExit(f"{filename}: marker/species mismatch: {row}")
+        if row["value_provenance"] != "channel_tools.K_IV":
+            raise SystemExit(f"{filename}: value is not attributed to deposited channel_tools.K_IV: {row}")
+        if abs(float(row[tau_column]) - expected_values[species]) > 1.0e-9:
+            raise SystemExit(f"{filename}: source-code recovery value mismatch: {row}")
+        if float(row["voltage_digitization_uncertainty_mV"]) != 0.0:
+            raise SystemExit(f"{filename}: exact source value should not be labelled plot-digitized: {row}")
+        if float(row[tau_uncertainty_column]) != 0.0:
+            raise SystemExit(f"{filename}: exact source value should not be labelled plot-digitized: {row}")
+    if {row["species"] for row in rows} != set(expected_values):
+        raise SystemExit(f"{filename}: one or more species source values are missing")
+    print(f"{filename}: {len(rows)} exact experimental marker values transcribed from channel_tools.K_IV")
+    return len(rows)
 
 
 def main() -> int:
@@ -144,42 +178,6 @@ def main() -> int:
             "tau_tolerance": 0.11,
             "tau_bounds": (0.0, 800.0),
         },
-        "M fast recovery": {
-            "filename": "HUMAN-L23-WILBERS-FIG-S5-M-FAST-RECOVERY.csv",
-            "tau_column": "tau_fast_recovery_ms",
-            "tau_uncertainty_column": "tau_digitization_uncertainty_ms",
-            "expected_voltages": [-80.0],
-            "x_reference_pixel": 387.0,
-            "x_reference_mv": -80.0,
-            "x_pixels_per_mv": 33.5,
-            "y_reference_pixel": 197.5,
-            "y_reference_value": 300.0,
-            "y_second_pixel": 340.0,
-            "y_second_value": 200.0,
-            "voltage_uncertainty": 1.0,
-            "tau_uncertainty": 15.0,
-            "voltage_tolerance": 0.11,
-            "tau_tolerance": 0.11,
-            "tau_bounds": (0.0, 500.0),
-        },
-        "N slow recovery": {
-            "filename": "HUMAN-L23-WILBERS-FIG-S5-N-SLOW-RECOVERY.csv",
-            "tau_column": "tau_slow_recovery_s",
-            "tau_uncertainty_column": "tau_digitization_uncertainty_s",
-            "expected_voltages": [-80.0],
-            "x_reference_pixel": 360.0,
-            "x_reference_mv": -80.0,
-            "x_pixels_per_mv": 33.5,
-            "y_reference_pixel": 225.5,
-            "y_reference_value": 3.0,
-            "y_second_pixel": 460.0,
-            "y_second_value": 2.0,
-            "voltage_uncertainty": 1.0,
-            "tau_uncertainty": 0.10,
-            "voltage_tolerance": 0.11,
-            "tau_tolerance": 0.11,
-            "tau_bounds": (0.0, 5.0),
-        },
     }
 
     total = 0
@@ -187,13 +185,33 @@ def main() -> int:
         voltage_error, tau_error, count = validate_panel(**settings)
         total += count
         print(
-            f"{name}: {count} markers; max rounding residuals "
+            f"{name}: {count} manually digitized markers; max rounding residuals "
             f"{voltage_error:.3g} mV and {tau_error:.3g} axis units"
         )
+
+    total += validate_source_marker_values(
+        filename="HUMAN-L23-WILBERS-FIG-S5-M-FAST-RECOVERY.csv",
+        tau_column="tau_fast_recovery_ms",
+        tau_uncertainty_column="tau_digitization_uncertainty_ms",
+        expected_values={
+            "human": 228.52749381071555,
+            "mouse": 245.12119700268607,
+        },
+    )
+    total += validate_source_marker_values(
+        filename="HUMAN-L23-WILBERS-FIG-S5-N-SLOW-RECOVERY.csv",
+        tau_column="tau_slow_recovery_s",
+        tau_uncertainty_column="tau_digitization_uncertainty_s",
+        expected_values={
+            "human": 1.9997294967866596,
+            "mouse": 3.5798563888349777,
+        },
+    )
     print(
-        f"Figure S5 digitization passed: {total} experimental group-mean markers; "
+        f"Figure S5 evidence record passed: {total} experimental group-mean markers "
+        "(46 manually digitized, 4 transcribed from source-script constants); "
         "source provenance, species markers, point grids, and axis calibration verified. "
-        "Digitization uncertainty is not biological SD."
+        "Plot-digitization uncertainty is not biological SD."
     )
     return 0
 
