@@ -1059,8 +1059,7 @@ mod tests {
         }
 
         let log_tau = (left + right) * 0.5;
-        let residual_sum_squares =
-            biexponential_fixed_tau2_sse(log_tau, times_ms, values, tau2_ms);
+        let residual_sum_squares = biexponential_fixed_tau2_sse(log_tau, times_ms, values, tau2_ms);
         let r_squared = 1.0 - residual_sum_squares / total_sum_squares;
         Some((log_tau.exp(), r_squared))
     }
