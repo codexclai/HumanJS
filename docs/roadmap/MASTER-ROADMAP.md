@@ -24,7 +24,7 @@
 - [x] Record the connection class, species, experimental methods, direct observations, fitted values, assumptions, and parameter provenance for the first glutamatergic mechanism.
 - [x] Review human L2/L3 somatic Na+/K+ current measurements, human AIS sodium-subtype localization, and the model/measurement boundary for intrinsic spike initiation.
 - [x] Retrieve and inspect the Wilbers supplementary Tables S1–S3 and original CC0 Dataverse fitting scripts, including protocol and temperature settings.
-- [x] Retrieve the official PMC AWS copy of Wilbers Supplementary Figure S5, visually map model/human/mouse series, and digitize the K+ slow-inactivation panel with explicit uncertainty and a reproducible data validator; remaining kinetic panels are still outstanding.
+- [x] Retrieve the official PMC AWS copy of Wilbers Supplementary Figure S5, visually map model/human/mouse series, and digitize experimental group-mean markers in kinetic panels I, J, K, M, and N with explicit uncertainty and a reproducible validator; independent model-curve digitization and raw-trace reproduction remain outstanding.
 - [x] Retrieve and inspect the original Wilbers pure human na_human.mod and k_human.mod sources, equations, parameter values, units, Q10 behavior, conductance expressions and fixed Rb=Ra relation.
 - [x] Inspect author-deposited per-cell summary workbooks and verify the published human Na+/K+ sample counts and steady-state fit summaries.
 - [x] Compile the original pure Wilbers human Na+/K+ mechanisms in NEURON 9.0.2 and probe exact trap0 singularities plus the actual Na+ lookup grid; record the numerical outcomes without patching the source.
