@@ -119,3 +119,13 @@ Runner: `experiments/reproduce_eyal_figure7a.py`.
 6. Keep AIS-resolved modeling separate. Human NaV1.2/NaV1.6 immunostaining does not provide functional conductance densities or gating parameters.
 
 No biological validation, clinical validity, whole-brain functionality, or consciousness claim is made. Save/restore, Rust-native concurrency, the configurable 10,000-unit default, JSON model loading, Python, C/C++, and WGSL remain unimplemented.
+
+### Current-clamp conductance-grid follow-up (2026-11-11)
+
+- Recovered the complete deposited fit_gbar_na_k.py and currentclamp.py source scripts through the Dataverse access API (dataset DOI 10.34894/L5J0SD, v3.0; files 318556 and 318553).
+- fit_gbar_na_k.py evaluates a 20×20 grid of independent human Na/K kinetic ratios (20 values each from 0 to 1), calling the cross-species-midpoint fit_densities optimizer at all 400 combinations and writing gbar_na.csv / gbar_k.csv. Rows are reversed in the exported matrices for plotting.
+- currentclamp.py separately fits all-human, all-mouse and 0.5/0.5 kinetic mixtures, then invokes the fitted-density interpolation path for 20×20 AP upstroke/downstroke heatmaps and repeated-AP sweeps up to 200 APs.
+- Its initial values 96.01446023 and 48.84943554 pS/µm² are optimizer starting values, not fitted outputs. The numeric interpolation CSVs remain blocked by Dataverse anti-bot responses.
+- Exact provenance of HumanJS's 114.48/29.05 pS/µm² values remains unresolved; do not equate them with the all-human fit. A targeted extraction still did not recover get_outcomes_full, so the feature windows/thresholds remain unknown.
+- Next: recover AP1comparison.csv, both gbar interpolation CSVs, and the complete outcome helper; map the exact source table entry to the Rust preset before considering any parameter changes.
+
