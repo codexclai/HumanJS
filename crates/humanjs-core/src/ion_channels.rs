@@ -808,10 +808,7 @@ mod tests {
         advance_k_clamp(model, &mut gates, 60.0, 50.0, 0.1)
     }
 
-    fn replay_k_recovery(
-        model: HumanL23SingleCompartmentModel,
-        recovery_delay_ms: f64,
-    ) -> f64 {
+    fn replay_k_recovery(model: HumanL23SingleCompartmentModel, recovery_delay_ms: f64) -> f64 {
         let mut gates = initial_potassium_clamp_gates(model, -120.0);
         advance_k_clamp(model, &mut gates, -120.0, 2.0, 0.5);
         advance_k_clamp(model, &mut gates, 40.0, 5_000.0, 0.5);
@@ -831,7 +828,9 @@ mod tests {
         assert!((activation_at_zero - 0.471_306_108_091_782).abs() < 1.0e-9);
         assert!((inactivation_after_minus_80 - 0.805_281_859_671_567_1).abs() < 1.0e-9);
 
-        let delays_ms = [4.0, 100.0, 400.0, 900.0, 1_600.0, 2_500.0, 3_600.0, 4_900.0, 6_400.0, 8_464.0];
+        let delays_ms = [
+            4.0, 100.0, 400.0, 900.0, 1_600.0, 2_500.0, 3_600.0, 4_900.0, 6_400.0, 8_464.0,
+        ];
         let recovered: Vec<f64> = delays_ms
             .into_iter()
             .map(|delay| replay_k_recovery(model, delay))
