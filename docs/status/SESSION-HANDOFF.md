@@ -125,17 +125,13 @@ No biological validation, clinical validity, whole-brain functionality, or consc
 - Recovered the complete deposited fit_gbar_na_k.py and currentclamp.py source scripts through the Dataverse access API (dataset DOI 10.34894/L5J0SD, v3.0; files 318556 and 318553).
 - fit_gbar_na_k.py evaluates a 20×20 grid of independent human Na/K kinetic ratios (20 values each from 0 to 1), calling the cross-species-midpoint fit_densities optimizer at all 400 combinations and writing gbar_na.csv / gbar_k.csv. Rows are reversed in the exported matrices for plotting.
 - currentclamp.py separately fits all-human, all-mouse and 0.5/0.5 kinetic mixtures, then invokes the fitted-density interpolation path for 20×20 AP upstroke/downstroke heatmaps and repeated-AP sweeps up to 200 APs.
-- Its initial values 96.01446023 and 48.84943554 pS/µm² are optimizer starting values, not fitted outputs. The numeric interpolation CSVs remain blocked by Dataverse anti-bot responses.
+- Its initial values 96.01446023 and 48.84943554 pS/µm² are optimizer starting values, not fitted outputs. The deposited interpolation CSVs have since been retrieved and checksum-verified.
 - The all-human kinetic grid endpoint has been mapped exactly to HumanJS's 114.48/29.05 pS/μm² values after rounding. Do not misstate this as a human-only AP fit: its targets are 50:50 human/mouse medians.
 - Next: review the provisional single-compartment mechanism's scientific acceptance gate and determine which additional source evidence or mechanistic corrections are required before promotion. Do not change fitted conductances solely because provenance is now resolved.
 
-### Current-clamp source completeness finding (2026-11-11)
+### Current-clamp source completeness finding (2026-11-11) — superseded
 
-- Targeted live search of the retrieved complete Dataverse `cc_tools.py` (file 318557) finds `get_outcomes_full`, `get_outcomes`, and any amp/up/down feature extraction function all absent.
-- `fit_densities` nevertheless calls `get_outcomes_full` inside the Powell objective and again after fitting. The retrieved source set is therefore incomplete as an executable fitting workflow unless an additional, unverified import/source dependency supplies the helper.
-- Exact AP amplitude/upstroke/downstroke definitions, counting logic, thresholds, and windows remain unknown. Do not infer them from feature labels or claim independent optimizer reproduction.
-- The 20×20 calibration-grid structure is visible, but numerical CSV outputs and the outcome helper are still unavailable. The HumanJS 114.48/29.05 pS/µm² values remain untraceable to a source table entry.
-- Next: inspect the full Dataverse v3.0 file inventory and identify any alternate source file containing the missing helper; retrieve the exact calibration CSVs and compare the all-human table cell with the Rust preset before changing parameters.
+The 2026-11-11 missing-helper conclusion was based on an incomplete extraction. The complete checksum-verified `cc_tools.py` defines `get_outcomes_full` and `get_outcomes`; all three calibration CSVs are now retrieved and their exact all-human grid endpoint is mapped to the HumanJS preset. See the 2026-11-12 resolved audit below.
 
 
 ### 2026-11-12 current-clamp inventory correction
@@ -144,8 +140,8 @@ No biological validation, clinical validity, whole-brain functionality, or consc
 - The unrestricted current-clamp files are present: `AP1comparison.csv` file 318555 (846 bytes), `gbar_na.csv` file 318551 (8,224 bytes), and `gbar_k.csv` file 318552 (8,037 bytes).
 - The CSV contents have since been retrieved through the signed object-store redirect and verified against Dataverse metadata; see the subsequent resolution entry.
 - The current-clamp directory contains only three Python source files in the inventory: `cc_tools.py`, `currentclamp.py`, and `fit_gbar_na_k.py`. No separately named extractor module is listed because `get_outcomes_full` is defined at the end of `cc_tools.py`; the earlier extraction omitted that part of the file.
-- Do not infer that no external dependency exists; record the released source set as incomplete for independent execution. The 114.48/29.05 pS/µm² preset is now traced to the all-human-kinetics grid endpoint; the spike model remains exploratory pending its broader scientific acceptance gate.
-- Next: obtain the three CSV bytes through a legitimate alternate Dataverse access route, verify file checksums, parse the grid orientation/values, and map the exact all-human/mixed source fit only if the missing outcome extractor can also be resolved. Do not retune before those conditions are met.
+- The all-human grid endpoint is now traced to the 114.48/29.05 pS/µm² preset; the spike model remains exploratory pending its broader scientific acceptance gate.
+- This inventory note is superseded by the fully retrieved and checksum-verified source audit below.
 
 
 ### 2026-11-12 — current-clamp calibration source fully recovered
