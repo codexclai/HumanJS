@@ -228,9 +228,9 @@ The article's Methods describe 14 parameters per channel model: 2 steady-state p
 
 The potassium fit-script's apparent final-dictionary conflict is also clarified by execution order. The script applies the first inactivation optimizer result with `mod_cell(cell, inact_fit['params'])`, explicitly reapplies those same six values, then fits activation kinetics and activation steady state. Its trailing “final best fit” dictionary is a bare dictionary literal: it is not assigned, returned, or passed to `mod_cell`. Therefore that literal is not evidence that the alternate six inactivation values were used by the executed fitting sequence. The operative K+ inactivation values in the deposited script are the first optimizer result, which matches Table S2 and the pure `k_human.mod` source.
 
-The K+ fitting script also assigns `cell.h12factor_k_human = 10.5` between the inactivation and activation fits. However, the pure `k_human.mod` mechanism declares `inact_rate_factor` (value 1) and does not declare `h12factor_k_human`; the deposited `channel_tools.py` K+ protocol helper does not read that Python attribute. There is therefore no evidence in the deposited pure-mechanism fitting path that this assignment changes the NMODL kinetics. Treat it as an unconsumed/legacy assignment unless a different mechanism variant or runtime contract is demonstrated. The distinct hybrid current-clamp mechanism remains a separate source variant and must not be conflated with the pure voltage-clamp mechanism.
+The K+ fitting script also assigns `cell.h12factor_k_human = 10.5` between the inactivation and activation fits. Direct inspection of all three deposited K+ NMODL variants used in this audit (pure `k_human.mod`, hybrid `k_human.mod`, and `k_human_hm12inf.mod`) shows that the only occurrence of `h12factor` is the commented-out line `:h2tau = h1tau * h12factor`. It is not declared in any active `NEURON` or `PARAMETER` block, and `channel_tools.py` does not read the Python attribute. The assignment therefore has no active mechanism path in these deposited variants; it is a stale/unused fit-script assignment, not an unresolved kinetic multiplier.
 
-The pure mechanism inspection also resolves the Table S2 `Rb` omission: both Na+ and K+ NMODL files explicitly assign `Rb = Ra`. The fitting scripts therefore optimize one shared opening/closing prefactor rather than two independent values. The table's single `Ra` row is consistent with the deposited mechanism's equality constraint. The rate-prefactor rows are printed in Table S2 as ms⁻¹, but the deposited `trap0` equation multiplies the prefactor by `(V − th)`, which is in mV, before returning a transition rate. Dimensional consistency therefore requires an effective coefficient unit of mV⁻¹·ms⁻¹. HumanJS retains the deposited numeric values and encodes that equation-level dimensional interpretation in `RatePrefactor`; the table's printed unit is recorded as incomplete rather than silently treated as dimensionally exact.
+The pure mechanism inspection also resolves the Table S2 `Rb` omission: both Na+ and K+ NMODL files explicitly assign `Rb = Ra`. The fitting scripts therefore optimize one shared opening/closing prefactor rather than two independent values. The table's single `Ra` row is consistent with the deposited mechanism's equality constraint. The pure Na+ and K+ NMODL `PARAMETER` blocks explicitly annotate `Ra`, `Rb`, `Rd`, and `Rg` as `(/ms)`, matching Table S2. However, the source `trap0` equation is `a * (v - th) / (1 - exp(-(v - th)/q))`: its denominator is dimensionless while its numerator is in mV. For the result to be a transition rate in ms⁻¹, dimensional analysis requires the coefficient to be mV⁻¹·ms⁻¹, not the source-declared ms⁻¹. The `FUNCTION trap0` arguments have no explicit unit declarations, and the source `UNITS` block does not resolve this coefficient mismatch. The unchanged mechanisms compile, but compilation alone does not establish dimensional consistency. HumanJS retains the deposited numeric values without rescaling and gives the internal coefficient the equation-consistent mV⁻¹·ms⁻¹ type; this is an explicit dimensional reinterpretation, not an exact reproduction of the source's unit declaration.
 
 ### Author-deposited fitting code and protocol cross-check
 
@@ -302,13 +302,13 @@ gbar = 40 pS/μm² in the file's parameter declaration; this is a mechanism star
 | q_act_inf | 10.2311528961 | Activation steady-state slope, mV |
 | tha | −58.5923560662 | Activation rate-function voltage parameter, mV |
 | qa | 9.21455371864 | Activation rate-function slope, mV |
-| Ra, Rb | 0.213984927041 | Opening/closing rate prefactors, ms⁻¹; the file explicitly sets them equal |
+| Ra, Rb | 0.213984927041 | Opening/closing prefactors; source-declared /ms (equation requires mV⁻¹·ms⁻¹); the file explicitly sets them equal |
 | th_inact_inf | −64.48 | Inactivation steady-state half-voltage, mV |
 | q_inact_inf | 11.02 | Inactivation steady-state slope, mV |
 | thi1 | −39.2986769113 | Inactivation time-constant voltage parameter, mV |
 | thi2 | −77.1667453246 | Recovery time-constant voltage parameter, mV |
 | qi1, qi2 | 7.21636386593; 4.74945004839 | Inactivation/recovery rate slopes, mV |
-| Rd, Rg | 0.0476391878314; 0.0119516550234 | Inactivation/recovery rate prefactors, ms⁻¹ |
+| Rd, Rg | 0.0476391878314; 0.0119516550234 | Inactivation/recovery prefactors; source-declared /ms (equation requires mV⁻¹·ms⁻¹) |
 | temp, q10 | 25°C; 2.3 | Reference temperature and temperature coefficient |
 | vShift_inact | 0 mV | Additional shift applied only to the inactivation gate |
 
@@ -330,7 +330,7 @@ gbar = 40 pS/μm² in the file's parameter declaration. The K+ channel is modele
 | q_act_inf | 19.1995502734 | Activation steady-state slope, mV |
 | tha, thb | −29.9617980169 each | Activation/deactivation rate voltage parameters, mV |
 | qa, qb | 6.59040568888 each | Activation/deactivation slopes, mV |
-| Ra, Rb | 0.0184592505854 each | Opening/closing rate prefactors, ms⁻¹; explicitly equal |
+| Ra, Rb | 0.0184592505854 each | Opening/closing prefactors; source-declared /ms (equation requires mV⁻¹·ms⁻¹); explicitly equal |
 | th_inact_inf | −52.61 | Inactivation steady-state half-voltage, mV |
 | q_inact_inf | 13.09 | Inactivation steady-state slope, mV |
 | thi1, thi2 | 40.5659148938; −75.9382265931 | Inactivation/recovery time-constant voltage parameters, mV |

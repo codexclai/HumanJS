@@ -26,10 +26,10 @@ struct PotassiumRates {
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 struct RatePrefactor {
-    // trap0 = a * (V - th) / (1 - exp(-(V - th) / q)). Since V and q
-    // are in mV, a must have units mV^-1 ms^-1 for the returned rate to
-    // have units ms^-1. Table S2 labels the fitted prefactors ms^-1; that
-    // published unit label is dimensionally incomplete for this equation.
+    // The pure NMODL files and Table S2 declare these prefactors as ms^-1.
+    // But trap0 multiplies a by the voltage-valued term (V - th), so the
+    // equation requires mV^-1 ms^-1 for its result to be a rate in ms^-1.
+    // Preserve source numeric values, but expose the equation-consistent unit.
     per_millivolt_per_ms: f64,
 }
 
