@@ -109,6 +109,30 @@ mod tests {
     use crate::SimulationError;
 
     #[test]
+    fn membrane_density_units_convert_consistently_to_si() {
+        use super::{FaradsPerSquareMeter, SiemensPerSquareMeter, SquareMeters};
+
+        assert_eq!(
+            SquareMeters::from_square_micrometers(314.0)
+                .unwrap()
+                .as_square_meters(),
+            314.0e-12
+        );
+        assert_eq!(
+            SiemensPerSquareMeter::from_picosiemens_per_square_micrometer(114.48)
+                .unwrap()
+                .as_siemens_per_square_meter(),
+            114.48
+        );
+        assert_eq!(
+            FaradsPerSquareMeter::from_microfarads_per_square_centimeter(1.0)
+                .unwrap()
+                .as_farads_per_square_meter(),
+            0.01
+        );
+    }
+
+    #[test]
     fn unit_conversions_are_consistent_with_si() {
         assert_eq!(Volts::from_millivolts(-70.0).unwrap().as_volts(), -0.07);
         assert_eq!(
@@ -146,5 +170,71 @@ mod tests {
         assert!(Volts::from_volts(f64::NAN).is_err());
         assert!(Amperes::from_amperes(f64::INFINITY).is_err());
         assert!(Farads::from_farads(f64::INFINITY).is_err());
+    }
+}
+
+
+/// Surface area, in square metres.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct SquareMeters(f64);
+
+impl SquareMeters {
+    pub fn from_square_meters(value: f64) -> Result<Self, SimulationError> {
+        require_positive("surface area (m^2)", value)?;
+        Ok(Self(value))
+    }
+
+    pub fn from_square_micrometers(value: f64) -> Result<Self, SimulationError> {
+        Self::from_square_meters(value * 1.0e-12)
+    }
+
+    pub const fn as_square_meters(self) -> f64 {
+        self.0
+    }
+}
+
+/// Specific conductance, in siemens per square metre.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct SiemensPerSquareMeter(f64);
+
+impl SiemensPerSquareMeter {
+    pub fn from_siemens_per_square_meter(value: f64) -> Result<Self, SimulationError> {
+        require_positive("specific conductance (S/m^2)", value)?;
+        Ok(Self(value))
+    }
+
+    /// Convert picosiemens per square micrometre to S/m^2.
+    ///
+    /// The numerical value is unchanged because 1 pS/μm² equals 1 S/m².
+    pub fn from_picosiemens_per_square_micrometer(
+        value: f64,
+    ) -> Result<Self, SimulationError> {
+        Self::from_siemens_per_square_meter(value)
+    }
+
+    pub const fn as_siemens_per_square_meter(self) -> f64 {
+        self.0
+    }
+}
+
+/// Specific membrane capacitance, in farads per square metre.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct FaradsPerSquareMeter(f64);
+
+impl FaradsPerSquareMeter {
+    pub fn from_farads_per_square_meter(value: f64) -> Result<Self, SimulationError> {
+        require_positive("specific capacitance (F/m^2)", value)?;
+        Ok(Self(value))
+    }
+
+    /// Convert microfarads per square centimetre to F/m^2.
+    pub fn from_microfarads_per_square_centimeter(
+        value: f64,
+    ) -> Result<Self, SimulationError> {
+        Self::from_farads_per_square_meter(value * 1.0e-2)
+    }
+
+    pub const fn as_farads_per_square_meter(self) -> f64 {
+        self.0
     }
 }
