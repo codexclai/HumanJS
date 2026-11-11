@@ -2,7 +2,7 @@
 
 **Reviewed:** 2026-11-10  
 **Scope:** somatic action-potential generation and axon-initial-segment (AIS) initiation in human neocortical pyramidal cells.  
-**Status:** canonical source audit and selected NEURON reproductions completed; a HumanJS spike implementation remains evidence-gated. No spike-generation code is implemented by this review.
+**Status:** canonical source audit and selected NEURON reproductions completed. Exploratory HumanJS spike-capable code was subsequently added before the evidence gate was closed; it remains unaccepted and is documented as provisional. This review does not establish biological validation.
 
 ## Decision summary
 
@@ -14,7 +14,7 @@ Human data support three distinct evidence layers:
 
 These sources are complementary, not interchangeable. A single-compartment soma/nucleated-patch equivalent must not be described as an anatomically complete neuron or an AIS-resolved initiation model. An AIS compartment requires additional parameter provenance that is not established by immunostaining alone.
 
-**No intrinsic spike-initiation mechanism is approved for implementation yet.** A bounded somatic-patch-equivalent is a possible first increment after exact human kinetic equations, parameter units, temperature corrections, and fit-source provenance have been verified. An anatomical soma/AIS model is a separate, stricter milestone.
+**No intrinsic spike-initiation mechanism is yet scientifically accepted.** Exploratory single-compartment Na+/K+ code now exists in the Rust core, but it was added before the evidence gate below was closed. A bounded somatic-patch-equivalent could become an accepted first increment only after exact human kinetic equations, parameter units, temperature corrections, fit-source provenance, and voltage-clamp behavior have been reconciled. An anatomical soma/AIS model is a separate, stricter milestone.
 
 ## 1. Eyal et al. (2018): human L2/L3 soma/axon model fits
 
@@ -411,7 +411,7 @@ Before writing an intrinsic spike model in HumanJS, close these specific questio
 
 A first somatic-patch-equivalent model may become defensible using the direct human channel recordings and the paper's fitted equations, but it must not claim to reproduce a full neuron, dendrites, AIS, or axonal propagation. An AIS-resolved model remains a separate evidence-gated increment.
 
-No AP-generating code, threshold-only spike event, or generic rodent HH parameter set has been added to HumanJS by this review. The canonical Eyal source audit and selected Figure 7A reproduction are recorded separately; neither is treated as biological validation.
+Exploratory AP-generating code now exists in `crates/humanjs-core/src/ion_channels.rs`; it is not accepted as a scientifically validated human mechanism and must not be described as one. It uses a stable analytic-limit interpretation of `trap0`, Table S2 / first-optimizer K+ values despite the later fit-dictionary discrepancy, and current-clamp fitted conductance densities that were optimized against cross-species mean AP features. The implementation is one lumped compartment, not an anatomical soma/AIS neuron. Its software tests do not replace voltage-clamp protocol reproduction or biological validation. See ADR-016 and the architecture validation gate. The canonical Eyal source audit and selected Figure 7A reproduction remain separate; neither is treated as HumanJS implementation or biological validation.
 
 ## Sources and provenance
 
