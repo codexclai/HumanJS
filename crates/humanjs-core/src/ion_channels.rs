@@ -30,7 +30,7 @@ struct RatePrefactor {
     // are in mV, a must have units mV^-1 ms^-1 for the returned rate to
     // have units ms^-1. Table S2 labels the fitted prefactors ms^-1; that
     // published unit label is dimensionally incomplete for this equation.
-    per_millivolt_per_millivolt_per_ms: f64,
+    per_millivolt_per_ms: f64,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
