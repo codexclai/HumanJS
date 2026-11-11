@@ -2,7 +2,7 @@
 
 **Updated:** 2026-11-11  
 **Canonical repository:** `codexclai/HumanJS`, branch `main` only.  
-**Verified source/code commit:** `5dfba6257ffb375bf741b8149026f13274600ae5`.  
+**Verified source/code commit:** `8e2781f608ef0fe820024124e01933bd7265c63e`.  
 **Documentation reconciliation:** subsequent commits on `main`; verify the live HEAD and workflow before using this handoff in a later session.
 
 ## Verified repository state at start of this continuation
@@ -11,7 +11,7 @@
 - Full tree retrieved: 55 entries, not truncated.
 - Live branch listing contained exactly `main`.
 - No open issues or pull requests were returned.
-- GitHub Actions run `42973247775` passed on exact head `5dfba6257ffb375bf741b8149026f13274600ae5`: https://github.com/codexclai/HumanJS/actions/runs/42973247775. Rust formatting, Clippy, workspace tests, Python syntax validation, and repository policy all passed.
+- GitHub Actions run `42975485454` passed on exact code head `8e2781f608ef0fe820024124e01933bd7265c63e`: https://github.com/codexclai/HumanJS/actions/runs/42975485454. Rust formatting, Clippy, workspace tests (including the K+ clamp replay regression), Python syntax validation, and repository policy all passed.
 - This chat did not complete a fresh local clone because DNS resolution failed. Do not claim a local Rust test run.
 
 ## Current HumanJS implementation
@@ -67,7 +67,7 @@ Runner: `experiments/reproduce_eyal_figure7a.py`.
 - The human optimizer fits six inactivation/recovery parameters, then activation kinetics, then activation steady state. Its fast-recovery target is hard-coded to 236.824345 ms, commented as the mean of human and mouse values. Slow inactivation (450 ms) and slow recovery (2,789.7929 ms) are fixed mechanism settings, not fitted variables. Reported inactivation/recovery component scores are fast 0.0721, slow 2.4386, and fast recovery 0.00235; the slow component has 0.05 relative weight.
 - The public 65-file Dataverse inventory lacks the `Experimental means/k_tau_*.csv` files read by the fitting helper, the `data_fig5.xlsx` referenced by the K plotting script, and raw K voltage-clamp NWB current traces. `K_data_fig2.xlsx` is AP-clamp repeated-waveform amplitude data, not the missing voltage-step kinetic dataset.
 - Added a Rust unit test in `crates/humanjs-core/src/ion_channels.rs` that replays the activation, inactivation, and recovery command sequences with exact first-order gate updates. Golden conductance fractions were calculated independently from the source equations. This tests model-side protocol/equation regression only; it does not compare against experimental traces.
-- The source-protocol/optimizer audit is complete. The next step is to extend the Rust replay across the full voltage series and compare only against published group-level K+ summary targets, while preserving the missing raw-trace/CSV limitation. Do not claim raw-trace reproduction or biological validation.
+- The source-protocol/optimizer audit and the first Rust model-side replay are complete. The replay's independent reference conductance fractions and recovery ordering passed the Rust workspace test. The next step is to extend the replay across the full voltage series and compare only against published group-level K+ summary targets, while preserving the missing raw-trace/CSV limitation. Do not claim raw-trace reproduction or biological validation.
 
 ## Corrective documentation work completed in this continuation
 
@@ -84,7 +84,7 @@ Runner: `experiments/reproduce_eyal_figure7a.py`.
 ## Next concrete work
 
 1. Verify the live main HEAD and latest workflow after these documentation updates.
-2. Extend the Rust-side voltage-clamp replay across the full deposited voltage series, preserving source gate equations and the distinction between fixed and fitted constants.
+2. Extend the Rust-side voltage-clamp replay across the full deposited voltage series, preserving source gate equations and the distinction between fixed and fitted constants; compare conductance activation/inactivation curves and availability at −80 mV with the published human summary.
 3. Compare model output with published K+ group-level activation/inactivation and recovery summaries; label the absence of the source CSV targets and raw K+ traces.
 4. Resolve the `trap0` prefactor unit discrepancy against NEURON's original unit-checking contract and verify temperature handling.
 5. Verify the cross-species current-clamp fit target and geometry/reversal/channel-shift setup before promoting the model.
