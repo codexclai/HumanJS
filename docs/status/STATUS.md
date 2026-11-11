@@ -40,9 +40,9 @@ This is an effective conductance abstraction for an adult human L2/L3 pyramidal-
 
 Parameter/evidence boundaries:
 - Na+ gates use values transcribed from the pure Wilbers human `na_human.mod`.
-- K+ gates use the pure `k_human.mod` values that match Table S2 and the first optimizer result. The deposited fit script's later final six-parameter dictionary differs; the code's selection is provisional, not a resolution.
-- The script assigns `h12factor_k_human=10.5`, while the pure K+ mechanism declares `inact_rate_factor=1` and does not declare that script variable. The relationship is unresolved.
-- The paper's stated 14 sodium fitting parameters remain unreconciled with the visible staged fitting/assignment variables. The article Discussion also acknowledges that its HH channel models did not accurately reproduce potassium inactivation and that this likely contributed to poor K+ current and AP-fall fits.
+- K+ gates use the pure `k_human.mod` values that match Table S2 and the first optimizer result. Inspection of `fit_k_hh_cma_human.py` shows that this first result is explicitly applied; the trailing alternate six-value dictionary is a bare literal, never assigned or applied.
+- The script assigns `h12factor_k_human=10.5`, but the pure K+ mechanism does not declare it and `channel_tools.py` does not read it; its effect in the deposited pure-mechanism fit path is unsupported.
+- The article's 14-parameter description counts two inactivation steady-state values and an independent `Rb`; the deposited scripts assign the former from experimental fits and constrain `Rb = Ra`, leaving 11 optimizer variables. The parameter-count difference is traced to these constraints, though full protocol reproduction remains outstanding. The article Discussion also acknowledges that its HH channel models did not accurately reproduce potassium inactivation and that this likely contributed to poor K+ current and AP-fall fits.
 - Current-clamp maximum conductance densities (114.48 pS/μm² Na+, 29.05 pS/μm² K+) are fitted against cross-species mean AP features, not direct human channel-density measurements.
 - The 10 μm cylindrical geometry, 34°C, −10 mV channel shift, +15 mV reversal offsets, 1 μF/cm² capacitance, leak corresponding to Rm=10,000 Ω·cm², and 20 μs step follow the authors' current-clamp helper.
 - The Rust `trap0` function uses a stable analytic limit at the mathematical singularity. It does not reproduce the problematic source branch logic exactly.
@@ -65,7 +65,7 @@ The ten mechanisms actually inserted by those six templates compiled in NEURON 9
 
 The pure human `na_human.mod` and `k_human.mod` files were retrieved from the CC0 DataverseNL deposit, checksum-verified, compiled unchanged, and probed in NEURON 9.0.2. Direct exact-singularity probes exposed non-finite `trap0` values. The active Na+ table's 200 nodes were finite; with the table disabled, exact-singularity rates were non-finite. K+ has no active table; exact singularities are non-finite and two opposite-sign branch triggers produce negative inactivation time constants.
 
-The K+ file matches Table S2 and the first optimizer result, while the fit script's later final dictionary differs and assigns an undeclared `h12factor_k_human`. The methods-level 14-parameter sodium count remains unreconciled. The full Wilbers voltage-clamp fitting workflow was not rerun from raw traces; public workbooks are summary fits and the original NWB traces were absent from the 65-file Dataverse version examined.
+The K+ file matches the parameter values actually applied in the deposited fitting sequence; the trailing alternate dictionary is not applied. The article's 14-parameter model description is reconciled with the deposited 11-variable optimizer sequence by the two experimentally fixed inactivation steady-state values and `Rb = Ra` constraint. `h12factor_k_human` is not consumed by the pure mechanism/helper. The full Wilbers voltage-clamp fitting workflow was not rerun from raw traces; public workbooks are summary fits and the original NWB traces were absent from the 65-file Dataverse version examined.
 
 ## Not yet implemented
 
@@ -83,4 +83,4 @@ These remain requirements or future objectives, not current capabilities.
 
 ## Next milestone
 
-Keep the spike-capable code provisional. Resolve or explicitly bound the Wilbers K+ fit/dictionary and sodium parameter-count discrepancies; audit units and temperature conventions; compare gate curves/time constants/recovery behavior against the published voltage-clamp protocols and human summaries; and verify the current-clamp conductance-fit objective and setup. Add independent validation tests before considering promotion. Keep the single-compartment preparation-equivalent distinct from any anatomical soma/AIS model. Do not claim biological validation from software tests or external model reproduction.
+Keep the spike-capable code provisional. Reproduce the Wilbers K+ fast/slow inactivation and recovery protocols independently; audit rate-prefactor dimensional conventions and temperature semantics; compare gate curves/time constants/recovery behavior against the published voltage-clamp protocols and human summaries; and verify the current-clamp conductance-fit objective and setup. Add independent validation tests before considering promotion. Keep the single-compartment preparation-equivalent distinct from any anatomical soma/AIS model. Do not claim biological validation from software tests or external model reproduction.
