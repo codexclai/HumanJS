@@ -192,11 +192,15 @@ impl HumanL23SingleCompartmentModel {
         })
     }
 
-    /// Published human L2/L3 current-clamp fit from Wilbers et al. (2023).
+    /// All-human-kinetics endpoint of the Wilbers et al. (2023) current-clamp
+    /// conductance calibration grid.
     ///
-    /// The conductance densities (114.48 and 29.05 pS/μm²) are fitted model
-    /// values calibrated against cross-species mean AP features, not direct
-    /// human nucleated-patch conductance measurements.
+    /// The conductance densities (114.47654963753565 and
+    /// 29.045736151752504 pS/μm²) are the (Na ratio=1, K ratio=1) corner of
+    /// the deposited 20×20 grid. The Powell objective still targets the
+    /// 50:50 average of human and mouse median AP peak voltage, upstroke,
+    /// and downstroke features. These are fitted model values, not direct
+    /// human nucleated-patch conductance measurements or a human-only AP fit.
     /// The 10 μm × 10 μm cylinder, 34°C temperature, -10 mV channel shift,
     /// and +15 mV reversal-potential offsets reproduce the authors' current-
     /// clamp setup. The 20 μs maximum step matches their single-AP runner.
