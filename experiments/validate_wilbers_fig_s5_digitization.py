@@ -122,6 +122,51 @@ def validate_source_marker_values(
     return len(rows)
 
 
+def validate_mouse_model_prefit_check() -> None:
+    filename = "HUMAN-L23-WILBERS-FIG-S5-I-MOUSE-MODEL-PREFIT-CHECK.csv"
+    _, rows = read_rows(filename)
+    expected_voltages = [-5.0, 5.0, 15.0, 25.0, 35.0, 45.0]
+    if len(rows) != len(expected_voltages):
+        raise SystemExit(f"{filename}: expected six unmarked model-line samples")
+    observed_y = []
+    default_y = []
+    postfit_y = []
+    for row, voltage in zip(rows, expected_voltages):
+        if float(row["voltage_mV"]) != voltage:
+            raise SystemExit(f"{filename}: model-line voltage grid mismatch: {row}")
+        if float(row["default_Ra_per_ms"]) != 0.0167:
+            raise SystemExit(f"{filename}: deposited mouse default Ra changed: {row}")
+        if abs(float(row["postfit_Ra_per_ms"]) - 0.020746083599133762) > 1.0e-14:
+            raise SystemExit(f"{filename}: optimizer mouse Ra provenance changed: {row}")
+        observed_y.append(float(row["observed_blue_model_line_y_pixel"]))
+        default_y.append(float(row["default_model_y_pixel"]))
+        postfit_y.append(float(row["postfit_model_y_pixel"]))
+        for tau_key, pixel_key in (
+            ("default_model_tau_ms", "default_model_y_pixel"),
+            ("postfit_model_tau_ms", "postfit_model_y_pixel"),
+        ):
+            expected_pixel = 104.0 + (7.5 - float(row[tau_key])) * (232.0 / 5.0)
+            if abs(expected_pixel - float(row[pixel_key])) > 0.01:
+                raise SystemExit(f"{filename}: model line axis conversion mismatch: {row}")
+    default_rmse = math.sqrt(
+        sum((actual - predicted) ** 2 for actual, predicted in zip(observed_y, default_y))
+        / len(rows)
+    )
+    postfit_rmse = math.sqrt(
+        sum((actual - predicted) ** 2 for actual, predicted in zip(observed_y, postfit_y))
+        / len(rows)
+    )
+    if abs(default_rmse - 5.3483597199) > 0.01 or abs(postfit_rmse - 36.0577657963) > 0.01:
+        raise SystemExit(
+            f"{filename}: expected default/post-fit pixel RMSE 5.348/36.058, "
+            f"found {default_rmse:.3f}/{postfit_rmse:.3f}"
+        )
+    print(
+        f"{filename}: blue model line matches pre-fit default Ra more closely "
+        f"(pixel RMSE {default_rmse:.2f} vs {postfit_rmse:.2f} post-fit)"
+    )
+
+
 def main() -> int:
     panels = {
         "I activation": {
@@ -207,6 +252,7 @@ def main() -> int:
             "mouse": 3.5798563888349777,
         },
     )
+    validate_mouse_model_prefit_check()
     print(
         f"Figure S5 evidence record passed: {total} experimental group-mean markers "
         "(46 manually digitized, 4 transcribed from source-script constants); "
