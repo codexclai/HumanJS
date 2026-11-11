@@ -117,7 +117,7 @@ The Rust core now contains `HumanL23SingleCompartmentModel`, an exploratory sing
 The model uses:
 - Human Na+ activation/inactivation gate parameters transcribed from the pure Wilbers `na_human.mod` source.
 - Human K+ activation and fast/slow inactivation parameters from the pure Wilbers `k_human.mod` file and the matching Table S2 / first optimizer result.
-- The current-clamp fitted maximum conductance densities (114.48 pS/μm² Na+ and 29.05 pS/μm² K+), which are optimization outputs against cross-species mean AP features, not direct human channel-density measurements.
+- The current-clamp fitted maximum conductance densities (114.47654963753565 pS/μm² Na+ and 29.045736151752504 pS/μm² K+), checksum-verified as the all-human-kinetics (Na ratio=1, K ratio=1) corner of the deposited 20×20 grid. The Powell objective still targets the 50:50 average of human and mouse median AP peak voltage, upstroke, and downstroke; these are not human-only fit targets or direct channel-density measurements. The source outcome extractor and exact feature windows are now documented in the research audit.
 - The deposited current-clamp setup: a 10 μm × 10 μm cylindrical compartment, 34°C, −10 mV channel voltage shift, +15 mV reversal-potential offsets, 1 μF/cm² capacitance, leak density corresponding to Rm=10,000 Ω·cm², and a 20 μs maximum integration step.
 - A fixed-step RK4 integrator, explicit gate states, finite/bounded state checks, and transactional state updates.
 
