@@ -43,6 +43,8 @@
 - [x] Implement one human-evidence-grounded glutamatergic conductance mechanism coupled to the passive membrane, including transactional runtime-state updates and causal tests.
 - [ ] Retain a configurable default of 10,000 spiking-neuron units as an engineering configuration, not a biological claim.
 - [ ] Implement a human-evidence-bounded somatic-patch-equivalent spike mechanism only after exact equations, parameters, units, temperature, and fit behavior are reproduced; keep this distinct from a future anatomical AIS model.
+
+  Exploratory spike-capable code currently exists in `crates/humanjs-core/src/ion_channels.rs`, but it was added before this evidence gate was closed. It is not counted as completion of this roadmap item. Keep it provisional until the Wilbers K+ and sodium parameter discrepancies, unit/temperature provenance, voltage-clamp behavior, and current-clamp fit assumptions are resolved and tested.
 - [ ] Implement an AIS-resolved mechanism only when its geometry and functional channel-density/gating evidence are sufficiently constrained; do not derive conductances from immunostaining alone.
 - [ ] Implement Rust-native concurrency with explicit ownership, synchronization, interruption, and recovery behavior.
 - [ ] Implement save/restore that preserves live and learned state and safely rejects corrupted or resource-exhausting input.
