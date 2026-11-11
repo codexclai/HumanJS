@@ -815,7 +815,13 @@ mod tests {
         let mut gates = initial_potassium_clamp_gates(model, -120.0);
         advance_k_clamp(model, &mut gates, -120.0, 2.0, 0.5);
         advance_k_clamp(model, &mut gates, 40.0, 5_000.0, 0.5);
-        advance_k_clamp(model, &mut gates, recovery_voltage_mv, recovery_delay_ms, 0.5);
+        advance_k_clamp(
+            model,
+            &mut gates,
+            recovery_voltage_mv,
+            recovery_delay_ms,
+            0.5,
+        );
         advance_k_clamp(model, &mut gates, 40.0, 5.0, 0.5)
     }
 
@@ -854,8 +860,7 @@ mod tests {
         // command-condition combinations.
         let recovery_voltages_mv = [-90.0, -85.0, -80.0, -75.0, -70.0];
         let delays_ms = [
-            4.0, 144.0, 484.0, 1_024.0, 1_764.0, 2_704.0, 3_844.0, 5_184.0, 6_724.0,
-            8_464.0,
+            4.0, 144.0, 484.0, 1_024.0, 1_764.0, 2_704.0, 3_844.0, 5_184.0, 6_724.0, 8_464.0,
         ];
         let expected = [
             [
