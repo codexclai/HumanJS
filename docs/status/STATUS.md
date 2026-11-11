@@ -6,10 +6,10 @@
 ## Canonical repository and live state
 
 - Repository: `codexclai/HumanJS`, public, default branch `main`.
-- `main` is the only branch; the live branch listing returned exactly `main`.
+- `main` is the only branch; the live branch listing returned exactly `main`. The full tree contained 63 entries and was not truncated.
 - No open issues or pull requests were returned by live checks.
-- Latest source/code commit: `660dee7287376720d37d96dac939941fe26df7d6`. Latest research audit update: `8944ad147ece6aa33d73efdfdc5ab985b919407a`.
-- GitHub Actions run `43016424733` passed on exact code head `660dee7287376720d37d96dac939941fe26df7d6`: https://github.com/codexclai/HumanJS/actions/runs/43016424733. Rust formatting, Clippy, Rust workspace tests (including the 50-condition K+ recovery grid), Python syntax validation, and repository policy all passed.
+- Latest source/code commit: `3c28de63c8a953c85084ff7c6731caae144b4ee6`. Latest research audit update: `4d01ec6f7d025ee1e5183b67d43b08bb8de21e32`.
+- GitHub Actions run `43023898904` passed on exact repository head `4e441ce16402cac487d5ee48506458630686b340`: https://github.com/codexclai/HumanJS/actions/runs/43023898904. `cargo fmt --all -- --check`, workspace Clippy with warnings denied, and `cargo test --workspace --locked` passed (27 core, 3 passive, 6 synapse tests); Python syntax, the seven-CSV Figure S5 validator, and repository policy also passed.
 - This chat did not complete a fresh local clone because network DNS resolution failed. No local Rust test run is claimed.
 
 ## Implemented Rust CPU mechanisms
