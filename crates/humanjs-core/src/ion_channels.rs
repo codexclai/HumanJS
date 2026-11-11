@@ -744,13 +744,20 @@ mod tests {
         let depolarized = model.potassium_rates(30.0, 0.5).unwrap();
         let hyperpolarized = model.potassium_rates(-70.0, 0.5).unwrap();
 
-        assert_eq!(depolarized.slow_inactivation_time_constant_ms, 450.0);
+        assert_eq!(
+            depolarized.slow_inactivation_time_constant_ms,
+            450.0
+        );
         assert_eq!(
             hyperpolarized.slow_inactivation_time_constant_ms,
             2789.7929428108187
         );
-        assert!(depolarized.fast_inactivation.time_constant_ms > 0.0);
-        assert!(hyperpolarized.fast_inactivation.time_constant_ms > 0.0);
+        assert!(
+            depolarized.fast_inactivation.time_constant_ms > 0.0
+        );
+        assert!(
+            hyperpolarized.fast_inactivation.time_constant_ms > 0.0
+        );
     }
 
     #[test]
@@ -762,9 +769,15 @@ mod tests {
             * model.potassium.slow_fraction_of_inactivating;
         let non_inactivating_fraction = 1.0 - model.potassium.inactivating_fraction;
 
-        assert!((fast_fraction - 0.51).abs() < f64::EPSILON);
-        assert!((slow_fraction - 0.34).abs() < f64::EPSILON);
-        assert!((non_inactivating_fraction - 0.15).abs() < f64::EPSILON);
+        assert!(
+            (fast_fraction - 0.51).abs() < f64::EPSILON
+        );
+        assert!(
+            (slow_fraction - 0.34).abs() < f64::EPSILON
+        );
+        assert!(
+            (non_inactivating_fraction - 0.15).abs() < f64::EPSILON
+        );
         assert!(
             (fast_fraction + slow_fraction + non_inactivating_fraction - 1.0).abs()
                 < f64::EPSILON
