@@ -27,9 +27,8 @@
 - [x] Retrieve and inspect the original Wilbers pure human na_human.mod and k_human.mod sources, equations, parameter values, units, Q10 behavior, conductance expressions and fixed Rb=Ra relation.
 - [x] Inspect author-deposited per-cell summary workbooks and verify the published human Na+/K+ sample counts and steady-state fit summaries.
 - [x] Compile the original pure Wilbers human Na+/K+ mechanisms in NEURON 9.0.2 and probe exact trap0 singularities plus the actual Na+ lookup grid; record the numerical outcomes without patching the source.
-- [ ] Reconcile the paper's 14-parameter methods count with the visible staged Na+/K+ fit/assignment variables; explain the K+ script's final dictionary mismatch and the undeclared h12factor assignment.
+- [x] Reconcile the article's 14-parameter model description with the deposited 11-variable optimizer workflow (two inactivation steady states fixed from experiment; `Rb = Ra`); trace the K+ script's trailing alternate dictionary as an unapplied literal and document the unconsumed `h12factor_k_human` assignment.
 - [ ] Reproduce the complete Wilbers voltage-clamp fitting workflow against raw current traces; the deposited per-cell workbooks are summary fits and the original NWB traces were not in the 65-file Dataverse listing examined.
-- [ ] Obtain or independently reproduce against raw voltage-clamp traces; the deposited per-cell workbooks are fit summaries and the NWB trace files were not in the 65-file public deposit listing examined.
 - [x] Retrieve and transcribe the original Eyal et al. 2018 supplementary Table S4 for all six soma/axon model parameter sets, confirming the nine-conductance + three NaTg-gate + two Ca-dynamics values per compartment and shared leak reversal potential.
 - [x] Retrieve and audit the canonical 139,316,573-byte Eyal ModelDB archive, map all six Table S4 parameter sets to the original HOC soma/axon templates, and identify the nine inserted conductance mechanisms plus CaDynamics_E2.
 - [ ] For each subsequent mechanism, gather relevant primary literature and authoritative technical references.
@@ -44,7 +43,7 @@
 - [ ] Retain a configurable default of 10,000 spiking-neuron units as an engineering configuration, not a biological claim.
 - [ ] Implement a human-evidence-bounded somatic-patch-equivalent spike mechanism only after exact equations, parameters, units, temperature, and fit behavior are reproduced; keep this distinct from a future anatomical AIS model.
 
-  Exploratory spike-capable code currently exists in `crates/humanjs-core/src/ion_channels.rs`, but it was added before this evidence gate was closed. It is not counted as completion of this roadmap item. Keep it provisional until the Wilbers K+ and sodium parameter discrepancies, unit/temperature provenance, voltage-clamp behavior, and current-clamp fit assumptions are resolved and tested.
+  Exploratory spike-capable code currently exists in `crates/humanjs-core/src/ion_channels.rs`, but it was added before this evidence gate was closed. It is not counted as completion of this roadmap item. Keep it provisional until the Wilbers voltage-clamp protocols are independently reproduced, the `trap0` prefactor dimensional convention and temperature handling are verified, and the current-clamp fit assumptions are independently checked.
 - [ ] Implement an AIS-resolved mechanism only when its geometry and functional channel-density/gating evidence are sufficiently constrained; do not derive conductances from immunostaining alone.
 - [ ] Implement Rust-native concurrency with explicit ownership, synchronization, interruption, and recovery behavior.
 - [ ] Implement save/restore that preserves live and learned state and safely rejects corrupted or resource-exhausting input.
