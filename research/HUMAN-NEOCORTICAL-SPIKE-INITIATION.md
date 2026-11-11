@@ -575,3 +575,17 @@ The deposited `fit_densities` implementation nevertheless calls `get_outcomes_fu
 
 This also means the cross-species midpoint objective is only partially reproducible from the deposited files: the target aggregation and normalized squared-error expression are visible in `fit_densities`, but the feature extractor that produces the compared values is not. Do not reconstruct it from labels, and do not claim a complete reproduction of the optimizer. The calibration-grid scripts describe intended workflow structure, not independently reproducible fitted density results. The 114.48/29.05 pS/µm² HumanJS values remain untraceable to an exact source output.
 
+
+### Current-clamp Dataverse inventory recheck (2026-11-12)
+
+A fresh live query of the released DataverseNL dataset DOI `10.34894/L5J0SD`, version 3.0, returned the complete 65-file inventory. This corrects the earlier wording that treated the current-clamp CSVs as absent from the deposit: all three expected files are present in the public inventory and marked unrestricted:
+
+| File | Dataverse file ID | Directory | Size |
+|---|---:|---|---:|
+| `AP1comparison.csv` | 318555 | `Figures5_6/Current_clamp` | 846 bytes |
+| `gbar_na.csv` | 318551 | `Figures5_6/Current_clamp` | 8,224 bytes |
+| `gbar_k.csv` | 318552 | `Figures5_6/Current_clamp` | 8,037 bytes |
+
+The complete inventory lists only three Python source files in `Figures5_6/Current_clamp`: `cc_tools.py` (318557), `currentclamp.py` (318553), and `fit_gbar_na_k.py` (318556). It contains no separately named outcome-extractor Python module in that directory. The retrieved `cc_tools.py` source still lacks `get_outcomes_full` while calling it from `fit_densities`; the 65-file inventory does not identify an alternate current-clamp source module that resolves this missing symbol. This makes the published current-clamp fit workflow's executable source dependency incomplete in the released inventory examined, although an externally installed/unlisted dependency cannot be ruled out.
+
+Content retrieval for the three unrestricted CSVs was blocked during this recheck by Dataverse's BotStopper/anti-bot service (the metadata inventory itself succeeded). Thus the files are **present and public by metadata**, but their numeric contents were not read in this session. Do not describe them as missing from the dataset, and do not claim their values or the HumanJS preset mapping has been independently verified. The next step is to obtain the CSV bytes through a legitimate alternate Dataverse access route and validate their checksums before parsing; no parameter retuning is justified yet.
