@@ -2,7 +2,7 @@
 
 **Updated:** 2026-11-11  
 **Canonical repository:** `codexclai/HumanJS`, branch `main` only.  
-**Current code head at handoff update:** `ecebdfade5f14639b839d39f8e34c7769ca69726`.  
+**Verified code commit:** `621664411ec0c089c3fdc7bbb2e8a9d51961606a`.  
 **Documentation reconciliation:** subsequent commits on `main`; verify the live HEAD and workflow before using this handoff in a later session.
 
 ## Verified repository state at start of this continuation
@@ -11,8 +11,7 @@
 - Full tree retrieved: 55 entries, not truncated.
 - Live branch listing contained exactly `main`.
 - No open issues or pull requests were returned.
-- Earlier workflow run `42971014142` passed on `6007494b9c5bdffd47821931be65a8fc0234418e`: https://github.com/codexclai/HumanJS/actions/runs/42971014142. Formatting, Clippy, Rust workspace tests, Python syntax, and repository policy passed there.
-- Current code head `ecebdfade5f14639b839d39f8e34c7769ca69726` has workflow run `42972168530` pending: https://github.com/codexclai/HumanJS/actions/runs/42972168530. GitHub returned no job records. Older run `42971760205` remained in progress without started steps; do not claim current code verification until the current run finishes.
+- GitHub Actions run `42972854292` passed on exact code commit `621664411ec0c089c3fdc7bbb2e8a9d51961606a`: https://github.com/codexclai/HumanJS/actions/runs/42972854292. Rust formatting, Clippy, workspace tests, Python syntax validation, and repository policy all passed.
 - This chat did not complete a fresh local clone because DNS resolution failed. Do not claim a local Rust test run.
 
 ## Current HumanJS implementation
@@ -68,7 +67,7 @@ Runner: `experiments/reproduce_eyal_figure7a.py`.
 - Added regression tests for potassium slow inactivation/recovery constants, the three-component conductance fractions, and human gate half-voltage steady states. The half-voltage test accounts for the current-clamp −10 mV channel shift.
 - Corrected the `RatePrefactor` dimensional name and error label to `mV^-1 ms^-1`; no channel parameter values were changed.
 - Updated `docs/roadmap/MASTER-ROADMAP.md` to keep the accepted somatic-patch milestone unchecked and classify existing code as provisional.
-- Replaced `docs/status/STATUS.md` with a live, accurate implementation and verification summary.
+- Reconciled `docs/status/STATUS.md` with the current implementation and passing verification run.
 - This handoff is the final documentation file to update after this commit.
 
 ## Next concrete work
