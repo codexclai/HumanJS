@@ -2,7 +2,9 @@
 
 **Updated:** 2026-11-11  
 **Canonical repository:** `codexclai/HumanJS`, branch `main` only.  
-**Verified source/code commit:** `660dee7287376720d37d96dac939941fe26df7d6`.  
+**Latest implementation/CI change:** `6e1842579113ddb1542628e033107b07db20a526`.  
+**Latest research-data record:** `3a13199d21c58377dbd3517ab47c4984267d6753`.  
+Verify the live HEAD and newest workflow before relying on this handoff.  
 **Documentation reconciliation:** subsequent commits on `main`; verify the live HEAD and workflow before using this handoff in a later session.
 
 ## Verified repository state at start of this continuation
@@ -78,10 +80,15 @@ Runner: `experiments/reproduce_eyal_figure7a.py`.
 - The original NMODL is therefore not a unit-checked reference implementation. HumanJS's Rust rate units and analytic singularity handling are equation-consistent corrections, not exact reproduction of the source branch.
 
 
-### Supplementary K+ kinetic curves located
+### Supplementary Figure S5: verified legend and first calibrated digitization
 
-- The publisher-hosted 13-page Supplementary Figure S5 (panels I–N) includes K+ activation, fast/slow inactivation, and fast/slow recovery time-constant plots. PDF text extraction exposes numeric point tables, but series names are unlabelled and the legend mapping to model/human/mouse is not preserved. Some fast-recovery voltage labels may be OCR-ambiguous.
-- The PDF was retrieved successfully through the publisher endpoint, but the available screenshot renderer did not return page images and direct browser rendering was challenged. Visual legend mapping and digitization have not been completed. Do not use the OCR tables as fit targets. The exact Dataverse CSVs and raw per-cell K+ voltage-clamp traces remain absent.
+- Retrieved the official 13-page supplement from the new PMC AWS Article Dataset object: https://pmc-oa-opendata.s3.amazonaws.com/PMC10569700.1/sciadv.ade3300_sm.pdf. Size 1,468,232 bytes; SHA-256 `dfa1daaf4dd0e3979bac84b9cb8b1874c4514d40588969a21d7766a7f12f2a1d`.
+- Rendered Figure S5 page 7 and visually verified the legend: red model line/human open-circle experimental means; blue model line/mouse cross experimental means. The caption duplicates “(I)” for fast inactivation; the actual plotted panel is labelled J.
+- Digitized panel K slow-inactivation group means: 10 red human open-circle points and 10 blue mouse cross points at −30 to +60 mV. The checked-in CSV records pixel centers, axis calibration, source checksum, and conservative ±2.5 mV / ±25 ms plot-reading uncertainty. These uncertainties are not biological SD.
+- Added `experiments/validate_wilbers_fig_s5_digitization.py` and a CI step checking provenance, marker mapping, counts, and axis-derived values. This validates the transcription/calibration, not the biology.
+- The panel's two model curves are visually near the fixed 450-ms slow-inactivation setting. Experimental markers vary substantially with voltage and between group means, consistent with the authors' statement that their HH models did not accurately reproduce K+ inactivation.
+- Main-text summary values: activation V1/2 human −3.0 ± 5.9 mV (n=13), mouse −7.9 ± 6.0 mV (n=29), P=0.02; inactivation V1/2 human −52.7 ± 6.0 mV (n=11), mouse −65.0 ± 5.3 mV (n=26), P<10⁻⁶; resting-potential availability human 0.94 ± 0.05, mouse 0.86 ± 0.06. Human K+ currents activate faster at lower voltages; fast/slow inactivation and recovery time constants were described as similar between species, although human currents recover to a larger proportion.
+- Remaining: digitize panels I, J, M, and N. The exact Dataverse `Experimental means/k_tau_*.csv` files and raw per-cell K+ voltage-clamp traces remain absent. No raw-trace reproduction or biological validation is claimed.
 
 ## Corrective documentation work completed in this continuation
 
@@ -92,16 +99,18 @@ Runner: `experiments/reproduce_eyal_figure7a.py`.
 - Added regression tests for potassium slow inactivation/recovery constants, the three-component conductance fractions, and human gate half-voltage steady states. The half-voltage test accounts for the current-clamp −10 mV channel shift.
 - Corrected the `RatePrefactor` dimensional name and error label to `mV^-1 ms^-1`; no channel parameter values were changed.
 - Updated `docs/roadmap/MASTER-ROADMAP.md` to keep the accepted somatic-patch milestone unchecked and classify existing code as provisional.
-- Reconciled `docs/status/STATUS.md` and `docs/BOOT.md` with the expanded K+ recovery regression and passing workflow `43016424733`.
+- Retrieved and rendered the official PMC AWS supplement; visually mapped the Figure S5 series and added an uncertainty-qualified panel K digitization.
+- Added a stdlib-only validator for the Figure S5 CSV and wired it into `.github/workflows/repository-policy.yml`.
+- Updated `docs/BOOT.md`, `docs/status/STATUS.md`, `docs/REPOSITORY-STRUCTURE.md`, and `docs/roadmap/MASTER-ROADMAP.md` with the new research state.
 - This handoff is the final documentation file to update after this commit.
 
 ## Next concrete work
 
-1. Verify the live `main` HEAD and workflow after this handoff commit.
-2. Obtain a visually inspectable rendering of publisher Supplementary Figure S5, map the model line and human open-circle/mouse cross series, then digitize the K+ kinetic curves with axis calibration and uncertainty. The ordinary PDF parser output is not enough to identify series.
-3. Compare the newly exposed group-level K+ kinetic targets against the deposited model equations without treating the optimizer's pooled human/mouse recovery target as human-only evidence. Keep missing Dataverse CSVs and raw traces explicit.
-4. Resolve the `trap0` prefactor unit discrepancy against NEURON's original unit-checking contract and verify temperature handling.
-5. Verify the cross-species current-clamp fit target and geometry/reversal/channel-shift setup before promoting the model.
+1. Verify the live `main` HEAD and the workflow that executes the new Figure S5 digitization validator.
+2. Digitize Figure S5 panels I (activation), J (fast inactivation), M (fast recovery), and N (slow recovery), keeping human, mouse, and model series separate and recording axis/point uncertainty.
+3. Compare the panel-level group-mean curves with the deposited K+ equations and fixed model constants. Do not treat the pooled 236.824345-ms fast-recovery optimizer target as a human-only target.
+4. Preserve the absence of the exact Dataverse K tau CSVs and raw voltage-clamp NWB traces; no fitting or biological-validation claim is justified without them.
+5. Independently verify the cross-species current-clamp fit objective, geometry, reversal/channel shifts, temperature handling, and source rate-prefactor dimensional convention.
 6. Keep AIS-resolved modeling separate. Human NaV1.2/NaV1.6 immunostaining does not provide functional conductance densities or gating parameters.
 
 No biological validation, clinical validity, whole-brain functionality, or consciousness claim is made. Save/restore, Rust-native concurrency, the configurable 10,000-unit default, JSON model loading, Python, C/C++, and WGSL remain unimplemented.
