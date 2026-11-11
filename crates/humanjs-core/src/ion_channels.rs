@@ -761,8 +761,7 @@ mod tests {
             .unwrap();
         let advance_gate = |gate: f64, gate_rates: GateRates| {
             gate_rates.steady_state
-                + (gate - gate_rates.steady_state)
-                    * (-step_ms / gate_rates.time_constant_ms).exp()
+                + (gate - gate_rates.steady_state) * (-step_ms / gate_rates.time_constant_ms).exp()
         };
         gates.activation = advance_gate(gates.activation, rates.activation);
         gates.fast_inactivation = advance_gate(gates.fast_inactivation, rates.fast_inactivation);
@@ -795,9 +794,8 @@ mod tests {
         let steps = (duration_ms / step_ms).round() as usize;
         let mut peak_conductance = 0.0_f64;
         for _ in 0..steps {
-            peak_conductance = peak_conductance.max(advance_k_clamp_step(
-                model, gates, voltage_mv, step_ms,
-            ));
+            peak_conductance =
+                peak_conductance.max(advance_k_clamp_step(model, gates, voltage_mv, step_ms));
         }
         peak_conductance
     }
@@ -811,8 +809,7 @@ mod tests {
         let reversal_mv = model.potassium_reversal.as_volts() * 1_000.0;
         let mut current = Vec::with_capacity(4_995);
         for step in 1..=5_000 {
-            let conductance =
-                advance_k_clamp_step(model, &mut gates, test_voltage_mv, 0.1);
+            let conductance = advance_k_clamp_step(model, &mut gates, test_voltage_mv, 0.1);
             let time_ms = 20.0 + step as f64 * 0.1;
             if time_ms > 20.4 && time_ms < 520.0 {
                 current.push(conductance * (test_voltage_mv - reversal_mv));
@@ -821,19 +818,10 @@ mod tests {
         current
     }
 
-    fn exponential_fit_sse(
-        log_tau: f64,
-        times_ms: &[f64],
-        values: &[f64],
-        mean_value: f64,
-    ) -> f64 {
+    fn exponential_fit_sse(log_tau: f64, times_ms: &[f64], values: &[f64], mean_value: f64) -> f64 {
         let tau_ms = log_tau.exp();
-        let exponentials: Vec<f64> = times_ms
-            .iter()
-            .map(|time| (-time / tau_ms).exp())
-            .collect();
-        let mean_exponential =
-            exponentials.iter().sum::<f64>() / exponentials.len() as f64;
+        let exponentials: Vec<f64> = times_ms.iter().map(|time| (-time / tau_ms).exp()).collect();
+        let mean_exponential = exponentials.iter().sum::<f64>() / exponentials.len() as f64;
         let variance = exponentials
             .iter()
             .map(|value| (value - mean_exponential).powi(2))
@@ -844,25 +832,18 @@ mod tests {
         let covariance = exponentials
             .iter()
             .zip(values)
-            .map(|(exponential, value)| {
-                (exponential - mean_exponential) * (value - mean_value)
-            })
+            .map(|(exponential, value)| (exponential - mean_exponential) * (value - mean_value))
             .sum::<f64>();
         let amplitude = covariance / variance;
         let offset = mean_value - amplitude * mean_exponential;
         exponentials
             .iter()
             .zip(values)
-            .map(|(exponential, value)| {
-                (value - (amplitude * exponential + offset)).powi(2)
-            })
+            .map(|(exponential, value)| (value - (amplitude * exponential + offset)).powi(2))
             .sum()
     }
 
-    fn fit_exponential_offset_tau(
-        times_ms: &[f64],
-        values: &[f64],
-    ) -> Option<(f64, f64)> {
+    fn fit_exponential_offset_tau(times_ms: &[f64], values: &[f64]) -> Option<(f64, f64)> {
         if times_ms.len() != values.len() || times_ms.len() < 4 {
             return None;
         }
@@ -883,8 +864,7 @@ mod tests {
         let mut best_error = f64::INFINITY;
         for index in 0..=GRID_STEPS {
             let log_tau = minimum_log_tau + index as f64 * log_step;
-            let error =
-                exponential_fit_sse(log_tau, times_ms, values, mean_value);
+            let error = exponential_fit_sse(log_tau, times_ms, values, mean_value);
             if error < best_error {
                 best_error = error;
                 best_index = index;
@@ -892,8 +872,7 @@ mod tests {
         }
 
         let mut left = minimum_log_tau + best_index.saturating_sub(1) as f64 * log_step;
-        let mut right = minimum_log_tau
-            + (best_index + 1).min(GRID_STEPS) as f64 * log_step;
+        let mut right = minimum_log_tau + (best_index + 1).min(GRID_STEPS) as f64 * log_step;
         let golden_ratio = (5.0_f64.sqrt() - 1.0) / 2.0;
         let mut c = right - golden_ratio * (right - left);
         let mut d = left + golden_ratio * (right - left);
@@ -916,8 +895,7 @@ mod tests {
         }
 
         let log_tau = (left + right) * 0.5;
-        let residual_sum_squares =
-            exponential_fit_sse(log_tau, times_ms, values, mean_value);
+        let residual_sum_squares = exponential_fit_sse(log_tau, times_ms, values, mean_value);
         let r_squared = 1.0 - residual_sum_squares / total_sum_squares;
         Some((log_tau.exp(), r_squared))
     }
@@ -932,7 +910,9 @@ mod tests {
             return None;
         }
         let last_before_peak = current[peak_index - 1];
-        let times: Vec<f64> = (0..peak_index).map(|index| index as f64 * step_ms).collect();
+        let times: Vec<f64> = (0..peak_index)
+            .map(|index| index as f64 * step_ms)
+            .collect();
         let values: Vec<f64> = current[..peak_index]
             .iter()
             .map(|value| value - last_before_peak)
