@@ -1,0 +1,26 @@
+# Source: Wilbers et al. (2023), Science Advances 9, eade3300, Supplementary Figure S5, panel I.
+# DOI: https://doi.org/10.1126/sciadv.ade3300
+# Official PMC AWS object: https://pmc-oa-opendata.s3.amazonaws.com/PMC10569700.1/sciadv.ade3300_sm.pdf
+# PDF size: 1,468,232 bytes; SHA-256: dfa1daaf4dd0e3979bac84b9cb8b1874c4514d40588969a21d7766a7f12f2a1d
+# PDF page: 7. Panel I: activation time constant (ms) versus command voltage (mV).
+# Legend: red open circle = human experimental mean; blue cross = mouse experimental mean.
+# Digitization: marker centers read from a 6x raster of the publisher/PMC PDF. At several voltages the corresponding model line passes through/very near the experimental marker; this file records experimental marker centers only, not an independently digitized model curve.
+# x-axis calibration: -10 mV at crop x=50 px; 50 mV at x=662 px; 10.2 raster px/mV.
+# y-axis calibration: 7.5 ms at crop y=104 px; 2.5 ms at y=336 px.
+# Uncertainties are conservative plot-digitization estimates, NOT biological SD: +/-1 mV and +/-0.25 ms.
+# These are approximate group means digitized from a figure, not raw per-cell values or source CSV data.
+species,voltage_mV,tau_activation_ms,voltage_digitization_uncertainty_mV,tau_digitization_uncertainty_ms,x_pixel_crop,y_pixel_crop,marker
+human,-10,3.36,1.0,0.25,50,296,red_open_circle
+human,0,2.41,1.0,0.25,152,340,red_open_circle
+human,10,1.68,1.0,0.25,254,374,red_open_circle
+human,20,1.25,1.0,0.25,356,394,red_open_circle
+human,30,0.88,1.0,0.25,458,411,red_open_circle
+human,40,0.69,1.0,0.25,560,420,red_open_circle
+human,50,0.58,1.0,0.25,662,425,red_open_circle
+mouse,-10,7.76,1.0,0.25,50,92,blue_cross
+mouse,0,4.63,1.0,0.25,152,237,blue_cross
+mouse,10,2.54,1.0,0.25,254,334,blue_cross
+mouse,20,1.85,1.0,0.25,356,366,blue_cross
+mouse,30,1.40,1.0,0.25,458,387,blue_cross
+mouse,40,1.12,1.0,0.25,560,400,blue_cross
+mouse,50,0.93,1.0,0.25,662,409,blue_cross
