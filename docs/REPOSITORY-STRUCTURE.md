@@ -12,14 +12,14 @@ GitHub `main` is the authoritative project record. Create implementation directo
 | `Cargo.toml`, `Cargo.lock` | Rust workspace definition and lockfile | Active |
 | `crates/humanjs-core/` | Passive membrane and glutamatergic synapse CPU mechanisms and tests | Active |
 | `docs/` | Owner requirements, architecture, specifications, decisions, roadmap, operations, status, current session handoff | Active |
-| `research/` | Human passive membrane, glutamatergic synapse, and spike-initiation evidence notes | Active |
+| `research/` | Human evidence notes, provenance-tracked plot digitizations, and derived research datasets | Active |
 | `.github/scripts/` | Maintainer repository-policy validation | Active |
 | `.github/workflows/` | Main-branch policy and Rust verification | Active |
 | `python/` | Primary Python package and tests | Planned |
 | `bindings/c/`, `bindings/cpp/` | C ABI headers, C++ wrappers and tests | Planned |
 | `gpu/` | WGSL compute kernels and GPU resources | Planned |
 | `models/` | Inspectable brain/model/IR definitions, JSON where appropriate | Planned |
-| `experiments/` | Reproducible protocols, canonical external model reproductions, stimuli, configurations and results | Active |
+| `experiments/` | Reproducible protocols, canonical external model reproductions, stimuli, configurations, results, and scientific-data validators | Active |
 | `tests/` | Cross-layer integration and acceptance tests | Planned |
 | `benchmarks/` | Reproducible performance workloads and measurement records | Planned |
 | `tools/` | Maintainer tooling that is genuinely needed and maintained | Planned |
