@@ -1,14 +1,14 @@
 # Source: Wilbers et al. (2023), Science Advances 9, eade3300, Supplementary Figure S5, panel N.
 # DOI: https://doi.org/10.1126/sciadv.ade3300
 # Official PMC AWS object: https://pmc-oa-opendata.s3.amazonaws.com/PMC10569700.1/sciadv.ade3300_sm.pdf
-# PDF size: 1,468,232 bytes; SHA-256: dfa1daaf4dd0e3979bac84b9cb8b1874c4514d40588969a21d7766a7f12f2a1d
-# PDF page: 7. Panel N: slow-recovery time constant (s) versus recovery voltage (mV).
+# PDF SHA-256: dfa1daaf4dd0e3979bac84b9cb8b1874c4514d40588969a21d7766a7f12f2a1d
+# Panel N: slow-recovery time constant (s) versus recovery voltage (mV).
 # Legend: red open circle = human experimental mean; blue cross = mouse experimental mean.
-# Digitization: one experimental marker per species at -80 mV, read from a 6x raster. The two model curves are flat and visually coincide with the fixed 2,789.7929 ms model parameter.
-# x-axis calibration: -90 to -70 mV; the experimental markers are centred at -80 mV.
-# y-axis calibration: 3 s at crop y=225.5 px; 2 s at y=460 px.
-# Uncertainties are conservative plot-digitization estimates, NOT biological SD: +/-1 mV and +/-0.10 s.
-# These are approximate group means digitized from a figure, not raw per-cell values or source CSV data.
-species,voltage_mV,tau_slow_recovery_s,voltage_digitization_uncertainty_mV,tau_digitization_uncertainty_s,x_pixel_crop,y_pixel_crop,marker
-human,-80,2.00,1.0,0.10,360,460,red_open_circle
-mouse,-80,3.58,1.0,0.10,360,90,blue_cross
+# Exact marker values are hard-coded in the deposited channel_tools.py (Dataverse file 326242), function K_IV:
+# human 1999.7294967866596 ms; mouse 3579.8563888349777 ms, both at -80 mV.
+# The model's shared slow-recovery constant 2789.7929428108187 ms is exactly the arithmetic mean of these two source values.
+# Pixel coordinates are approximate visual locations only. Values are source-script constants, not digitized estimates.
+# Zero uncertainties here mean exact transcription of the script constants, NOT zero biological uncertainty.
+species,voltage_mV,tau_slow_recovery_s,voltage_digitization_uncertainty_mV,tau_digitization_uncertainty_s,x_pixel_crop,y_pixel_crop,marker,value_provenance
+human,-80,1.9997294967866596,0.0,0.0,360,460,red_open_circle,channel_tools.K_IV
+mouse,-80,3.5798563888349777,0.0,0.0,360,90,blue_cross,channel_tools.K_IV
