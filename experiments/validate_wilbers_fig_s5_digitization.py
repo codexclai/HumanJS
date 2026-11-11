@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate provenance, axis calibration, and values in the Figure S5 K+ digitizations."""
+"""Validate provenance, axis calibration, and values in digitized Wilbers Figure S5 K+ panels."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ EXPECTED_SHA256 = "dfa1daaf4dd0e3979bac84b9cb8b1874c4514d40588969a21d7766a7f12f2
 SPECIES_MARKERS = {"human": "red_open_circle", "mouse": "blue_cross"}
 
 
-def close(actual: float, expected: float, tolerance: float = 0.11) -> bool:
+def close(actual: float, expected: float, tolerance: float) -> bool:
     return math.isfinite(actual) and abs(actual - expected) <= tolerance
 
 
@@ -21,6 +21,7 @@ def validate_panel(
     *,
     filename: str,
     tau_column: str,
+    tau_uncertainty_column: str,
     expected_voltages: list[float],
     x_reference_pixel: float,
     x_reference_mv: float,
@@ -31,6 +32,8 @@ def validate_panel(
     y_second_value: float,
     voltage_uncertainty: float,
     tau_uncertainty: float,
+    voltage_tolerance: float,
+    tau_tolerance: float,
     tau_bounds: tuple[float, float],
 ) -> tuple[float, float, int]:
     path = ROOT / "research" / filename
@@ -69,15 +72,15 @@ def validate_panel(
             )
             max_voltage_error = max(max_voltage_error, abs(derived_voltage - voltage))
             max_tau_error = max(max_tau_error, abs(derived_tau - tau))
-            if not close(derived_voltage, voltage):
+            if not close(derived_voltage, voltage, voltage_tolerance):
                 raise SystemExit(f"{filename}: voltage calibration mismatch: {row}")
-            if not close(derived_tau, tau):
+            if not close(derived_tau, tau, tau_tolerance):
                 raise SystemExit(f"{filename}: time-constant calibration mismatch: {row}")
             if row["marker"] != expected_marker:
                 raise SystemExit(f"{filename}: marker/species mismatch: {row}")
             if float(row["voltage_digitization_uncertainty_mV"]) != voltage_uncertainty:
                 raise SystemExit(f"{filename}: voltage uncertainty missing or changed: {row}")
-            if float(row["tau_digitization_uncertainty_ms"]) != tau_uncertainty:
+            if float(row[tau_uncertainty_column]) != tau_uncertainty:
                 raise SystemExit(f"{filename}: time-constant uncertainty missing or changed: {row}")
             if not (tau_bounds[0] < tau < tau_bounds[1]):
                 raise SystemExit(f"{filename}: implausible plotted time constant: {row}")
@@ -90,6 +93,7 @@ def main() -> int:
         "I activation": {
             "filename": "HUMAN-L23-WILBERS-FIG-S5-I-ACTIVATION.csv",
             "tau_column": "tau_activation_ms",
+            "tau_uncertainty_column": "tau_digitization_uncertainty_ms",
             "expected_voltages": [float(value) for value in range(-10, 51, 10)],
             "x_reference_pixel": 50.0,
             "x_reference_mv": -10.0,
@@ -100,11 +104,32 @@ def main() -> int:
             "y_second_value": 2.5,
             "voltage_uncertainty": 1.0,
             "tau_uncertainty": 0.25,
+            "voltage_tolerance": 0.11,
+            "tau_tolerance": 0.11,
             "tau_bounds": (0.0, 10.0),
+        },
+        "J fast inactivation": {
+            "filename": "HUMAN-L23-WILBERS-FIG-S5-J-FAST-INACTIVATION.csv",
+            "tau_column": "tau_fast_inactivation_ms",
+            "tau_uncertainty_column": "tau_digitization_uncertainty_ms",
+            "expected_voltages": [float(value) for value in range(0, 51, 10)],
+            "x_reference_pixel": 36.0,
+            "x_reference_mv": -10.0,
+            "x_pixels_per_mv": 648.0 / 70.0,
+            "y_reference_pixel": 118.0,
+            "y_reference_value": 60.0,
+            "y_second_pixel": 393.5,
+            "y_second_value": 20.0,
+            "voltage_uncertainty": 1.0,
+            "tau_uncertainty": 2.0,
+            "voltage_tolerance": 0.6,
+            "tau_tolerance": 0.11,
+            "tau_bounds": (0.0, 80.0),
         },
         "K slow inactivation": {
             "filename": "HUMAN-L23-WILBERS-FIG-S5-K-SLOW-INACTIVATION.csv",
             "tau_column": "tau_slow_inactivation_ms",
+            "tau_uncertainty_column": "tau_digitization_uncertainty_ms",
             "expected_voltages": [float(value) for value in range(-30, 61, 10)],
             "x_reference_pixel": 108.0,
             "x_reference_mv": -20.0,
@@ -115,16 +140,55 @@ def main() -> int:
             "y_second_value": 200.0,
             "voltage_uncertainty": 2.5,
             "tau_uncertainty": 25.0,
+            "voltage_tolerance": 0.11,
+            "tau_tolerance": 0.11,
             "tau_bounds": (0.0, 800.0),
         },
+        "M fast recovery": {
+            "filename": "HUMAN-L23-WILBERS-FIG-S5-M-FAST-RECOVERY.csv",
+            "tau_column": "tau_fast_recovery_ms",
+            "tau_uncertainty_column": "tau_digitization_uncertainty_ms",
+            "expected_voltages": [-80.0],
+            "x_reference_pixel": 387.0,
+            "x_reference_mv": -80.0,
+            "x_pixels_per_mv": 33.5,
+            "y_reference_pixel": 197.5,
+            "y_reference_value": 300.0,
+            "y_second_pixel": 340.0,
+            "y_second_value": 200.0,
+            "voltage_uncertainty": 1.0,
+            "tau_uncertainty": 15.0,
+            "voltage_tolerance": 0.11,
+            "tau_tolerance": 0.11,
+            "tau_bounds": (0.0, 500.0),
+        },
+        "N slow recovery": {
+            "filename": "HUMAN-L23-WILBERS-FIG-S5-N-SLOW-RECOVERY.csv",
+            "tau_column": "tau_slow_recovery_s",
+            "tau_uncertainty_column": "tau_digitization_uncertainty_s",
+            "expected_voltages": [-80.0],
+            "x_reference_pixel": 360.0,
+            "x_reference_mv": -80.0,
+            "x_pixels_per_mv": 33.5,
+            "y_reference_pixel": 225.5,
+            "y_reference_value": 3.0,
+            "y_second_pixel": 460.0,
+            "y_second_value": 2.0,
+            "voltage_uncertainty": 1.0,
+            "tau_uncertainty": 0.10,
+            "voltage_tolerance": 0.11,
+            "tau_tolerance": 0.11,
+            "tau_bounds": (0.0, 5.0),
+        },
     }
+
     total = 0
     for name, settings in panels.items():
         voltage_error, tau_error, count = validate_panel(**settings)
         total += count
         print(
             f"{name}: {count} markers; max rounding residuals "
-            f"{voltage_error:.3g} mV and {tau_error:.3g} ms"
+            f"{voltage_error:.3g} mV and {tau_error:.3g} axis units"
         )
     print(
         f"Figure S5 digitization passed: {total} experimental group-mean markers; "
