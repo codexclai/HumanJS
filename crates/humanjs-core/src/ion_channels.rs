@@ -718,7 +718,8 @@ fn trap0(
 mod tests {
     use super::{
         trap0, GateRates, HumanL23SingleCompartmentInitialConditions,
-        HumanL23SingleCompartmentModel, HumanL23SingleCompartmentSimulation, RatePrefactor,
+        HumanL23SingleCompartmentModel, HumanL23SingleCompartmentSimulation,
+        PotassiumChannelParameters, RatePrefactor,
     };
     use crate::{Amperes, SimDuration, SimTime, SimulationError, Volts};
 
@@ -739,6 +740,42 @@ mod tests {
         model.voltage_shift_mv = 0.0;
         // The deposited voltage-clamp helper initializes EK to -101 mV.
         model.potassium_reversal = Volts::from_millivolts(-101.0).unwrap();
+        model
+    }
+
+    fn wilbers_mouse_voltage_clamp_model() -> HumanL23SingleCompartmentModel {
+        let mut model = wilbers_voltage_clamp_model();
+        // Pure k_mouse.mod values from Dataverse file 318560. Its current is
+        // scaled by (1 - human_ratio); that common amplitude does not affect
+        // the normalized current time-constant fits reproduced in these tests.
+        model.potassium = PotassiumChannelParameters {
+            activation_half_voltage_mv: -24.922394891493052,
+            activation_slope_mv: 17.95852797022577,
+            activation_rate_half_voltage_mv: -17.107947829817025,
+            activation_rate_slope_mv: 3.6884191311479615,
+            activation_rate: RatePrefactor {
+                per_millivolt_per_ms: 0.0167,
+            },
+            inactivation_half_voltage_mv: -65.2,
+            inactivation_slope_mv: 12.1,
+            inactivation_rate_half_voltage_mv: 40.5659148938157,
+            recovery_rate_half_voltage_mv: -75.93822659307075,
+            inactivation_rate_slope_mv: 26.773929244740913,
+            recovery_rate_slope_mv: 0.40183382749400054,
+            inactivation_rate: RatePrefactor {
+                per_millivolt_per_ms: 0.0016901435659310753,
+            },
+            recovery_rate: RatePrefactor {
+                per_millivolt_per_ms: 0.0004968791312639546,
+            },
+            slow_inactivation_time_constant_ms: 450.0,
+            slow_recovery_time_constant_ms: 2789.7929428108187,
+            inactivating_fraction: 0.85,
+            slow_fraction_of_inactivating: 0.4,
+            inactivation_rate_factor: 1.0,
+            reference_temperature_celsius: 34.0,
+            q10: 2.3,
+        };
         model
     }
 
@@ -1323,6 +1360,89 @@ mod tests {
                 "K_IV fast inactivation tau mismatch at {voltage_mv} mV: {tau1_ms} ms"
             );
             assert!(r_squared > 0.99);
+        }
+    }
+
+    #[test]
+    fn deposited_k_iv_fixed_slow_tau_fit_replays_mouse_fast_inactivation_curve() {
+        let model = wilbers_mouse_voltage_clamp_model();
+        let voltages_mv = [0.0, 10.0, 20.0, 30.0, 40.0, 50.0];
+        // Independent SciPy references from k_mouse.mod, with the K_IV
+        // activation current and fixed 450-ms slow component used in Figure S5J.
+        let expected_fast_tau_ms = [
+            53.429_1,
+            41.997_2,
+            33.677_6,
+            27.398_6,
+            22.571_7,
+            18.819_3,
+        ];
+        for (index, voltage_mv) in voltages_mv.into_iter().enumerate() {
+            let current = replay_k_activation_current(model, voltage_mv);
+            let (tau1_ms, r_squared) =
+                fit_k_inactivation_current_tau1(&current, 0.1, 450.0).unwrap();
+            assert!(
+                (tau1_ms - expected_fast_tau_ms[index]).abs() < 0.02,
+                "mouse K_IV fast inactivation tau mismatch at {voltage_mv} mV: {tau1_ms} ms"
+            );
+            assert!(r_squared > 0.99);
+        }
+    }
+
+    #[test]
+    fn deposited_k_recovery_current_protocol_replays_mouse_figure_s5_curves() {
+        let model = wilbers_mouse_voltage_clamp_model();
+        let recovery_delays_ms = [
+            4.0, 144.0, 484.0, 1_024.0, 1_764.0, 2_704.0, 3_844.0, 5_184.0, 6_724.0, 8_464.0,
+        ];
+        let recovery_voltages_mv = [-90.0, -85.0, -80.0, -75.0, -70.0];
+        // Independent SciPy references from pure k_mouse.mod for the deposited
+        // 5-voltage x 10-delay protocol, followed by the 5-ms +40-mV test pulse.
+        let expected_fast_tau_ms = [
+            115.587_958_76,
+            155.364_357_20,
+            234.451_978_56,
+            374.388_268_19,
+            329.900_992_76,
+        ];
+        let expected_slow_tau_ms = [
+            2_790.860_045_91,
+            2_793.137_069_31,
+            2_799.268_838_73,
+            2_801.184_309_52,
+            2_799.717_372_53,
+        ];
+
+        for (index, recovery_voltage_mv) in recovery_voltages_mv.into_iter().enumerate() {
+            let pulse_peaks =
+                replay_k_recovery_peak_currents(model, recovery_voltage_mv, &recovery_delays_ms);
+            assert!(pulse_peaks
+                .iter()
+                .all(|peak| peak.is_finite() && *peak > 0.0));
+            assert!(pulse_peaks.windows(2).all(|pair| pair[1] > pair[0]));
+            let (fast_tau_ms, slow_tau_ms, r_squared) =
+                fit_recovery_biexponential(&recovery_delays_ms, &pulse_peaks).unwrap();
+            assert!(fast_tau_ms < 1_000.0);
+            assert!((1_000.0..=5_000.0).contains(&slow_tau_ms));
+            assert!(
+                (fast_tau_ms - expected_fast_tau_ms[index]).abs() < 3.0,
+                "mouse K_recovery fast tau mismatch at {recovery_voltage_mv} mV: {fast_tau_ms} ms"
+            );
+            assert!(
+                (slow_tau_ms - expected_slow_tau_ms[index]).abs() < 15.0,
+                "mouse K_recovery slow tau mismatch at {recovery_voltage_mv} mV: {slow_tau_ms} ms"
+            );
+            assert!(r_squared > 0.999);
+            if recovery_voltage_mv == -80.0 {
+                // The plotted source target is the human/mouse arithmetic mean;
+                // the mechanism's slow recovery constant is also shared.
+                let pooled_fast_mean_ms =
+                    (228.527_493_810_715_55 + 245.121_197_002_686_07) / 2.0;
+                let pooled_slow_mean_ms =
+                    (1_999.729_496_786_659_6 + 3_579.856_388_834_977_7) / 2.0;
+                assert!((fast_tau_ms - pooled_fast_mean_ms).abs() < 3.0);
+                assert!((slow_tau_ms - pooled_slow_mean_ms).abs() < 20.0);
+            }
         }
     }
 
