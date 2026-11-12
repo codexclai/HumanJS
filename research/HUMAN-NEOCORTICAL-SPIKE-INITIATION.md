@@ -674,7 +674,7 @@ A focused clarification request is now actionable through these corresponding-au
 The official supplementary PDF was fetched directly from the public PMC open-access object store, independently SHA-256 verified (dfa1daaf4dd0e3979bac84b9cb8b1874c4514d40588969a21d7766a7f12f2a1d), and page 7 rendered at 300 dpi (2550 × 3300 pixels). This allowed a separate pixel-level read of the plotted model traces in panels J, K, M, and N, which had previously been left as the next evidence task.
 
 The file research/HUMAN-L23-WILBERS-FIG-S5-MODEL-LINE-RASTER.csv records 23 centerline samples with full-page pixel coordinates, approximate axis-derived values, and 3–4 px reading uncertainty:
-- Panel J, fast inactivation: 48.92, 39.59, 32.12, 26.52, 22.17, and 18.85 ms at 5–55 mV (10-mV intervals).
+- Panel J, fast inactivation: 47.07, 38.06, 30.51, 25.05, 20.65, and 17.51 ms at 5–55 mV (10-mV intervals).
 - Panel K, slow inactivation: approximately 444.77 ms across −25 to +55 mV (10-mV intervals), consistent with the plotted fixed slow component near 450 ms.
 - Panel M, fast recovery: approximately 121.82, 175.45, 274.55, and 316.36 ms at −87.5, −82.5, −77.5, and −72.5 mV.
 - Panel N, slow recovery: approximately 2.78, 2.78, 2.79, and 2.79 s at the same four voltages.
@@ -682,3 +682,8 @@ The file research/HUMAN-L23-WILBERS-FIG-S5-MODEL-LINE-RASTER.csv records 23 cent
 These are raster-derived estimates of the **combined visible red/blue model traces**. The model lines overlap or interleave at the PDF raster resolution, so this file deliberately does not assign the sampled trace to human versus mouse. It is not a recovery of the missing plotting script, fitted parameter state, per-cell source tables, or raw voltage-clamp traces. Pixel reading uncertainty is not biological uncertainty, and these samples must not be used as experimental observations or as an independent refit.
 
 The existing Figure S5 validator now checks the new CSV's PDF hash, point counts and voltage grids, units, page-coordinate bounds, uncertainty fields, broad ordinate ranges, and expected trace trends. This adds reproducibility checks for the digitized output but does not make the underlying visual read an exact source reproduction. The J/K source-helper arity defect remains unresolved; the spike-capable HumanJS mechanism remains exploratory and unaccepted.
+
+
+A marker-anchored affine recalibration was applied to panel J: the six pre-existing experimental marker centers were matched to their stored crop coordinates, then the model-line pixels were sampled halfway between those marker columns. The resulting six raster estimates have **0.36 ms RMSE** against linear interpolation/extrapolation of the existing human current-fit reconstruction (52.2804, 41.5635, 33.4636, 27.2646, 22.4693, 18.7451 ms at 0–50 mV). The corresponding mouse reconstruction also has approximately 0.36 ms RMSE at these intermediate voltages. Since the red/blue model lines overlap, this agreement does not identify which species curve is sampled and is not independent biological validation; it is a consistency check between the published raster and the transparent equation-level reconstruction.
+
+The K raster center is 444.77 ms, close to the source workflow's fixed 450-ms slow component. The N raster center (2.78–2.79 s) is close to the pooled slow-recovery constant (2.78979 s). Panel M is preserved as raster estimates only; its curve should not be conflated with the separate Rust K_recovery current-fit replay without a source-method equivalence check.
