@@ -552,14 +552,14 @@ The intermediate 2026-11-11 source-grid and missing-extractor notes above were b
 
 **Canonical dataset:** Wilbers et al. (2023), DataverseNL DOI [10.34894/L5J0SD](https://doi.org/10.34894/L5J0SD), version 3.0. The current-clamp source files and three calibration CSVs are unrestricted (Dataverse metadata `restricted=false`). They were retrieved from the documented Dataverse access API through its signed SURF object-store redirect. Downloaded byte counts and SHA-1 digests match the independent Dataverse file metadata:
 
-| File | Dataverse ID | Bytes | SHA-1 |
-|---|---:|---:|---|
-| `AP1comparison.csv` | 318555 | 846 | `85fea00fea374ed0595d032180a798371d96aa4d` |
-| `gbar_na.csv` | 318551 | 8,224 | `ac2f1b3ae108e8f256e53b0d85c4e0b353eb173a` |
-| `gbar_k.csv` | 318552 | 8,037 | `6867798db8a5a2a77a66bb72b7cae77590ff0247` |
-| `cc_tools.py` | 318557 | 10,448 | `f64162577fa5dd86892b46570d597e58e083a02b` |
-| `currentclamp.py` | 318553 | 3,070 | `fffbe589889ae552c29b96dd2eb1dafd90e1c69e` |
-| `fit_gbar_na_k.py` | 318556 | 1,472 | `708babaafe09090828978b366e4c6193fe982421` |
+| File | Dataverse ID | Bytes | SHA-1 (Dataverse) | SHA-256 (retrieved bytes) |
+|---|---:|---:|---|---|
+| `AP1comparison.csv` | 318555 | 846 | `85fea00fea374ed0595d032180a798371d96aa4d` | `2833ee551241917767e912db569833629009bf5cda157824747847be89432d97` |
+| `gbar_na.csv` | 318551 | 8,224 | `ac2f1b3ae108e8f256e53b0d85c4e0b353eb173a` | `b488e45ad87b03cc876f287e7a598d218899f63a85d9de6d8a108b01b05b9991` |
+| `gbar_k.csv` | 318552 | 8,037 | `6867798db8a5a2a77a66bb72b7cae77590ff0247` | `6682854d3c2e72a5a29c5115a193d5db00adf1eda177bae24204c04e3d3531d0` |
+| `cc_tools.py` | 318557 | 10,448 | `f64162577fa5dd86892b46570d597e58e083a02b` | `3215473c16162dc81f73cb60da161014f370f3acc052b7cae3c1c416d321f241` |
+| `currentclamp.py` | 318553 | 3,070 | `fffbe589889ae552c29b96dd2eb1dafd90e1c69e` | `56a83d012040bb8dd8114edbe658ea347c7cb3a7451f7b711c9be7b496b73321` |
+| `fit_gbar_na_k.py` | 318556 | 1,472 | `708babaafe09090828978b366e4c6193fe982421` | `a9549e210294a5016bb3d3e0ba51f4ba158e7f853f22150b75c728fc533b68d3` |
 
 The three CSV files are preserved verbatim in HumanJS under `research/WILBERS-CURRENT-CLAMP-*.csv` (CC0 source data). The stdlib-only validator `experiments/validate_wilbers_current_clamp_grid.py` checks their byte counts, SHA-1 values, target medians, grid shape/orientation, optimizer bounds, and both endpoint values; CI runs it on every main push.
 
