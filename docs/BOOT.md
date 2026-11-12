@@ -125,3 +125,10 @@ A fresh live check verified public repository codexclai/HumanJS, default branch 
 A new 23-point raster estimate of the combined visible red/blue Figure S5 model traces in panels J/K/M/N is preserved in research/HUMAN-L23-WILBERS-FIG-S5-MODEL-LINE-RASTER.csv. The official supplement PDF was retrieved and hash-verified; the Figure S5 validator now checks the added raster record. These estimates are not species-separated curves, raw data, exact source-code outputs, or biological validation. See the final 2026-11-12 section of research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md.
 
 Immediately before this BOOT update, live main was 1e721852bf3b49c72ff9c49cb249a376ccd339dc, with a complete non-truncated 68-entry tree, exactly one branch (main), no open issues or PRs, and workflow run 43129934568 pending on that exact commit. Recheck the final BOOT commit and its workflow before relying on this state.
+
+
+### 2026-11-12 — refined J/K/M/N model-line evidence
+
+The 23-point model-line raster CSV is now marker-anchored for panel J. The inter-marker J curve agrees with both existing human and mouse equation-level current-fit reconstructions at about 0.36 ms RMSE, but the red/blue model curves overlap and cannot be species-discriminated. K is approximately 444.8 ms versus the fixed 450-ms component; N is approximately 2.78–2.79 s versus the pooled slow-recovery constant. Panel M remains a raster-only estimate pending direct comparison with the deposited K_IV model path. Full detail is in the research record and current status/handoff.
+
+Immediately before this BOOT update, live main was 0727cb0d0b4bf309b98799d37bc609ab05536518, with a complete non-truncated 68-entry tree, exactly one branch (main), and the workflow queued on that exact commit. Recheck the final BOOT commit and its workflow; no claim of success is made from a queued run.
