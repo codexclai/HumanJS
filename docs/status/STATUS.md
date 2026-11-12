@@ -6,9 +6,9 @@
 ## Canonical repository and live state
 
 - Repository: `codexclai/HumanJS`, public, default branch `main`.
-- Live verification on 2026-11-12: default branch `main`; HEAD `adc5469835065d02bf7f9ce4ef35aa08c38473f6`; complete 75-entry tree; exactly one branch (`main`); zero open issues and zero open pull requests.
+- Live verification on 2026-11-12: default branch `main`; code HEAD `44c86d09ebcb5090d1b8f8dde51dbc4595bde9d7`; complete 75-entry tree; exactly one branch (`main`); zero open issues and zero open pull requests.
 - Latest code/test and research changes: `02545268cb0a432a5094114715141ad41bbd2305` (replay source gate equations on the HumanJS voltage path) and `e0fd3d358ad6727af523bc467017bad700aaa7e2` (initial-time validation and regression test).
-- GitHub Actions run `43169224452` passed on exact HEAD `adc5469835065d02bf7f9ce4ef35aa08c38473f6`: https://github.com/codexclai/HumanJS/actions/runs/43167476483. Rust formatting, Clippy, all Rust workspace tests, Python syntax, seven voltage-sampling and HumanJS-voltage replay unit tests, both Wilbers validators, and repository policy passed. These are software/evidence-integrity checks, not biological validation.
+- GitHub Actions run `43208967956` passed on exact code commit `44c86d09ebcb5090d1b8f8dde51dbc4595bde9d7`: https://github.com/codexclai/HumanJS/actions/runs/43167476483. Rust formatting, Clippy, all Rust workspace tests, Python syntax, twelve voltage-sampling and exact-stage replay unit tests, both Wilbers validators, and repository policy passed. These are software/evidence-integrity checks, not biological validation.
 - A fresh NEURON 9.0.2 check independently reconfirmed that unchanged `k_human.mod` and `k_mouse.mod` compile with `nrnivmodl` but fail unmodified `modlunit` at the untyped `trates(v+vshift)` call (line 82). This is a source unit-annotation failure, not a HumanJS CI failure; ADR-014 records the typed temporary diagnostic findings. No deposited source was modified.
 - A synchronized clean clone based on parent `900f650adb17da10aa4091d36427b255d7d414b2` passed `cargo fmt --all -- --check`, Clippy with `-D warnings`, all Rust workspace tests (31 unit, 3 synapse integration, 6 passive membrane integration), syntax parsing for all five experiment scripts, both Wilbers validators, and repository policy. The NEURON 9.0.2 AP1 solver/gate and shared-voltage diagnostics passed end-to-end with the pinned runtime and checksum-verified source. CI run `43149669478` independently passed on the committed code. These are software/evidence-integrity checks, not biological validation.
 
@@ -365,3 +365,22 @@ The complete 12-variant source matrix (dt 20/10/5 µs, secondorder 0/1, Na table
 
 Interpretation limits: source NMODL CNEXP effectively advances gates using the post-step voltage sample; HumanJS uses coupled RK4 with voltage evaluated at internal stages. Prescribed midpoint and linear interpolation on the HumanJS voltage path closely reproduce HumanJS gates, but neither captures the actual internal RK4 stage voltages. This is a numerical model-to-model attribution, not proof that either solver is biologically more accurate and not biological validation. The single-compartment spike-capable mechanism remains exploratory and unaccepted. The next experiment should capture the actual four RK4 stage voltages from the HumanJS step and compare exact stage replay with these midpoint/linear proxies, without changing biological parameters.
 
+
+
+### Exact coupled RK4 voltage-stage capture and gate replay (2026-11-12)
+
+HumanJS now exposes an opt-in `step_with_voltage_stages` diagnostic that returns the exact four membrane-voltage components of the intermediate state vectors passed to its coupled RK4 derivative evaluations: k1 at t, k2 at t+dt/2, k3 at t+dt/2, and k4 at t+dt. The ordinary `step` path does not materialize the diagnostic output. The AP1 example accepts `--stages-output` and writes one four-stage row per completed step; the NEURON diagnostic accepts `--humanjs-voltage-stages` and validates the stage CSV's columns, finite values, sample count, and timestamps before replay.
+
+Pinned execution: Ubuntu 22.04, Python 3.10.12, NEURON 9.0.2, NumPy 1.26.4, g++ 11.4.0, Rust 1.85.0. The final AP1 run exported 1,450 voltage-stage rows aligned to the 1,450 HumanJS voltage and gate samples. The unchanged author-helper source baseline remained 0.4552211065 mV voltage RMSE (4.6158729296 mV maximum at 3.94 ms) against HumanJS.
+
+The source gate equations were then replayed using the four actual HumanJS voltage stages at each step, with identical initial gates and the same RK4 gate-stage update:
+- Direct analytic Na rates (Na TABLE off): five-gate RMSE **2.45244e-8**, maximum absolute gate error **3.99679e-7**. Per-gate RMSE: Na activation 1.71060e-8, Na inactivation 2.86599e-13, K activation 5.21020e-8, K fast inactivation 2.86267e-13, K slow inactivation 2.83516e-13.
+- Source 200-node Na TABLE enabled: five-gate RMSE **3.93000e-5**, maximum absolute error **1.25180e-4**. The residual is confined overwhelmingly to Na gates (activation 3.78226e-5; inactivation 7.93216e-5); K activation remains 5.21020e-8 and both K inactivation gates remain approximately 2.86e-13.
+
+For context, the source NMODL gate traces versus HumanJS live gates have aggregate five-gate RMSE 0.00198518. Thus exact-stage replay reduces that discrepancy by about 80,900-fold with direct rates, and by about 50.5-fold with the source Na TABLE enabled. The remaining table-on difference is a lookup-table/direct-rate effect, not evidence of a different K gate mechanism. The k2 and k3 voltage stages are not interchangeable: their maximum absolute difference was 0.399717 mV at 3.98 ms; k1-to-k2 and k3-to-k4 differences reached 4.69044 and 4.57701 mV during the spike.
+
+The complete 12-variant NEURON matrix (20/10/5 µs, secondorder 0/1, Na TABLE on/off) was rerun against the exact-stage trace. The HumanJS-stage gate replay is independent of the NEURON variant, while the source voltage comparisons retain the earlier solver sensitivity (author default 0.455221 mV; 20-µs CN/table-on 0.0381243 mV; 10-µs CN/table-on 0.0127377 mV; 5-µs CN/table-off 0.00475618 mV).
+
+Interpretation: this is strong numerical evidence that the gate-update equations and RK4 gate-stage handling in HumanJS match the replayed Wilbers gate equations when supplied with HumanJS's actual coupled voltage stages. It does not explain away the remaining membrane-voltage trajectory difference, validate either solver biologically, or change the exploratory/unaccepted status of the single-compartment model. All stage traces and diagnostic JSON remained outside Git.
+
+The next numerical question is the residual membrane-voltage solver difference after gate-state agreement has been established; compare voltage-current balance and voltage integration at matched states without changing biological parameters.
