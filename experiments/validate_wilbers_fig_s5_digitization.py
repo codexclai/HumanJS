@@ -354,7 +354,7 @@ def validate_model_line_raster() -> None:
             raise SystemExit(f"{filename}: {panel} overlaid model trace should be nearly flat")
     print(
         f"{filename}: 23 model-line raster samples verified (J 6, K 9, M 4, N 4); "
-        "combined red/blue traces; J reconstruction RMSE={j_rmse:.2f} ms; K≈450 ms and N≈pooled slow constant"
+        f"combined red/blue traces; J reconstruction RMSE={j_rmse:.2f} ms; K≈450 ms and N≈pooled slow constant"
     )
 
 
