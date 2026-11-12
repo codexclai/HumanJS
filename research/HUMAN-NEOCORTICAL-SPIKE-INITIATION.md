@@ -653,3 +653,17 @@ The six scripts that are present under `Figures5_6/Channel_fitting` are `channel
 This recheck closes the *inventory question*, not the experimental-data gap. It strengthens the existing finding that the available public v3.0 deposit does not contain the named per-cell K tau tables, raw K voltage-clamp NWB traces, `data_fig5.xlsx`, or a separate S5 plot generator. The source helper defect and the reconstructed-versus-plotted-line distinction remain as recorded above. The paper's availability statement is not contradicted by this inventory: it says the evidence needed to evaluate the published conclusions is in the paper and supplement, while this HumanJS audit asks the narrower question of whether the public deposit supplies every input needed to independently reproduce the K-channel fitting and plotted S5 model curves.
 
 Do not infer that data were withheld, do not manufacture replacement observations from raster markers, and do not promote the exploratory Rust spike mechanism on these summaries. The next useful evidence action is a targeted request to the corresponding authors for (i) the exact script/version or export state that generated Figure S5J/K/M/N, (ii) the per-cell K kinetic CSVs or a stable alternative source for them, and (iii) the raw K voltage-clamp recordings or an explicit description of why they are unavailable. Until a response or independently verifiable copy is obtained, retain the current limitations and keep the single-compartment spike mechanism unaccepted.
+
+
+### Wilbers corresponding-author contact route (2026-11-12)
+
+The publisher's full-text page for the final Science Advances article (DOI https://doi.org/10.1126/sciadv.ade3300) explicitly lists two corresponding authors and their public institutional email addresses:
+
+- Huibert D. Mansvelder — h.d.mansvelder@vu.nl
+- Natalia A. Goriounova — n.a.goriounova@vu.nl
+
+The same publisher page states that all data, model files, and scripts used in the work are publicly available at Dataverse repository DOI 10.34894/L5J0SD. This is the authors' published availability statement, not evidence that every intermediate plotting input or raw recording is present in the deposit. The released Dataverse v3.0 manifest remains the 65-file inventory audited above.
+
+A focused clarification request is now actionable through these corresponding-author contacts. It should ask for (1) the exact script/notebook and parameter state that generated Figure S5 panels J/K/M/N model curves, including intermediate exports; (2) the human per-cell K+ activation, fast/slow inactivation, and recovery measurements or source tables behind the absent Experimental means/k_tau_*.csv files; (3) raw K+ voltage-clamp recordings and acquisition/protocol metadata, if distributable; and (4) an explicit statement identifying which materials were never retained, are unavailable, or cannot be shared. It should acknowledge the existing Dataverse DOI and avoid implying misconduct or intentional withholding.
+
+**Contact verification only:** these addresses are printed by the publisher as corresponding-author contacts. No email has been sent, no response has been received, and no additional data have been obtained. The HumanJS K+ model remains exploratory; contact discovery does not change its acceptance or validation status.
