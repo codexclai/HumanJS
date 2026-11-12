@@ -259,7 +259,7 @@ Workflow run 43134731123 passed formatting and Clippy and executed 30 of 31 test
 
 ### 2026-11-12 — author current-clamp protocol replay diagnostic
 
-A Rust-side replay of the published rheobase search and 1.5×-rheobase pulse now reaches one −20-mV crossing and a 48–53-mV peak. The published 40-mV/ms threshold heuristic is undefined on this HumanJS trace: its peak-centred window begins with 47.44865 mV/ms and no pre-maximum derivative below 40. This mismatch is preserved as a regression, not hidden by relaxing the criterion or inventing a threshold. See the detailed finding in research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md. This is HumanJS model output, not a biological result or source-exact NEURON reproduction.
+A Rust-side replay of the published rheobase search and 1.5×-rheobase pulse reaches one −20-mV crossing, but the peak is 59.594103 mV (outside the 48–53-mV regression band). The published 40-mV/ms threshold heuristic is also undefined: its peak-centred window begins at 47.44865 mV/ms with no pre-maximum derivative below 40. Both mismatches are explicitly preserved as regressions. This is HumanJS RK4 output, not a biological result or source-exact NEURON reproduction.
 
 
 ### Author current-clamp replay — quantitative mismatch
@@ -270,3 +270,10 @@ The 1.5×-rheobase Rust replay finds one −20-mV crossing, but the HumanJS peak
 ### Verification correction — stale peak-band assertion
 
 Run 43135076696 exposed a stale 48–53-mV assertion that remained ahead of the new explicit mismatch assertions. It correctly failed on the 59.594-mV model output, but prevented the test from reaching its assertions that pin this result and the undefined threshold extractor. The stale success-band assertion is removed; the test is renamed to state that it preserves the published-feature mismatch. The 48–53-mV band is not widened.
+
+
+### Verified protocol mismatch regression — CI success (2026-11-12)
+
+Commit b44a0650b72501f76864f68ef593a772e16c779f removes the stale peak-band success assertion and renames the new test to `author_current_clamp_rheobase_protocol_preserves_published_feature_mismatch`. The test now checks exactly one −20-mV crossing, pins the HumanJS RK4 peak at 59.59410314264656 mV, asserts it remains above the 53-mV upper regression bound, and preserves the undefined source-threshold case (first derivative 47.448651583561485 mV/ms; max 526.5973771676144 mV/ms). It does not claim the 50:50 AP1 target is met.
+
+GitHub Actions run 43135180538 completed successfully on exact commit b44a0650b72501f76864f68ef593a772e16c779f: rustfmt, Clippy, all Rust tests (31 passed), Python syntax, Figure S5 validator, current-clamp grid validator, and repository-policy validation passed. Earlier failed workflow attempts are recorded above; they surfaced formatting/API mistakes and then the actual model mismatch. This successful test is a regression which preserves the discrepancy, not a pass of the biological/source acceptance gate. No NEURON run or biological validation is claimed.
