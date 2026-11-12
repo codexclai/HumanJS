@@ -21,10 +21,10 @@ K,combined_red_blue,25.00,444.77,ms,753.52,2298.50,3,near-horizontal red/blue mo
 K,combined_red_blue,35.00,444.77,ms,797.44,2298.50,3,near-horizontal red/blue model traces overlap; pixel center sampled between marker columns
 K,combined_red_blue,45.00,444.77,ms,841.36,2298.50,3,near-horizontal red/blue model traces overlap; pixel center sampled between marker columns
 K,combined_red_blue,55.00,444.77,ms,885.28,2298.50,3,near-horizontal red/blue model traces overlap; pixel center sampled between marker columns
-M,combined_red_blue,-87.50,133.84,ms,1184.12,2406.00,5,model lines overlap; line center extracted from rendered raster; y-axis calibrated from 300- and 200-ms ticks
-M,combined_red_blue,-82.50,192.42,ms,1300.38,2347.00,5,model lines overlap; line center extracted from rendered raster; y-axis calibrated from 300- and 200-ms ticks
-M,combined_red_blue,-77.50,303.54,ms,1416.62,2238.00,5,model lines overlap; line center extracted from rendered raster; y-axis calibrated from 300- and 200-ms ticks
-M,combined_red_blue,-72.50,350.00,ms,1532.88,2192.00,5,model lines overlap; line center extracted from rendered raster; y-axis calibrated from 300- and 200-ms ticks
+M,combined_red_blue,-87.50,134.36,ms,1184.12,2405.48,5,combined red/blue pixel-center estimate; y-axis calibrated from 300- and 200-ms ticks
+M,combined_red_blue,-82.50,193.41,ms,1300.38,2347.02,5,combined red/blue pixel-center estimate; y-axis calibrated from 300- and 200-ms ticks
+M,combined_red_blue,-77.50,304.46,ms,1416.62,2237.08,5,combined red/blue pixel-center estimate; y-axis calibrated from 300- and 200-ms ticks
+M,combined_red_blue,-72.50,350.03,ms,1532.88,2191.97,5,combined red/blue pixel-center estimate; y-axis calibrated from 300- and 200-ms ticks
 N,combined_red_blue,-87.50,2.78,s,1822.25,2295.00,3,horizontal red/blue model traces overlap; axis calibrated to printed 2 and 3 s ticks
 N,combined_red_blue,-82.50,2.78,s,1936.75,2295.00,3,horizontal red/blue model traces overlap; axis calibrated to printed 2 and 3 s ticks
 N,combined_red_blue,-77.50,2.79,s,2051.25,2294.00,3,horizontal red/blue model traces overlap; axis calibrated to printed 2 and 3 s ticks
