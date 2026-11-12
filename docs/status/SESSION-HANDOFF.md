@@ -171,3 +171,10 @@ The 2026-11-11 missing-helper conclusion was based on an incomplete extraction. 
 - The traces are combined red/blue estimates because the species curves overlap/interleave at this raster resolution; do not assign species, treat them as measurements, or claim exact curve reproduction.
 - Wired structural/range/trend checks into experiments/validate_wilbers_fig_s5_digitization.py.
 - Next: compare these raster estimates with the prior equation-level reconstructions without refitting, quantify residuals only where axes/overlap support it, and preserve the missing source plotting code/raw recordings as an unresolved evidence gap. Do not promote the spike mechanism.
+
+
+### 2026-11-12 — refined Figure S5 curve comparison
+
+- Recalibrated panel J against the six existing experimental marker centers and updated its six inter-marker model-line estimates. The raster trace is within 0.36 ms RMSE of both the human and mouse equation-level current-fit reconstructions; the overlaid traces cannot be species-discriminated at this resolution.
+- Panel K's raster line is approximately 444.8 ms, close to the fixed 450-ms slow component; panel N is approximately 2.78–2.79 s, close to the pooled slow-recovery constant.
+- Panel M remains a raster estimate only. Next work: inspect the deposited K_IV recovery model path and compare its exact voltage-dependent model output to the raster before interpreting any residual against the Rust K_recovery protocol replay.
