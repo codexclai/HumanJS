@@ -56,6 +56,48 @@ This is independent model-side execution of the authors' deposited model and hel
 The model remains exploratory and unaccepted for the reasons in ADR-014/ADR-016 and the current research record: defective source trap0 behavior is not exactly reproduced, the public deposit lacks raw per-cell K voltage-clamp data and missing kinetic targets, the slow K recovery parameter is pooled human/mouse, the conductance optimizer targets cross-species midpoint AP features, fitted channel densities are not direct human measurements, and the model has no spatial AIS/axon/dendrite structure.
 
 
+
+
+### Channel-gate state comparison (2026-11-12)
+
+The voltage-only residual did not show which internal mechanism states differed. The Rust trace exporter now accepts an optional gates-output path and writes all five live gate fractions alongside the unchanged voltage CSV. The NEURON diagnostic records the original NMODL m, h, m, h1, and h2 state variables, exports them with gate-dir, and compares them with HumanJS through humanjs-gates. The source states are advanced by the deposited METHOD cnexp; HumanJS advances voltage and all five gates together with its fixed-step RK4 implementation. Gate columns are dimensionless fractions, not measured channel occupancies.
+
+For the author's default source settings (20 µs, NEURON secondorder=0, Na table on), aligned post-step gate errors against HumanJS are:
+
+| Gate | RMSE (fraction) | Maximum absolute error (fraction) | Time of maximum |
+|---|---:|---:|---:|
+| Na activation m | 0.003213 | 0.016551 | 5.78 ms |
+| Na inactivation h | 0.002729 | 0.006711 | 3.90 ms |
+| K activation m | 0.001386 | 0.004554 | 6.90 ms |
+| K fast inactivation h1 | 0.0000810 | 0.0002465 | 4.50 ms |
+| K slow inactivation h2 | 0.0000770 | 0.0000948 | 29.00 ms |
+
+The pre-spike 0–2 ms state differences are very small (Na activation RMSE 0.000216; Na inactivation 0.000123; K activation 0.000050). They rise during the AP upstroke/peak (3–4.2 ms): Na activation RMSE 0.00517, Na inactivation 0.00238, and K activation 0.00113. K fast/slow inactivation remain much closer (4.40×10⁻⁵ and 9.01×10⁻⁶). This localizes the dominant state divergence to fast activation/inactivation gates during the rapidly changing voltage trajectory, rather than a large slow-K recovery-state mismatch.
+
+Converting the measured gate trajectories back through the deposited conductance equations at the same fitted densities gives derived model conductance-density differences of 0.1436 pS/µm² Na RMSE (2.596 pS/µm² maximum, 3.88 ms) and 0.02367 pS/µm² K RMSE (0.1081 pS/µm² maximum, 4.48 ms). These are computed mechanism outputs from the two model trajectories, not observed conductances or experimental estimates.
+
+At a 1-µs source step with secondorder=1 and the Na table disabled, compared with the 1-µs HumanJS trace, all five state trajectories converge much more closely:
+
+| Gate | RMSE (fraction) | Maximum absolute error (fraction) |
+|---|---:|---:|
+| Na activation | 0.0001406 | 0.0020874 |
+| Na inactivation | 0.0000990 | 0.0012626 |
+| K activation | 0.0000544 | 0.0004639 |
+| K fast inactivation | 0.00000352 | 0.0000199 |
+| K slow inactivation | 0.000000572 | 0.000000994 |
+
+The source-vs-HumanJS 1-µs gate and voltage comparisons both include all 29,000 post-step samples. This high-resolution configuration is a numerical convergence diagnostic, not the authors' original simulation setting. It does not prove which numerical method is closer to biology. The source-default comparison remains the appropriate reproduction baseline.
+
+Reproduction commands from the repository root:
+
+    cargo run -p humanjs-core --example wilbers_current_clamp_trace -- --step-us 20 --gates-output /tmp/humanjs-gates-20us.csv > /tmp/humanjs-voltage-20us.csv
+    python3.10 experiments/diagnose_wilbers_neuron_solver.py --humanjs-trace /tmp/humanjs-voltage-20us.csv --humanjs-gates /tmp/humanjs-gates-20us.csv --dt-ms 0.02 0.005 --secondorder 0 1 --na-table 1 0 --trace-dir /tmp/wilbers-voltage --gate-dir /tmp/wilbers-gates --output /tmp/wilbers-gate-diagnostics.json
+
+For the high-resolution convergence comparison, run the Rust example with --step-us 1 and pass its voltage/gate outputs to the diagnostic with --dt-ms 0.001 --secondorder 1 --na-table 0. All output paths above are caller-selected temporary outputs, not committed traces. The five source rate-state variables are recorded using NEURON Vector recording; the unchanged author helper's voltage baseline is still independently checked in the same diagnostic.
+
+This remains a model-to-model numerical comparison. It is not a biological state measurement, a fit acceptance test, or biological validation. It also does not isolate cnexp from RK4 on an externally prescribed identical membrane-voltage path; that is a distinct follow-up experiment if a tighter integrator-only decomposition is needed.
+
+
 ### CI verification of corrected NEURON reference replay (2026-11-12)
 
 Commit 3ea7cb43fcc0e9627cfc7b6cdde3c28055356dd0 passed GitHub Actions run 43139126138. All required steps succeeded: Rust formatting, Clippy, complete Rust workspace tests, Python experiment-runner syntax, Figure S5 digitization validator, current-clamp conductance-grid validator, and repository policy. Two immediately preceding runs stopped at rustfmt because the source file lacked its terminal newline; that formatting-only issue was corrected. The source-model comparison assertions themselves passed unchanged. This CI validates the implementation and its pinned reference checks, not biological validity.

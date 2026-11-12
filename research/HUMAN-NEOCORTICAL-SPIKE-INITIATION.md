@@ -842,6 +842,19 @@ The Na table toggle changes the CN source waveform by about 0.0292-mV RMSE at 5 
 No biological parameters were tuned. This comparison remains model-side software verification only.
 
 
+### Internal gate-state comparison (2026-11-12)
+
+The AP1 residual was decomposed one level below membrane voltage. An optional Rust example output records all five HumanJS runtime gates; the NEURON diagnostic records the matching five original NMODL STATE variables with Vector.record. The source variables are Na m/h and K m/h1/h2; the HumanJS fields are sodium activation/inactivation, potassium activation, fast inactivation, and slow inactivation. Source gate updates use NMODL cnexp, while HumanJS uses coupled RK4 over voltage and gates.
+
+At the unchanged author-default configuration (20 µs, secondorder=0, Na table on), the gate RMSEs (fraction units) against HumanJS are: Na activation 0.003213 (maximum 0.016551), Na inactivation 0.002729 (0.006711), K activation 0.001386 (0.004554), K fast inactivation 0.0000810 (0.0002465), and K slow inactivation 0.0000770 (0.0000948). Before the spike (0–2 ms), all five states are much closer. During the AP upstroke/peak (3–4.2 ms), Na activation RMSE rises to 0.00517, Na inactivation to 0.00238, and K activation to 0.00113, while K fast/slow inactivation remain at 4.40e-5/9.01e-6. This indicates that the largest internal-state mismatch is concentrated in the fast gates during rapid voltage change, not in the slow K state.
+
+Applying the deposited conductance equations to these gate trajectories at the unchanged fitted densities gives derived Na conductance-density RMSE 0.1436 pS/µm² (maximum 2.596 at 3.88 ms) and K RMSE 0.02367 pS/µm² (maximum 0.1081 at 4.48 ms). These are computed outputs, not observed channel conductances.
+
+At the numerical convergence setting (source 1 µs, secondorder=1, Na table off vs HumanJS 1 µs), all 29,000 post-step samples overlap; per-gate RMSE/max errors are Na activation 0.0001406/0.0020874, Na inactivation 0.0000990/0.0012626, K activation 0.0000544/0.0004639, K fast inactivation 0.00000352/0.0000199, and K slow inactivation 0.000000572/0.000000994. This is a non-default numerical sensitivity configuration, not the authors' reported simulation settings or a biological accuracy result.
+
+The Rust exporter and NEURON diagnostic accept optional gate-output/input paths. The complete commands, mappings, source-state capture method, and detailed gate tables are in experiments/WILBERS-CURRENT-CLAMP-NEURON-REFERENCE.md. The author-default source voltage baseline remains separately checked against the unchanged helper. These comparisons are model internal states, not experimentally measured channel occupancy or biological validation. They do not yet isolate the gate integrator alone under an externally prescribed identical voltage waveform; that is a distinct optional follow-up and must not be conflated with the voltage-solver attribution.
+
+
 ### CI verification of corrected NEURON reference replay (2026-11-12)
 
 Commit 3ea7cb43fcc0e9627cfc7b6cdde3c28055356dd0 passed GitHub Actions run 43139126138. All required steps succeeded: Rust formatting, Clippy, complete Rust workspace tests, Python experiment-runner syntax, Figure S5 digitization validator, current-clamp conductance-grid validator, and repository policy. Two immediately preceding runs stopped at rustfmt because the source file lacked its terminal newline; that formatting-only issue was corrected. The source-model comparison assertions themselves passed unchanged. This CI validates the implementation and its pinned reference checks, not biological validity.

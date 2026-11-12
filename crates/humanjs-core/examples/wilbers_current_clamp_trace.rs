@@ -1,4 +1,7 @@
 use std::error::Error;
+use std::fs::File;
+use std::io::{BufWriter, Write};
+use std::path::PathBuf;
 
 use humanjs_core::{
     Amperes, HumanL23SingleCompartmentInitialConditions, HumanL23SingleCompartmentModel,
@@ -60,16 +63,31 @@ fn source_protocol_rheobase_pa() -> Result<f64, Box<dyn Error>> {
 fn main() -> Result<(), Box<dyn Error>> {
     let mut arguments = std::env::args().skip(1);
     let mut step_us = 20;
+    let mut gates_output: Option<PathBuf> = None;
     while let Some(argument) = arguments.next() {
-        let value = if argument == "--step-us" {
-            arguments.next()
-        } else {
-            argument.strip_prefix("--step-us=").map(str::to_owned)
-        };
-        if let Some(value) = value {
-            step_us = value.parse::<u64>()?;
-        } else {
-            return Err(format!("unknown argument: {argument}").into());
+        match argument.as_str() {
+            "--step-us" => {
+                step_us = arguments
+                    .next()
+                    .ok_or("--step-us requires a microsecond value")?
+                    .parse::<u64>()?;
+            }
+            "--gates-output" => {
+                gates_output = Some(PathBuf::from(
+                    arguments
+                        .next()
+                        .ok_or("--gates-output requires a file path")?,
+                ));
+            }
+            _ => {
+                if let Some(value) = argument.strip_prefix("--step-us=") {
+                    step_us = value.parse::<u64>()?;
+                } else if let Some(path) = argument.strip_prefix("--gates-output=") {
+                    gates_output = Some(PathBuf::from(path));
+                } else {
+                    return Err(format!("unknown argument: {argument}").into());
+                }
+            }
         }
     }
     if step_us == 0 || 1_000 % step_us != 0 || 29_000 % step_us != 0 {
@@ -84,9 +102,19 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut simulation = HumanL23SingleCompartmentSimulation::new(model, initial)?;
     let current = Amperes::from_picoamperes(rheobase_pa * 1.5)?;
     let zero = Amperes::from_amperes(0.0)?;
+    let mut gates_writer = gates_output
+        .map(File::create)
+        .transpose()?
+        .map(BufWriter::new);
+    if let Some(writer) = gates_writer.as_mut() {
+        writeln!(
+            writer,
+            "time_ms,sodium_activation,sodium_inactivation,potassium_activation,potassium_fast_inactivation,potassium_slow_inactivation"
+        )?;
+    }
 
     eprintln!(
-        "# HumanJS Wilbers current-clamp trace: rheobase={rheobase_pa:.1} pA,          AP1 current={:.1} pA, dt={:.6} ms",
+        "# HumanJS Wilbers current-clamp trace: rheobase={rheobase_pa:.1} pA, AP1 current={:.1} pA, dt={:.6} ms",
         rheobase_pa * 1.5,
         step_us as f64 / 1_000.0
     );
@@ -101,6 +129,20 @@ fn main() -> Result<(), Box<dyn Error>> {
         let state = simulation.step(dt, injected)?;
         let time_ms = (index + 1) as f64 * step_us as f64 / 1_000.0;
         println!("{time_ms:.6},{:.12}", state.voltage().as_volts() * 1_000.0);
+        if let Some(writer) = gates_writer.as_mut() {
+            writeln!(
+                writer,
+                "{time_ms:.6},{:.12},{:.12},{:.12},{:.12},{:.12}",
+                state.sodium_activation(),
+                state.sodium_inactivation(),
+                state.potassium_activation(),
+                state.potassium_fast_inactivation(),
+                state.potassium_slow_inactivation(),
+            )?;
+        }
+    }
+    if let Some(writer) = gates_writer.as_mut() {
+        writer.flush()?;
     }
     Ok(())
 }

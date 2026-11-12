@@ -2,8 +2,9 @@
 """Diagnose numerical solver contributions to the Wilbers human L2/L3 AP1 replay.
 
 The original source mechanisms and author's rheobase procedure are preserved.
-Only NEURON's integration order, fixed step, and the human Na lookup-table
-switch are varied. This is a numerical sensitivity experiment, not a new fit.
+NEURON's integration order, fixed step, and human Na lookup-table switch are
+varied; optional NMODL/HumanJS gate traces expose internal state differences.
+This is a numerical sensitivity experiment, not a new fit.
 """
 
 from __future__ import annotations
@@ -18,6 +19,23 @@ from pathlib import Path
 from typing import Any
 
 import reproduce_wilbers_current_clamp_neuron as reproduction
+
+
+SOURCE_GATE_NAMES = (
+    "m_na_human",
+    "h_na_human",
+    "m_k_human",
+    "h1_k_human",
+    "h2_k_human",
+)
+HUMANJS_GATE_NAMES = (
+    "sodium_activation",
+    "sodium_inactivation",
+    "potassium_activation",
+    "potassium_fast_inactivation",
+    "potassium_slow_inactivation",
+)
+SOURCE_TO_HUMANJS_GATE = dict(zip(SOURCE_GATE_NAMES, HUMANJS_GATE_NAMES))
 
 
 def floats(values: Any) -> list[float]:
@@ -73,13 +91,17 @@ def compare_traces(
     reference_values = np.asarray(reference_voltage, dtype=float)
     sample_time = np.asarray(compared_times, dtype=float)
     sample_values = np.asarray(compared_voltage, dtype=float)
-    mask = (sample_time >= reference_time[0]) & (sample_time <= reference_time[-1])
+    time_tolerance = max(1.0e-9, 1.0e-12 * abs(float(reference_time[-1])))
+    mask = (sample_time >= reference_time[0] - time_tolerance) & (
+        sample_time <= reference_time[-1] + time_tolerance
+    )
     if not np.any(mask):
         raise reproduction.ReproductionError(
             "The compared trace has no samples within the reference trace interval"
         )
+    aligned_time = np.clip(sample_time[mask], reference_time[0], reference_time[-1])
     residual = sample_values[mask] - np.interp(
-        sample_time[mask], reference_time, reference_values
+        aligned_time, reference_time, reference_values
     )
     maximum_index = int(np.argmax(np.abs(residual)))
     return {
@@ -112,6 +134,87 @@ def compare_with_humanjs(
     return compare_traces(source_times, source_voltage, human_time, human_voltage)
 
 
+def compare_gate_traces(
+    reference_times: Any,
+    reference_gates: dict[str, Any],
+    compared_times: Any,
+    compared_gates: dict[str, Any],
+) -> dict[str, Any]:
+    import numpy as np
+
+    reference_time = np.asarray(reference_times, dtype=float)
+    sample_time = np.asarray(compared_times, dtype=float)
+    time_tolerance = max(1.0e-9, 1.0e-12 * abs(float(reference_time[-1])))
+    mask = (sample_time >= reference_time[0] - time_tolerance) & (
+        sample_time <= reference_time[-1] + time_tolerance
+    )
+    if not np.any(mask):
+        raise reproduction.ReproductionError(
+            "The compared gate trace has no samples within the reference interval"
+        )
+
+    summaries: dict[str, Any] = {}
+    for source_name, humanjs_name in SOURCE_TO_HUMANJS_GATE.items():
+        reference_values = np.asarray(reference_gates[source_name], dtype=float)
+        sample_values = np.asarray(compared_gates[humanjs_name], dtype=float)
+        aligned_time = np.clip(sample_time[mask], reference_time[0], reference_time[-1])
+        residual = sample_values[mask] - np.interp(
+            aligned_time, reference_time, reference_values
+        )
+        maximum_index = int(np.argmax(np.abs(residual)))
+        summaries[humanjs_name] = {
+            "rmse_gate_fraction": float(np.sqrt(np.mean(residual * residual))),
+            "mean_absolute_error_gate_fraction": float(np.mean(np.abs(residual))),
+            "maximum_absolute_error_gate_fraction": float(np.max(np.abs(residual))),
+            "maximum_absolute_error_time_ms": float(sample_time[mask][maximum_index]),
+            "mean_signed_residual_gate_fraction": float(np.mean(residual)),
+        }
+    return {"samples_compared": int(np.count_nonzero(mask)), "gates": summaries}
+
+
+def load_humanjs_gate_trace(path: Path) -> tuple[Any, dict[str, Any]]:
+    import numpy as np
+
+    trace = np.genfromtxt(path, delimiter=",", names=True, dtype=float)
+    if trace.dtype.names is None or not set(("time_ms", *HUMANJS_GATE_NAMES)).issubset(
+        trace.dtype.names
+    ):
+        raise reproduction.ReproductionError(
+            "HumanJS gate CSV must contain time_ms and all five named gate columns"
+        )
+    if trace.ndim == 0 or len(trace) < 2:
+        raise reproduction.ReproductionError("HumanJS gate CSV must contain at least two rows")
+    times = np.asarray(trace["time_ms"], dtype=float)
+    if not np.isfinite(times).all() or np.any(np.diff(times) <= 0.0):
+        raise reproduction.ReproductionError("HumanJS gate timestamps must be finite and strictly increasing")
+    gates = {name: np.asarray(trace[name], dtype=float) for name in HUMANJS_GATE_NAMES}
+    for name, values in gates.items():
+        if not np.isfinite(values).all() or np.any((values < 0.0) | (values > 1.0)):
+            raise reproduction.ReproductionError(
+                f"HumanJS gate {name} must contain finite values within [0, 1]"
+            )
+    return times, gates
+
+
+def save_source_gate_trace(
+    path: Path,
+    times_ms: Any,
+    gates: dict[str, Any],
+) -> None:
+    import numpy as np
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    matrix = np.column_stack((times_ms, *[gates[name] for name in SOURCE_GATE_NAMES]))
+    np.savetxt(
+        path,
+        matrix,
+        delimiter=",",
+        header="time_ms," + ",".join(SOURCE_GATE_NAMES),
+        comments="",
+        fmt="%.12g",
+    )
+
+
 def run_variant(
     h: Any,
     cell: Any,
@@ -121,7 +224,9 @@ def run_variant(
     use_na_table: int,
     feature_extractor: Any,
     trace_path: Path | None,
+    gate_path: Path | None,
     humanjs_path: Path | None,
+    humanjs_gates_path: Path | None,
     baseline_times: Any,
     baseline_voltage: Any,
 ) -> dict[str, Any]:
@@ -149,12 +254,27 @@ def run_variant(
     time_vector.record(h._ref_t)
     voltage_vector = h.Vector()
     voltage_vector.record(cell(0.5)._ref_v)
+    gate_vectors = {name: h.Vector() for name in SOURCE_GATE_NAMES}
+    for name, vector in gate_vectors.items():
+        vector.record(getattr(cell(0.5), "_ref_" + name))
     h.finitialize(-70.0)
     for _ in range(sample_count):
         h.fadvance()
 
     times = np.asarray(time_vector, dtype=float)
     voltage = np.asarray(voltage_vector, dtype=float)
+    gates = {name: np.asarray(vector, dtype=float) for name, vector in gate_vectors.items()}
+    if len(times) < 2 or not np.isfinite(times).all() or np.any(np.diff(times) <= 0.0):
+        raise reproduction.ReproductionError(
+            "NEURON gate timestamps must be finite and strictly increasing"
+        )
+    for name, values in gates.items():
+        if len(values) != len(times) or not np.isfinite(values).all() or np.any(
+            (values < 0.0) | (values > 1.0)
+        ):
+            raise reproduction.ReproductionError(
+                f"NEURON gate {name} must contain finite values in [0, 1] at every voltage sample"
+            )
     result: dict[str, Any] = {
         "configuration": {
             "dt_ms": dt_ms,
@@ -165,9 +285,18 @@ def run_variant(
             times, voltage, feature_extractor, trace_path
         ),
     }
+    if gate_path is not None:
+        save_source_gate_trace(gate_path, times, gates)
+        result["gate_trace_file"] = str(gate_path)
+    result["gate_state_method"] = "Original NMODL state variables advanced by METHOD cnexp"
     result["comparison_to_author_baseline"] = compare_traces(
         baseline_times, baseline_voltage, times, voltage
     )
+    if humanjs_gates_path is not None:
+        humanjs_gate_times, humanjs_gates = load_humanjs_gate_trace(humanjs_gates_path)
+        result["comparison_to_humanjs_gates"] = compare_gate_traces(
+            times, gates, humanjs_gate_times, humanjs_gates
+        )
     if humanjs_path is not None:
         result["comparison_to_humanjs"] = compare_with_humanjs(
             humanjs_path, times, voltage
@@ -206,7 +335,9 @@ def parse_args() -> argparse.Namespace:
         help="Human sodium usetable_na_human setting(s)",
     )
     parser.add_argument("--humanjs-trace", type=Path)
+    parser.add_argument("--humanjs-gates", type=Path)
     parser.add_argument("--trace-dir", type=Path)
+    parser.add_argument("--gate-dir", type=Path)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     for name, value in (("gbar-na", args.gbar_na), ("gbar-k", args.gbar_k)):
@@ -226,7 +357,11 @@ def run_diagnostics(args: argparse.Namespace) -> dict[str, Any]:
 
     original_cwd = Path.cwd()
     humanjs_path = args.humanjs_trace.expanduser().resolve() if args.humanjs_trace else None
+    humanjs_gates_path = (
+        args.humanjs_gates.expanduser().resolve() if args.humanjs_gates else None
+    )
     trace_dir = args.trace_dir.expanduser().resolve() if args.trace_dir else None
+    gate_dir = args.gate_dir.expanduser().resolve() if args.gate_dir else None
 
     with tempfile.TemporaryDirectory(prefix="wilbers_solver_diagnostic_") as temp_name:
         workdir = Path(temp_name)
@@ -304,6 +439,8 @@ def run_diagnostics(args: argparse.Namespace) -> dict[str, Any]:
                             f"-na-table-{use_table}.csv"
                         )
                         trace_path = trace_dir / name if trace_dir else None
+                        gate_name = name.removesuffix(".csv") + "-gates.csv"
+                        gate_path = gate_dir / gate_name if gate_dir else None
                         variants.append(
                             run_variant(
                                 h,
@@ -314,7 +451,9 @@ def run_diagnostics(args: argparse.Namespace) -> dict[str, Any]:
                                 use_table,
                                 cc_tools.get_outcomes_full,
                                 trace_path,
+                                gate_path,
                                 humanjs_path,
+                                humanjs_gates_path,
                                 baseline_times,
                                 baseline_voltage,
                             )
@@ -356,10 +495,16 @@ def run_diagnostics(args: argparse.Namespace) -> dict[str, Any]:
                     "recording_duration_ms": 29.0,
                 },
                 "baseline_author_helper": baseline,
+                "gate_state_fields": {
+                    "source_nmodl": list(SOURCE_GATE_NAMES),
+                    "humanjs": list(HUMANJS_GATE_NAMES),
+                    "source_integrator": "NMODL cnexp",
+                    "humanjs_integrator": "coupled fixed-step RK4",
+                },
                 "diagnostic_variants": variants,
                 "interpretation_limit": (
-                    "Solver and Na lookup-table sensitivity only. The diagnostic "
-                    "variants are not the authors' reported simulation settings, "
+                    "Solver, Na lookup-table, and optional gate-state sensitivity only. "
+                    "The diagnostic variants are not the authors' reported simulation settings, "
                     "do not tune biological parameters, and do not establish "
                     "biological validation."
                 ),
