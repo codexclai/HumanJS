@@ -64,6 +64,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut arguments = std::env::args().skip(1);
     let mut step_us = 20;
     let mut gates_output: Option<PathBuf> = None;
+    let mut stages_output: Option<PathBuf> = None;
     while let Some(argument) = arguments.next() {
         match argument.as_str() {
             "--step-us" => {
@@ -79,11 +80,20 @@ fn main() -> Result<(), Box<dyn Error>> {
                         .ok_or("--gates-output requires a file path")?,
                 ));
             }
+            "--stages-output" => {
+                stages_output = Some(PathBuf::from(
+                    arguments
+                        .next()
+                        .ok_or("--stages-output requires a file path")?,
+                ));
+            }
             _ => {
                 if let Some(value) = argument.strip_prefix("--step-us=") {
                     step_us = value.parse::<u64>()?;
                 } else if let Some(path) = argument.strip_prefix("--gates-output=") {
                     gates_output = Some(PathBuf::from(path));
+                } else if let Some(path) = argument.strip_prefix("--stages-output=") {
+                    stages_output = Some(PathBuf::from(path));
                 } else {
                     return Err(format!("unknown argument: {argument}").into());
                 }
@@ -106,10 +116,20 @@ fn main() -> Result<(), Box<dyn Error>> {
         .map(File::create)
         .transpose()?
         .map(BufWriter::new);
+    let mut stages_writer = stages_output
+        .map(File::create)
+        .transpose()?
+        .map(BufWriter::new);
     if let Some(writer) = gates_writer.as_mut() {
         writeln!(
             writer,
             "time_ms,sodium_activation,sodium_inactivation,potassium_activation,potassium_fast_inactivation,potassium_slow_inactivation"
+        )?;
+    }
+    if let Some(writer) = stages_writer.as_mut() {
+        writeln!(
+            writer,
+            "time_ms,stage_1_voltage_mv,stage_2_voltage_mv,stage_3_voltage_mv,stage_4_voltage_mv"
         )?;
     }
 
@@ -126,7 +146,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         } else {
             zero
         };
-        let state = simulation.step(dt, injected)?;
+        let (state, voltage_stages) = if stages_writer.is_some() {
+            let (state, stages) = simulation.step_with_voltage_stages(dt, injected)?;
+            (state, Some(stages))
+        } else {
+            (simulation.step(dt, injected)?, None)
+        };
         let time_ms = (index + 1) as f64 * step_us as f64 / 1_000.0;
         println!("{time_ms:.6},{:.12}", state.voltage().as_volts() * 1_000.0);
         if let Some(writer) = gates_writer.as_mut() {
@@ -140,8 +165,21 @@ fn main() -> Result<(), Box<dyn Error>> {
                 state.potassium_slow_inactivation(),
             )?;
         }
+        if let (Some(writer), Some(stages)) = (stages_writer.as_mut(), voltage_stages) {
+            writeln!(
+                writer,
+                "{time_ms:.6},{:.12},{:.12},{:.12},{:.12}",
+                stages[0].as_volts() * 1_000.0,
+                stages[1].as_volts() * 1_000.0,
+                stages[2].as_volts() * 1_000.0,
+                stages[3].as_volts() * 1_000.0,
+            )?;
+        }
     }
     if let Some(writer) = gates_writer.as_mut() {
+        writer.flush()?;
+    }
+    if let Some(writer) = stages_writer.as_mut() {
         writer.flush()?;
     }
     Ok(())

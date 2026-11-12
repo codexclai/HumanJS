@@ -595,6 +595,27 @@ impl HumanL23SingleCompartmentSimulation {
         self.state
     }
 
+    /// Advance one fixed RK4 step and return the four voltage values actually
+    /// supplied to the coupled derivative evaluations.
+    ///
+    /// The returned stages are ordered as (k1, k2, k3, k4), at the RK4
+    /// evaluation times t, t + dt/2, t + dt/2, and t + dt. They are the
+    /// voltage components of the exact intermediate state vectors used by
+    /// this step, not endpoint interpolation estimates.
+    ///
+    /// This diagnostic form advances the simulation identically to step().
+    /// It is intended for numerical attribution and reproducibility, not as
+    /// a separate integration method.
+    pub fn step_with_voltage_stages(
+        &mut self,
+        duration: SimDuration,
+        injected_current: Amperes,
+    ) -> Result<(HumanL23SingleCompartmentRuntimeState, [Volts; 4]), SimulationError> {
+        let mut voltage_stages = [Volts::from_volts(0.0)?; 4];
+        let state = self.integrate_step(duration, injected_current, Some(&mut voltage_stages))?;
+        Ok((state, voltage_stages))
+    }
+
     /// Advance one fixed RK4 step with constant injected current.
     ///
     /// The duration must not exceed the model's configured maximum internal
@@ -604,6 +625,15 @@ impl HumanL23SingleCompartmentSimulation {
         &mut self,
         duration: SimDuration,
         injected_current: Amperes,
+    ) -> Result<HumanL23SingleCompartmentRuntimeState, SimulationError> {
+        self.integrate_step(duration, injected_current, None)
+    }
+
+    fn integrate_step(
+        &mut self,
+        duration: SimDuration,
+        injected_current: Amperes,
+        voltage_stages: Option<&mut [Volts; 4]>,
     ) -> Result<HumanL23SingleCompartmentRuntimeState, SimulationError> {
         if duration.as_nanoseconds() > self.model.max_internal_step.as_nanoseconds() {
             return Err(SimulationError::OutOfRangeValue {
@@ -617,16 +647,22 @@ impl HumanL23SingleCompartmentSimulation {
         let next_time = self.state.time.checked_add(duration)?;
         let dt = duration.as_seconds();
         let y = self.state.as_array();
-        let k1 = self.model.derivatives(y, injected_current)?;
-        let k2 = self
-            .model
-            .derivatives(add_scaled(y, k1, dt * 0.5), injected_current)?;
-        let k3 = self
-            .model
-            .derivatives(add_scaled(y, k2, dt * 0.5), injected_current)?;
-        let k4 = self
-            .model
-            .derivatives(add_scaled(y, k3, dt), injected_current)?;
+        let stage_1 = y;
+        let k1 = self.model.derivatives(stage_1, injected_current)?;
+        let stage_2 = add_scaled(y, k1, dt * 0.5);
+        let k2 = self.model.derivatives(stage_2, injected_current)?;
+        let stage_3 = add_scaled(y, k2, dt * 0.5);
+        let k3 = self.model.derivatives(stage_3, injected_current)?;
+        let stage_4 = add_scaled(y, k3, dt);
+        let k4 = self.model.derivatives(stage_4, injected_current)?;
+        if let Some(stages) = voltage_stages {
+            *stages = [
+                Volts::from_volts(stage_1[0])?,
+                Volts::from_volts(stage_2[0])?,
+                Volts::from_volts(stage_3[0])?,
+                Volts::from_volts(stage_4[0])?,
+            ];
+        }
 
         let next = std::array::from_fn(|index| {
             y[index] + dt * (k1[index] + 2.0 * k2[index] + 2.0 * k3[index] + k4[index]) / 6.0
@@ -729,6 +765,43 @@ mod tests {
 
     type SourceApFeatureMetrics = (f64, f64, f64, f64);
     type SourceApReplay = (f64, Option<SourceApFeatureMetrics>, usize);
+
+    #[test]
+    fn rk4_voltage_stage_diagnostics_match_the_actual_intermediate_states() {
+        let model = wilbers_model();
+        let initial =
+            HumanL23SingleCompartmentInitialConditions::new(Volts::from_millivolts(-70.0).unwrap());
+        let mut diagnostic = HumanL23SingleCompartmentSimulation::new(model, initial).unwrap();
+        let mut ordinary = diagnostic.clone();
+        let duration = SimDuration::from_microseconds(20).unwrap();
+        let current = Amperes::from_picoamperes(30.0).unwrap();
+
+        let y = diagnostic.state.as_array();
+        let dt = duration.as_seconds();
+        let k1 = model.derivatives(y, current).unwrap();
+        let stage_2 = super::add_scaled(y, k1, dt * 0.5);
+        let k2 = model.derivatives(stage_2, current).unwrap();
+        let stage_3 = super::add_scaled(y, k2, dt * 0.5);
+        let k3 = model.derivatives(stage_3, current).unwrap();
+        let stage_4 = super::add_scaled(y, k3, dt);
+
+        let (diagnostic_state, voltage_stages) = diagnostic
+            .step_with_voltage_stages(duration, current)
+            .unwrap();
+        let ordinary_state = ordinary.step(duration, current).unwrap();
+
+        assert_eq!(diagnostic_state, ordinary_state);
+        assert_eq!(diagnostic_state, diagnostic.state());
+        assert_eq!(
+            voltage_stages,
+            [
+                Volts::from_volts(y[0]).unwrap(),
+                Volts::from_volts(stage_2[0]).unwrap(),
+                Volts::from_volts(stage_3[0]).unwrap(),
+                Volts::from_volts(stage_4[0]).unwrap(),
+            ]
+        );
+    }
 
     fn source_rheobase_trial_spikes(current_pa: f64) -> bool {
         let model =

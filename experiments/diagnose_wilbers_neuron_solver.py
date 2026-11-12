@@ -197,6 +197,38 @@ def load_humanjs_gate_trace(path: Path) -> tuple[Any, dict[str, Any]]:
     return times, gates
 
 
+def load_humanjs_voltage_stage_trace(path: Path) -> tuple[Any, Any]:
+    import numpy as np
+
+    names = (
+        "time_ms",
+        "stage_1_voltage_mv",
+        "stage_2_voltage_mv",
+        "stage_3_voltage_mv",
+        "stage_4_voltage_mv",
+    )
+    trace = np.genfromtxt(path, delimiter=",", names=True, dtype=float)
+    if trace.dtype.names is None or not set(names).issubset(trace.dtype.names):
+        raise reproduction.ReproductionError(
+            "HumanJS RK4 stage CSV must contain time_ms and all four named voltage stages"
+        )
+    if trace.ndim == 0 or len(trace) < 2:
+        raise reproduction.ReproductionError(
+            "HumanJS RK4 stage CSV must contain at least two rows"
+        )
+    times = np.asarray(trace["time_ms"], dtype=float)
+    stages = np.column_stack([np.asarray(trace[name], dtype=float) for name in names[1:]])
+    if (
+        not np.isfinite(times).all()
+        or not np.isfinite(stages).all()
+        or np.any(np.diff(times) <= 0.0)
+    ):
+        raise reproduction.ReproductionError(
+            "HumanJS RK4 stage timestamps and voltage values must be finite and timestamps strictly increasing"
+        )
+    return times, stages
+
+
 def save_source_gate_trace(
     path: Path,
     times_ms: Any,
@@ -393,6 +425,33 @@ def _shared_voltage_rk4_step_linear_voltage(
     )
     k4 = _shared_voltage_gate_derivative(
         gates + dt_ms * k3, voltage_end_mv, na_rate_table
+    )
+    return gates + (dt_ms / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4)
+
+
+def _shared_voltage_rk4_step_with_stages(
+    gates: Any,
+    effective_voltage_stages_mv: Any,
+    dt_ms: float,
+    na_rate_table: tuple[Any, Any] | None = None,
+) -> Any:
+    """RK4 gate update using the four actual coupled membrane voltage stages."""
+    import numpy as np
+
+    voltages = np.asarray(effective_voltage_stages_mv, dtype=float)
+    if voltages.shape != (4,) or not np.isfinite(voltages).all():
+        raise reproduction.ReproductionError(
+            "Actual RK4 voltage replay requires four finite voltage-stage samples"
+        )
+    k1 = _shared_voltage_gate_derivative(gates, float(voltages[0]), na_rate_table)
+    k2 = _shared_voltage_gate_derivative(
+        gates + 0.5 * dt_ms * k1, float(voltages[1]), na_rate_table
+    )
+    k3 = _shared_voltage_gate_derivative(
+        gates + 0.5 * dt_ms * k2, float(voltages[2]), na_rate_table
+    )
+    k4 = _shared_voltage_gate_derivative(
+        gates + dt_ms * k3, float(voltages[3]), na_rate_table
     )
     return gates + (dt_ms / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4)
 
@@ -620,6 +679,8 @@ def compare_gate_sampling_on_humanjs_voltage(
     humanjs_gate_times_ms: Any,
     humanjs_gates: dict[str, Any],
     use_na_table: int,
+    humanjs_voltage_stage_times_ms: Any | None = None,
+    humanjs_voltage_stages_mv: Any | None = None,
 ) -> dict[str, Any]:
     """Replay source gate equations on HumanJS's sampled voltage path.
 
@@ -670,6 +731,25 @@ def compare_gate_sampling_on_humanjs_voltage(
         raise reproduction.ReproductionError(
             "HumanJS voltage and gate traces must have identical timestamps"
         )
+    if (humanjs_voltage_stage_times_ms is None) != (humanjs_voltage_stages_mv is None):
+        raise reproduction.ReproductionError(
+            "HumanJS RK4 stage timestamps and voltage values must be supplied together"
+        )
+    stage_times = None
+    stage_voltages = None
+    if humanjs_voltage_stage_times_ms is not None:
+        stage_times = np.asarray(humanjs_voltage_stage_times_ms, dtype=float)
+        stage_voltages = np.asarray(humanjs_voltage_stages_mv, dtype=float)
+        if (
+            stage_times.shape != voltage_times.shape
+            or stage_voltages.shape != (len(voltage_times), 4)
+            or not np.isfinite(stage_times).all()
+            or not np.isfinite(stage_voltages).all()
+            or not np.allclose(stage_times, voltage_times, rtol=0.0, atol=1.0e-9)
+        ):
+            raise reproduction.ReproductionError(
+                "HumanJS RK4 voltage stages must have four finite values at every voltage/gate timestamp"
+            )
     if voltage_times[0] <= initial_time_ms:
         raise reproduction.ReproductionError(
             "HumanJS trace must contain post-initial voltage samples"
@@ -685,13 +765,15 @@ def compare_gate_sampling_on_humanjs_voltage(
         raise reproduction.ReproductionError("HumanJS replay times must increase from the initial state")
 
     table = _build_source_na_rate_table() if use_na_table == 1 else None
-    names = (
+    names = [
         "right_endpoint_cnexp",
         "left_endpoint_hold_rk4",
         "midpoint_hold_rk4",
         "right_endpoint_hold_rk4",
         "linear_voltage_ramp_rk4",
-    )
+    ]
+    if stage_voltages is not None:
+        names.append("actual_humanjs_rk4_voltage_stages")
     paths = {name: np.empty_like(actual_gates) for name in names}
     for path in paths.values():
         path[0] = initial
@@ -716,6 +798,16 @@ def compare_gate_sampling_on_humanjs_voltage(
         paths["linear_voltage_ramp_rk4"][index + 1] = _shared_voltage_rk4_step_linear_voltage(
             paths["linear_voltage_ramp_rk4"][index], left, right, step, table
         )
+        if stage_voltages is not None:
+            effective_stages = stage_voltages[index] - 10.0
+            paths["actual_humanjs_rk4_voltage_stages"][index + 1] = (
+                _shared_voltage_rk4_step_with_stages(
+                    paths["actual_humanjs_rk4_voltage_stages"][index],
+                    effective_stages,
+                    step,
+                    table,
+                )
+            )
 
     if any(
         not np.isfinite(path).all() or np.any((path < 0.0) | (path > 1.0))
@@ -731,10 +823,12 @@ def compare_gate_sampling_on_humanjs_voltage(
         "methods_against_humanjs_gates": {
             name: _gate_path_metrics(path, actual_gates) for name, path in paths.items()
         },
+        "actual_stage_replay": stage_voltages is not None,
         "interpretation_limit": (
-            "The prescribed midpoint and linear voltage paths approximate but do not capture "
-            "the actual internal voltage stages of the coupled HumanJS RK4 step. "
-            "The source-rate replay is not an independent biological model."
+            "When supplied, actual_humanjs_rk4_voltage_stages uses the four membrane voltage "
+            "components recorded from the exact coupled HumanJS RK4 derivative-stage states. "
+            "The gate-state replay is still a numerical counterfactual, not an independent "
+            "biological model or biological validation."
         ),
     }
 
@@ -751,6 +845,7 @@ def run_variant(
     gate_path: Path | None,
     humanjs_path: Path | None,
     humanjs_gates_path: Path | None,
+    humanjs_voltage_stages_path: Path | None,
     baseline_times: Any,
     baseline_voltage: Any,
 ) -> dict[str, Any]:
@@ -835,6 +930,11 @@ def run_variant(
             humanjs_gate_times,
             humanjs_gates,
             use_na_table,
+            *(
+                load_humanjs_voltage_stage_trace(humanjs_voltage_stages_path)
+                if humanjs_voltage_stages_path is not None
+                else (None, None)
+            ),
         )
     if humanjs_path is not None:
         result["comparison_to_humanjs"] = compare_with_humanjs(
@@ -875,6 +975,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--humanjs-trace", type=Path)
     parser.add_argument("--humanjs-gates", type=Path)
+    parser.add_argument("--humanjs-voltage-stages", type=Path)
     parser.add_argument("--trace-dir", type=Path)
     parser.add_argument("--gate-dir", type=Path)
     parser.add_argument("--output", type=Path)
@@ -899,6 +1000,17 @@ def run_diagnostics(args: argparse.Namespace) -> dict[str, Any]:
     humanjs_gates_path = (
         args.humanjs_gates.expanduser().resolve() if args.humanjs_gates else None
     )
+    humanjs_voltage_stages_path = (
+        args.humanjs_voltage_stages.expanduser().resolve()
+        if args.humanjs_voltage_stages
+        else None
+    )
+    if humanjs_voltage_stages_path is not None and (
+        humanjs_path is None or humanjs_gates_path is None
+    ):
+        raise reproduction.ReproductionError(
+            "--humanjs-voltage-stages requires both --humanjs-trace and --humanjs-gates"
+        )
     trace_dir = args.trace_dir.expanduser().resolve() if args.trace_dir else None
     gate_dir = args.gate_dir.expanduser().resolve() if args.gate_dir else None
 
@@ -993,6 +1105,7 @@ def run_diagnostics(args: argparse.Namespace) -> dict[str, Any]:
                                 gate_path,
                                 humanjs_path,
                                 humanjs_gates_path,
+                                humanjs_voltage_stages_path,
                                 baseline_times,
                                 baseline_voltage,
                             )
