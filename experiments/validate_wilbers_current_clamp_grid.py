@@ -15,14 +15,17 @@ EXPECTED = {
     "WILBERS-CURRENT-CLAMP-AP1COMPARISON.csv": (
         846,
         "85fea00fea374ed0595d032180a798371d96aa4d",
+        "2833ee551241917767e912db569833629009bf5cda157824747847be89432d97",
     ),
     "WILBERS-CURRENT-CLAMP-GBAR-NA.csv": (
         8224,
         "ac2f1b3ae108e8f256e53b0d85c4e0b353eb173a",
+        "b488e45ad87b03cc876f287e7a598d218899f63a85d9de6d8a108b01b05b9991",
     ),
     "WILBERS-CURRENT-CLAMP-GBAR-K.csv": (
         8037,
         "6867798db8a5a2a77a66bb72b7cae77590ff0247",
+        "6682854d3c2e72a5a29c5115a193d5db00adf1eda177bae24204c04e3d3531d0",
     ),
 }
 
@@ -43,15 +46,24 @@ def fail(message: str) -> None:
 def verify_source_file(filename: str) -> bytes:
     path = DATA / filename
     raw = path.read_bytes()
-    expected_size, expected_sha1 = EXPECTED[filename]
+    expected_size, expected_sha1, expected_sha256 = EXPECTED[filename]
     actual_sha1 = hashlib.sha1(raw).hexdigest()
-    if len(raw) != expected_size or actual_sha1 != expected_sha1:
+    actual_sha256 = hashlib.sha256(raw).hexdigest()
+    if (
+        len(raw) != expected_size
+        or actual_sha1 != expected_sha1
+        or actual_sha256 != expected_sha256
+    ):
         fail(
             f"{filename}: source identity mismatch; "
-            f"expected {expected_size} bytes / {expected_sha1}, "
-            f"found {len(raw)} bytes / {actual_sha1}"
+            f"expected {expected_size} bytes / SHA-1 {expected_sha1} / "
+            f"SHA-256 {expected_sha256}, found {len(raw)} bytes / "
+            f"SHA-1 {actual_sha1} / SHA-256 {actual_sha256}"
         )
-    print(f"{filename}: {len(raw)} bytes; Dataverse SHA-1 {actual_sha1} verified")
+    print(
+        f"{filename}: {len(raw)} bytes; Dataverse SHA-1 and local SHA-256 "
+        f"{actual_sha256} verified"
+    )
     return raw
 
 
