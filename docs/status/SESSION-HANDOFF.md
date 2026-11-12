@@ -153,3 +153,8 @@ The 2026-11-11 missing-helper conclusion was based on an incomplete extraction. 
 - Added `experiments/validate_wilbers_current_clamp_grid.py` and a repository-policy CI step. It validates upstream SHA-1 hashes, AP1 target medians, grid axes/orientation, bounds, and all-human/all-mouse endpoints.
 - Original NEURON/SciPy optimizer not rerun: NEURON, SciPy, and NumPy are unavailable in the execution environment. No biological validation is claimed.
 - Next: review the existing provisional spike mechanism against this now-resolved source provenance and prioritize a defensible acceptance gate (or explicitly defer its status); do not retune the conductance values based solely on this provenance correction.
+
+
+- Additional NMODL audit verified complementary species mixing: human Na/K current contributions scale with the human ratio, mouse contributions with (1-ratio), using shared fitted total conductance. Thus the (1,1) grid endpoint is truly all-human kinetics. Na Q10 scales conductance and rates; K Q10 scales rates only, matching Rust.
+- The source CSV validator now checks Dataverse SHA-1 plus retrieved-byte SHA-256 and verifies that the Rust preset literals match the rounded all-human endpoint.
+- Latest verified workflow: run `43124314513` passed on exact HEAD `c73a90270cc92979add481b00856ea2848eea98c`; formatting, Clippy, Rust workspace tests, Python syntax, both research validators, and repository policy all succeeded.
