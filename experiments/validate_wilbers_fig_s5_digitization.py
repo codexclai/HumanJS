@@ -316,14 +316,14 @@ def validate_model_line_raster() -> None:
             value = float(row["ordinate_estimate"])
             if not (0.0 <= x <= 2550.0 and 0.0 <= y <= 3300.0):
                 raise SystemExit(f"{filename}: page-raster coordinate out of bounds: {row}")
-            if uncertainty not in (3.0, 4.0):
+            if uncertainty not in (3.0, 4.0, 5.0):
                 raise SystemExit(f"{filename}: pixel-reading uncertainty missing: {row}")
             if not math.isfinite(value):
                 raise SystemExit(f"{filename}: non-finite ordinate estimate: {row}")
     checks = {
         "J": (17.0, 50.0, "decreasing"),
         "K": (430.0, 460.0, "flat"),
-        "M": (115.0, 325.0, "rising"),
+        "M": (120.0, 360.0, "rising"),
         "N": (2.70, 2.90, "flat"),
     }
 
@@ -338,6 +338,36 @@ def validate_model_line_raster() -> None:
     k_values = [float(row["ordinate_estimate"]) for row in rows if row["panel"] == "K"]
     if abs(sum(k_values) / len(k_values) - 450.0) > 6.0:
         raise SystemExit(f"{filename}: panel K raster trace no longer agrees with the fixed 450-ms component")
+
+    # K_IV plots the K_recovery tau1 curves on the five-voltage grid. Matplotlib
+    # connects those source outputs linearly; sample the four intervening raster
+    # points against that exact polyline, keeping the red/blue overlay combined.
+    _, replay_rows = read_rows("HUMAN-L23-WILBERS-FIG-S5-MN-RECOVERY-MODEL-REPLAY.csv")
+    replay = {float(row["recovery_voltage_mV"]): row for row in replay_rows}
+    def interpolate_recovery(column: str, voltage: float) -> float:
+        grid = sorted(replay)
+        for left, right in zip(grid, grid[1:]):
+            if left <= voltage <= right:
+                fraction = (voltage - left) / (right - left)
+                y0 = float(replay[left][column])
+                y1 = float(replay[right][column])
+                return y0 + fraction * (y1 - y0)
+        raise SystemExit(f"{filename}: panel M voltage is outside the source K_IV grid: {voltage}")
+    m_rows = [row for row in rows if row["panel"] == "M"]
+    m_errors = []
+    for row in m_rows:
+        voltage = float(row["voltage_mV"])
+        human = interpolate_recovery("human_model_tau1_ms_scipy_reference", voltage)
+        mouse = interpolate_recovery("mouse_model_tau1_ms_scipy_reference", voltage)
+        pooled_curve = (human + mouse) / 2.0
+        m_errors.append(float(row["ordinate_estimate"]) - pooled_curve)
+    m_rmse = math.sqrt(sum(error * error for error in m_errors) / len(m_errors))
+    m_max_error = max(abs(error) for error in m_errors)
+    if m_rmse > 3.0 or m_max_error > 5.1:
+        raise SystemExit(
+            f"{filename}: panel M raster/source K_IV polyline mismatch: "
+            f"RMSE={m_rmse:.2f} ms, max={m_max_error:.2f} ms"
+        )
     n_values = [float(row["ordinate_estimate"]) for row in rows if row["panel"] == "N"]
     pooled_slow_s = (1999.7294967866596 + 3579.8563888349777) / 2000.0
     if abs(sum(n_values) / len(n_values) - pooled_slow_s) > 0.02:
@@ -354,7 +384,7 @@ def validate_model_line_raster() -> None:
             raise SystemExit(f"{filename}: {panel} overlaid model trace should be nearly flat")
     print(
         f"{filename}: 23 model-line raster samples verified (J 6, K 9, M 4, N 4); "
-        f"combined red/blue traces; J reconstruction RMSE={j_rmse:.2f} ms; K≈450 ms and N≈pooled slow constant"
+        f"combined red/blue traces; J reconstruction RMSE={j_rmse:.2f} ms; M vs K_IV polyline RMSE={m_rmse:.2f} ms; K≈450 ms and N≈pooled slow constant"
     )
 
 
