@@ -192,3 +192,12 @@ Run 43130214819 exposed an overly restrictive validator lower bound (18 ms) for 
 - Archive remains outside GitHub. Do not port the legacy runtime or treat its old simulator outputs as current HumanJS or biological evidence. Selectively reuse a research citation only after checking the primary source; re-run a historical experiment in the Rust core before relying on its outcome.
 - This was triage, not exhaustive scientific revalidation of every old source/note. ADR-017 records the scope and policy. Future chats do not need the ZIP to continue current work.
 - Current active task: complete Figure S5 panel-M comparison using the deposited K_IV -> K_recovery source path and report the raster/polyline residual without conflating it with raw experimental evidence.
+
+
+### 2026-11-12 — Figure S5 panel-M source comparison complete
+
+- Traced the exact deposited Figure S5 recovery path: pre-optimizer human/mouse `K_IV(cell)` calls use pure `k_human.mod` / `k_mouse.mod`; `K_IV` calls `K_recovery`; tau1 is panel M and tau2 panel N. The mouse recovery plot uses the pre-fit model state. Source IDs, SHA-1 values and protocol details are preserved in the replay CSV header and research note.
+- Recalibrated M against the 300/200-ms printed ticks. Four combined red/blue raster samples: 134.36, 193.41, 304.46, 350.03 ms. Pooled human/mouse source-polyline comparison: RMSE 2.01 ms, max residual 3.32 ms.
+- This is a raster-to-equation-replay consistency check. NEURON was not executed; overlapping species traces are not separable; no raw K recordings or missing per-cell K tau tables were recovered.
+- CI runs 43131449785 and 43131513456 failed only because the validator rejected the newly explicit 5-pixel reading uncertainty. The validator was corrected to admit 5 pixels; the digitized samples were retained. Run 43131570918 passed all workflow steps on exact commit 49978d3920eb3d6d53e6dbc2e8aa20c25ef41fae.
+- Historical pre-migration archive review is recorded in ADR-017; no archive copy or legacy code is needed in future sessions.
