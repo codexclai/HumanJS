@@ -150,3 +150,8 @@ Useful information is to be recovered selectively, with provenance and scientifi
 - failed, rejected, and incomplete experiments are useful as design warnings, not evidence of biological behavior.
 
 This audit was a structural and documentation triage, not a line-by-line scientific revalidation of all 715-kB research material or all legacy source files. No legacy source, raw result, or unverified citation was imported. The ZIP is not required for future sessions: this decision and the triage findings are recorded in current GitHub documentation. If a specific historical file becomes necessary later, request only that file or relevant source material rather than making the archive a standing dependency.
+
+
+### ADR-017 follow-up — archived material and current evidence separation
+
+The one-time archive inventory identified 92 raw JSON result files from the discontinued JavaScript simulator and a 715-kB scientific information dossier with a 374-entry reference register. Neither was copied wholesale. The former results are not outputs from the current Rust implementation; the latter contains a mixture of human, animal, model, atlas, tractography, and engineering evidence that must be rechecked source-by-source before reuse. The archive's experiment protocols and rejected/failed findings may be useful as historical leads, but only after independent implementation and preregistered reproduction in the current Rust core. This follow-up does not expand ADR-017's original scope: no line-by-line scientific audit of the full dossier has been completed.
