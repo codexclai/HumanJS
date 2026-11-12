@@ -611,6 +611,132 @@ def compare_gate_integrators_on_shared_voltage(
         },
     }
 
+def compare_gate_sampling_on_humanjs_voltage(
+    initial_time_ms: float,
+    initial_voltage_mv: float,
+    initial_gates: Any,
+    humanjs_voltage_times_ms: Any,
+    humanjs_voltage_mv: Any,
+    humanjs_gate_times_ms: Any,
+    humanjs_gates: dict[str, Any],
+    use_na_table: int,
+) -> dict[str, Any]:
+    """Replay source gate equations on HumanJS's sampled voltage path.
+
+    The HumanJS voltage/gate traces contain post-step samples. The source
+    initial condition supplies the shared t=0 voltage and gate state. Voltage
+    between samples is prescribed as left, midpoint, right, or linear-ramp;
+    these are counterfactuals, not captured internal RK4 voltage stages.
+    """
+    import numpy as np
+
+    voltage_times = np.asarray(humanjs_voltage_times_ms, dtype=float)
+    voltage = np.asarray(humanjs_voltage_mv, dtype=float)
+    gate_times = np.asarray(humanjs_gate_times_ms, dtype=float)
+    gate_columns = [
+        np.asarray(humanjs_gates[name], dtype=float) for name in HUMANJS_GATE_NAMES
+    ]
+    initial = np.asarray(initial_gates, dtype=float)
+    if (
+        voltage_times.ndim != 1
+        or voltage.ndim != 1
+        or gate_times.ndim != 1
+        or len(voltage_times) < 2
+        or voltage.shape != voltage_times.shape
+        or gate_times.shape != voltage_times.shape
+        or any(column.shape != voltage_times.shape for column in gate_columns)
+        or initial.shape != (len(HUMANJS_GATE_NAMES),)
+    ):
+        raise reproduction.ReproductionError(
+            "HumanJS voltage and gate replay requires matching one-dimensional samples and five initial gates"
+        )
+    if (
+        not np.isfinite(voltage_times).all()
+        or not np.isfinite(voltage).all()
+        or not np.isfinite(gate_times).all()
+        or not np.isfinite(initial).all()
+        or not np.isfinite(np.column_stack(gate_columns)).all()
+        or np.any(np.diff(voltage_times) <= 0.0)
+        or np.any(np.diff(gate_times) <= 0.0)
+        or np.any((initial < 0.0) | (initial > 1.0))
+        or np.any((np.column_stack(gate_columns) < 0.0) | (np.column_stack(gate_columns) > 1.0))
+    ):
+        raise reproduction.ReproductionError(
+            "HumanJS voltage/gate replay samples must be finite, increasing, and gates within [0, 1]"
+        )
+    if not np.allclose(gate_times, voltage_times, rtol=0.0, atol=1.0e-9):
+        raise reproduction.ReproductionError(
+            "HumanJS voltage and gate traces must have identical timestamps"
+        )
+    if voltage_times[0] <= initial_time_ms:
+        raise reproduction.ReproductionError(
+            "HumanJS trace must contain post-initial voltage samples"
+        )
+
+    times = np.concatenate(([float(initial_time_ms)], voltage_times))
+    voltages = np.concatenate(([float(initial_voltage_mv)], voltage))
+    actual_gates = np.vstack((initial, np.column_stack(gate_columns)))
+    if not np.isfinite(voltages).all():
+        raise reproduction.ReproductionError("HumanJS initial voltage must be finite")
+    steps = np.diff(times)
+    if np.any(steps <= 0.0):
+        raise reproduction.ReproductionError("HumanJS replay times must increase from the initial state")
+
+    table = _build_source_na_rate_table() if use_na_table == 1 else None
+    names = (
+        "right_endpoint_cnexp",
+        "left_endpoint_hold_rk4",
+        "midpoint_hold_rk4",
+        "right_endpoint_hold_rk4",
+        "linear_voltage_ramp_rk4",
+    )
+    paths = {name: np.empty_like(actual_gates) for name in names}
+    for path in paths.values():
+        path[0] = initial
+
+    for index, dt_ms in enumerate(steps):
+        left = float(voltages[index]) - 10.0
+        right = float(voltages[index + 1]) - 10.0
+        midpoint = 0.5 * (left + right)
+        step = float(dt_ms)
+        paths["right_endpoint_cnexp"][index + 1] = _shared_voltage_cnexp_step(
+            paths["right_endpoint_cnexp"][index], right, step, table
+        )
+        paths["left_endpoint_hold_rk4"][index + 1] = _shared_voltage_rk4_step(
+            paths["left_endpoint_hold_rk4"][index], left, step, table
+        )
+        paths["midpoint_hold_rk4"][index + 1] = _shared_voltage_rk4_step(
+            paths["midpoint_hold_rk4"][index], midpoint, step, table
+        )
+        paths["right_endpoint_hold_rk4"][index + 1] = _shared_voltage_rk4_step(
+            paths["right_endpoint_hold_rk4"][index], right, step, table
+        )
+        paths["linear_voltage_ramp_rk4"][index + 1] = _shared_voltage_rk4_step_linear_voltage(
+            paths["linear_voltage_ramp_rk4"][index], left, right, step, table
+        )
+
+    if any(
+        not np.isfinite(path).all() or np.any((path < 0.0) | (path > 1.0))
+        for path in paths.values()
+    ):
+        raise reproduction.ReproductionError(
+            "HumanJS-voltage gate counterfactual produced invalid gate fractions"
+        )
+    return {
+        "purpose": "compare source-rate gate updates on the HumanJS sampled voltage path against HumanJS live gates",
+        "na_rate_mode": "200-node linear Na TABLE" if use_na_table == 1 else "direct analytic Na rates",
+        "voltage_shift_mV": -10.0,
+        "methods_against_humanjs_gates": {
+            name: _gate_path_metrics(path, actual_gates) for name, path in paths.items()
+        },
+        "interpretation_limit": (
+            "The prescribed midpoint and linear voltage paths approximate but do not capture "
+            "the actual internal voltage stages of the coupled HumanJS RK4 step. "
+            "The source-rate replay is not an independent biological model."
+        ),
+    }
+
+
 def run_variant(
     h: Any,
     cell: Any,
@@ -695,6 +821,18 @@ def run_variant(
         humanjs_gate_times, humanjs_gates = load_humanjs_gate_trace(humanjs_gates_path)
         result["comparison_to_humanjs_gates"] = compare_gate_traces(
             times, gates, humanjs_gate_times, humanjs_gates
+        )
+    if humanjs_path is not None and humanjs_gates_path is not None:
+        humanjs_voltage_times, humanjs_voltage = load_trace(humanjs_path)
+        result["gate_sampling_on_humanjs_voltage"] = compare_gate_sampling_on_humanjs_voltage(
+            float(times[0]),
+            float(voltage[0]),
+            np.asarray([gates[name][0] for name in SOURCE_GATE_NAMES], dtype=float),
+            humanjs_voltage_times,
+            humanjs_voltage,
+            humanjs_gate_times,
+            humanjs_gates,
+            use_na_table,
         )
     if humanjs_path is not None:
         result["comparison_to_humanjs"] = compare_with_humanjs(

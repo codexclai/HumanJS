@@ -78,6 +78,61 @@ class VoltageSamplingTests(unittest.TestCase):
                 times, voltage, source_gates, use_na_table=0
             )
 
+    def test_humanjs_voltage_midpoint_replay_matches_generated_rk4_path(self) -> None:
+        times = np.arange(9, dtype=float) * 0.02
+        voltage = np.asarray(
+            [-70.0, -69.0, -62.0, -45.0, -15.0, 18.0, 8.0, -25.0, -70.0],
+            dtype=float,
+        )
+        initial = np.asarray([0.05, 0.95, 0.02, 0.99, 0.99], dtype=float)
+        actual = np.empty((len(times), 5), dtype=float)
+        actual[0] = initial
+        for index, dt_ms in enumerate(np.diff(times)):
+            actual[index + 1] = diagnostic._shared_voltage_rk4_step(
+                actual[index],
+                0.5 * (voltage[index] + voltage[index + 1]) - 10.0,
+                float(dt_ms),
+            )
+        gates = {
+            name: actual[1:, index].copy()
+            for index, name in enumerate(diagnostic.HUMANJS_GATE_NAMES)
+        }
+        result = diagnostic.compare_gate_sampling_on_humanjs_voltage(
+            times[0],
+            float(voltage[0]),
+            initial,
+            times[1:],
+            voltage[1:],
+            times[1:],
+            gates,
+            use_na_table=0,
+        )
+        midpoint = result["methods_against_humanjs_gates"]["midpoint_hold_rk4"]
+        self.assertEqual(midpoint["overall_rmse_gate_fraction"], 0.0)
+        self.assertEqual(
+            midpoint["overall_maximum_absolute_error_gate_fraction"], 0.0
+        )
+
+    def test_humanjs_voltage_replay_rejects_misaligned_gate_timestamps(self) -> None:
+        times = np.arange(5, dtype=float) * 0.02
+        voltage = np.full(len(times), -70.0, dtype=float)
+        initial = np.asarray([0.05, 0.95, 0.02, 0.99, 0.99], dtype=float)
+        gates = {
+            name: np.full(4, initial[index], dtype=float)
+            for index, name in enumerate(diagnostic.HUMANJS_GATE_NAMES)
+        }
+        with self.assertRaises(reproduction.ReproductionError):
+            diagnostic.compare_gate_sampling_on_humanjs_voltage(
+                times[0],
+                float(voltage[0]),
+                initial,
+                times[1:],
+                voltage[1:],
+                times[1:] + 0.001,
+                gates,
+                use_na_table=0,
+            )
+
     def test_rejects_malformed_gate_metric_shapes(self) -> None:
         with self.assertRaises(reproduction.ReproductionError):
             diagnostic._gate_path_metrics(
