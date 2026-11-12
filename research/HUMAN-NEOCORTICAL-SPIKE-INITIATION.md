@@ -620,3 +620,36 @@ The unrestricted mouse mechanism files have Dataverse SHA-1 values: na_mouse.mod
 ### Reproduction boundary
 
 This session verified all six downloaded files against the Dataverse SHA-1 metadata and parsed the complete source helper and calibration tables. The original NEURON/SciPy optimization was **not rerun**: the available execution environment does not have NEURON, SciPy, or NumPy installed. The source grid is a deposited result, not a fresh independent optimization. The HumanJS 114.48/29.05 mapping is nevertheless directly verified by the exact grid corner and its matching source checksums. Do not claim an independently rerun optimizer, raw-trace reproduction, or biological validation.
+
+
+## 4. Versioned repository-completeness recheck (2026-11-12)
+
+A fresh Dataverse API check was made after the original 65-file audit to distinguish a stale or incomplete page scrape from the actual released dataset manifest.
+
+### Authoritative Dataverse version and file inventory
+
+- The DOI version API reports one released version for [DataverseNL DOI 10.34894/L5J0SD](https://doi.org/10.34894/L5J0SD): version **3.0**, released **2022-12-13T12:12:16Z**, under **CC0-1.0**. The dataset publication date is 2022-11-10.
+- The version-specific Dataverse Files API, queried directly at [the v3.0 manifest endpoint](https://dataverse.nl/api/datasets/:persistentId/versions/3.0/files?persistentId=doi:10.34894/L5J0SD), reports `totalCount=65`. The explicit `limit=100&offset=0` query also reports 65 total records, although the text extraction layer returned only 58 rendered rows. The exact count and all filenames were therefore cross-checked against the independent metadata export below rather than treating that partial rendering as a complete list.
+- The independent metadata export is in the public [DANS Labs ODISSEI portal experiment repository](https://github.com/Dans-labs/odissei-portal-exp/blob/ac75eb2a48cc0bf876ec451ed82d68c101326540/raw-data/doi-10.34894-L5J0SD/source/dataverse-json-export.json), pinned to repository commit `ac75eb2a48cc0bf876ec451ed82d68c101326540`. That JSON has exactly **65** `filename` entries, identifies dataset version 3 and the same 2022-12-13 release timestamp and CC0 license, and contains none of:
+  - `Experimental means/k_tau_act.csv`
+  - `Experimental means/k_tau_inact_fast.csv`
+  - `Experimental means/k_tau_inact_slow.csv`
+  - `data_fig5.xlsx`
+  - any `.nwb` file
+  - a separate final Figure S5 plotting/export script or Figure5/S5 directory.
+- The mirror's [pipeline context](https://github.com/Dans-labs/odissei-portal-exp/blob/ac75eb2a48cc0bf876ec451ed82d68c101326540/raw-data/doi-10.34894-L5J0SD/_pipeline-context.json) identifies the source as a Dataverse JSON export and records `written_at=2026-07-28T23:02:57.731547Z`. It is a metadata snapshot, not a second copy of the experimental data or fitting source. Its filename inventory independently confirms, rather than expands, the currently released 65-file deposit.
+
+The six scripts that are present under `Figures5_6/Channel_fitting` are `channel_kinetics.py`, `channel_tools.py`, `fit_k_hh_cma_human.py`, `fit_k_hh_cma_mouse.py`, `fit_na_hh_cma_human.py`, and `fit_na_hh_cma_mouse.py`. The relevant current-clamp scripts and outputs are present as already documented in Section 3. The inventory distinction is now firm: the file list includes published model/source snapshots and selected summary/calibration tables, but not the specific experimental K tau inputs or raw K voltage-clamp recordings needed for a trace-level independent refit.
+
+### Reconciliation with the preprint, final article, and ModelDB reference
+
+- The [bioRxiv v2 preprint](https://www.biorxiv.org/content/10.1101/2022.11.29.518317v2.full) has a preliminary Data and materials availability paragraph with explicit unfinished placeholders: the dataset URL was to be inserted in the final version; its ModelDB destination ends with an ellipsis and says it would be updated; and the GitHub URL is only `https://github.org/…`, also marked for later update. These are not usable repository locations and do not establish a separate author GitHub repository.
+- The [published Science Advances article](https://doi.org/10.1126/sciadv.ade3300) (12 October 2023) replaces that draft statement with a DataverseNL DOI. Its data-availability statement says all data, model files, and scripts used in the work are available from that Dataverse record, and that data needed to evaluate the conclusions appear in the article and/or Supplementary Materials. The live Dataverse v3.0 manifest is therefore the relevant public inventory for the named deposit; the article's statement is not evidence that unlisted raw-trace or per-cell CSV objects exist in that manifest.
+- The final paper's Methods also cite [ModelDB accession 8210](https://modeldb.science/8210) in connection with the earlier `spikeinit/na3h5.mod` sodium-channel model used as a similar Hodgkin–Huxley-style precedent. That is a reference to prior channel-model material, not an identified repository containing the Wilbers authors' full Figure S5 plotting source or the missing K voltage-clamp data. It should not be substituted for the Dataverse deposit or cited as the authors' own model archive.
+- A scoped public GitHub code search for the exact helper name `get_tau_inact_double_fixedtau2` and the missing K tau filenames returned no independent source/data mirror. The only relevant indexed repository hit was the third-party Dataverse metadata export described above; no separate author-owned plotting repository or corrected helper was verified.
+
+### Consequence for HumanJS and next evidence action
+
+This recheck closes the *inventory question*, not the experimental-data gap. It strengthens the existing finding that the available public v3.0 deposit does not contain the named per-cell K tau tables, raw K voltage-clamp NWB traces, `data_fig5.xlsx`, or a separate S5 plot generator. The source helper defect and the reconstructed-versus-plotted-line distinction remain as recorded above. The paper's availability statement is not contradicted by this inventory: it says the evidence needed to evaluate the published conclusions is in the paper and supplement, while this HumanJS audit asks the narrower question of whether the public deposit supplies every input needed to independently reproduce the K-channel fitting and plotted S5 model curves.
+
+Do not infer that data were withheld, do not manufacture replacement observations from raster markers, and do not promote the exploratory Rust spike mechanism on these summaries. The next useful evidence action is a targeted request to the corresponding authors for (i) the exact script/version or export state that generated Figure S5J/K/M/N, (ii) the per-cell K kinetic CSVs or a stable alternative source for them, and (iii) the raw K voltage-clamp recordings or an explicit description of why they are unavailable. Until a response or independently verifiable copy is obtained, retain the current limitations and keep the single-compartment spike mechanism unaccepted.
