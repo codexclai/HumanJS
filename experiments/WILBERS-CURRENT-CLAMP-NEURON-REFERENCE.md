@@ -98,6 +98,24 @@ For the high-resolution convergence comparison, run the Rust example with --step
 This remains a model-to-model numerical comparison. It is not a biological state measurement, a fit acceptance test, or biological validation. It also does not isolate cnexp from RK4 on an externally prescribed identical membrane-voltage path; that is a distinct follow-up experiment if a tighter integrator-only decomposition is needed.
 
 
+### Shared-voltage gate-integrator and Na-table decomposition (2026-11-12)
+
+The remaining `cnexp`-versus-RK4 question was tested with an externally prescribed common voltage sequence. This avoids changing fitted densities or comparing gates under two different membrane-voltage histories. For each interval ending at sample `t[n+1]`, both counterfactual gate solvers receive the same post-step voltage sample `V[n+1]` (including the deposited −10-mV channel shift) and the same initial NMODL gate state. That sampling phase was independently checked: the source-equation exponential recurrence reproduces the recorded NMODL states when the source Na table mode is matched. The maximum direct-rate replay error on the 20-µs source path is 1.7623×10⁻⁶ gate fraction, below the diagnostic's 10⁻⁴ replay guard.
+
+The isolated integrator comparison uses the same continuous source-equation rates with the Na table disabled for both methods. At 20 µs on the direct-rate source voltage path, the overall five-gate RK4-versus-cnexp difference is 2.8221×10⁻⁶ RMSE and 1.16295×10⁻⁴ maximum gate fraction. Nearly all of that is sodium activation (`m`: 6.3101×10⁻⁶ RMSE, 1.16295×10⁻⁴ max); sodium inactivation is 6.6710×10⁻⁸ RMSE and the three K gates are at or near floating-point precision. At 1 µs the overall gate RMSE falls to 1.1710×10⁻¹¹ and the maximum to 4.8856×10⁻¹⁰. The RK4-versus-cnexp difference therefore converges rapidly under the shared piecewise-constant voltage convention.
+
+The same common voltage path also isolates the source's 200-node Na TABLE interpolation from direct analytic rates. With the CNEXP update unchanged, table-on versus direct-rate gate differences are 3.70195×10⁻⁵ overall RMSE and 1.23720×10⁻⁴ maximum; the differences occur only in the Na activation/inactivation gates (K rates are not tabled). The NMODL recurrence with the matching table setting reproduces the recorded source gate states within the 10⁻⁴ gate-fraction integrity bound for both table-on and table-off cases.
+
+For scale, the full dynamic 20-µs source-table-off versus HumanJS gate comparison still has much larger residuals: Na activation 0.003242 RMSE, Na inactivation 0.002694, K activation 0.001448, K fast inactivation 0.0000822, and K slow inactivation 0.0000772. These are orders of magnitude above the isolated update-method errors. This indicates that the gate update rule by itself is not a sufficient explanation for the full dynamic state discrepancy. Different voltage trajectories, voltage-stage sampling and coupled membrane/gate feedback remain the main unresolved numerical contributors; the current experiment does not fully partition them.
+
+The diagnostic adds the shared-voltage calculation to every solver variant and emits both (a) RK4-versus-exponential-update gate differences on the common path and (b) source Na-table-versus-direct-rate effects on that same path. It also checks that a matching exponential recurrence reproduces the recorded NMODL gate states within 10⁻⁴ when the rate mode matches. This is a numerical diagnostic tolerance, not biological uncertainty or model acceptance. It does not establish that either integrator is biologically superior.
+
+Reproduce the shared-path solver and table decomposition with the pinned NEURON environment:
+
+    python3.10 experiments/diagnose_wilbers_neuron_solver.py --dt-ms 0.02 0.001 --secondorder 0 1 --na-table 1 0 --trace-dir /tmp/wilbers-voltage --gate-dir /tmp/wilbers-gates --output /tmp/wilbers-shared-voltage-gate-results.json
+
+The same-voltage output is computed for every variant from its source voltage samples; it does not require HumanJS trace files. Add `--humanjs-trace` and `--humanjs-gates` to also emit the independent dynamic source-vs-HumanJS comparison for the selected HumanJS files.
+
 ### CI verification of corrected NEURON reference replay (2026-11-12)
 
 Commit 3ea7cb43fcc0e9627cfc7b6cdde3c28055356dd0 passed GitHub Actions run 43139126138. All required steps succeeded: Rust formatting, Clippy, complete Rust workspace tests, Python experiment-runner syntax, Figure S5 digitization validator, current-clamp conductance-grid validator, and repository policy. Two immediately preceding runs stopped at rustfmt because the source file lacked its terminal newline; that formatting-only issue was corrected. The source-model comparison assertions themselves passed unchanged. This CI validates the implementation and its pinned reference checks, not biological validity.

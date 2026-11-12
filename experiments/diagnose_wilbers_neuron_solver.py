@@ -4,7 +4,8 @@
 The original source mechanisms and author's rheobase procedure are preserved.
 NEURON's integration order, fixed step, and human Na lookup-table switch are
 varied; optional NMODL/HumanJS gate traces expose internal state differences.
-This is a numerical sensitivity experiment, not a new fit.
+A shared-voltage counterfactual isolates the gate-update method from voltage
+feedback. This is a numerical sensitivity experiment, not a new fit.
 """
 
 from __future__ import annotations
@@ -215,6 +216,289 @@ def save_source_gate_trace(
     )
 
 
+def _sigmoid(value: float) -> float:
+    import math
+
+    if value >= 0.0:
+        exponential = math.exp(-value)
+        return 1.0 / (1.0 + exponential)
+    exponential = math.exp(value)
+    return exponential / (1.0 + exponential)
+
+
+def _source_trap0(voltage_mv: float, half_voltage_mv: float, prefactor: float, slope_mv: float) -> float:
+    """Stable analytic form of the deposited trap0 rate, away from its defective fallback."""
+    import math
+
+    x = (voltage_mv - half_voltage_mv) / slope_mv
+    if abs(x) < 1.0e-7:
+        ratio = 1.0 + x / 2.0 + x * x / 12.0 - x**4 / 720.0
+    else:
+        ratio = x / -math.expm1(-x)
+    return prefactor * slope_mv * ratio
+
+
+def _wilbers_gate_rate_bundle(
+    effective_voltage_mv: float,
+    na_rate_table: tuple[Any, Any] | None = None,
+) -> tuple[float, ...]:
+    """Pure human Na/K rates; optionally linearly interpolate source Na TABLE outputs."""
+    na_temperature_factor = 2.3 ** 0.9
+
+    na_alpha_m = _source_trap0(
+        effective_voltage_mv, -58.59235606617833, 0.2139849270413559, 9.21455371864071
+    )
+    na_beta_m = _source_trap0(
+        -effective_voltage_mv, 58.59235606617833, 0.2139849270413559, 9.21455371864071
+    )
+    na_m_inf = _sigmoid((effective_voltage_mv + 42.29145668954657) / 10.231152896063074)
+    na_m_tau = 1.0 / (na_temperature_factor * (na_alpha_m + na_beta_m))
+
+    na_alpha_h = _source_trap0(
+        effective_voltage_mv, -39.298676911255, 0.0476391878313753, 7.21636386592805
+    )
+    na_beta_h = _source_trap0(
+        -effective_voltage_mv, 77.16674532461128, 0.011951655023359499, 4.749450048393884
+    )
+    na_h_inf = _sigmoid((-64.48 - effective_voltage_mv) / 11.02)
+    na_h_tau = 1.0 / (na_temperature_factor * (na_alpha_h + na_beta_h))
+
+    k_alpha_m = _source_trap0(
+        effective_voltage_mv, -29.961798016904638, 0.018459250585411965, 6.590405688881463
+    )
+    k_beta_m = _source_trap0(
+        -effective_voltage_mv, 29.961798016904638, 0.018459250585411965, 6.590405688881463
+    )
+    k_m_inf = _sigmoid((effective_voltage_mv + 18.406163539758502) / 19.199550273441083)
+    k_m_tau = 1.0 / (k_alpha_m + k_beta_m)
+
+    k_alpha_h = _source_trap0(
+        effective_voltage_mv, 40.5659148938157, 0.0016901435659310753, 26.773929244740913
+    )
+    k_beta_h = _source_trap0(
+        -effective_voltage_mv, 75.93822659307075, 0.0004968791312639546, 0.40183382749400054
+    )
+    k_h_inf = _sigmoid((-52.61 - effective_voltage_mv) / 13.09)
+    k_h_tau = 1.0 / (k_alpha_h + k_beta_h)
+
+    if na_rate_table is not None:
+        import numpy as np
+
+        table_voltage, table_values = na_rate_table
+        na_m_inf, na_m_tau, na_h_inf, na_h_tau = (
+            float(np.interp(effective_voltage_mv, table_voltage, table_values[:, index]))
+            for index in range(4)
+        )
+
+    return (
+        na_m_inf, na_m_tau, na_h_inf, na_h_tau,
+        k_m_inf, k_m_tau, k_h_inf, k_h_tau,
+        2789.7929428108187, 450.0,
+    )
+
+
+def _build_source_na_rate_table() -> tuple[Any, Any]:
+    import numpy as np
+
+    voltage_nodes = np.linspace(-120.0, 100.0, 200)
+    values = np.asarray(
+        [_wilbers_gate_rate_bundle(float(voltage))[:4] for voltage in voltage_nodes],
+        dtype=float,
+    )
+    return voltage_nodes, values
+
+
+def _shared_voltage_gate_derivative(
+    gates: Any,
+    effective_voltage_mv: float,
+    na_rate_table: tuple[Any, Any] | None = None,
+) -> Any:
+    import numpy as np
+
+    (
+        na_m_inf, na_m_tau, na_h_inf, na_h_tau,
+        k_m_inf, k_m_tau, k_h_inf, k_h_tau,
+        k_h_slow_recovery_tau, k_h_slow_inactivation_tau,
+    ) = _wilbers_gate_rate_bundle(effective_voltage_mv, na_rate_table)
+    k_h2_tau = k_h_slow_recovery_tau if k_h_inf > gates[4] else k_h_slow_inactivation_tau
+    return np.asarray(
+        [
+            (na_m_inf - gates[0]) / na_m_tau,
+            (na_h_inf - gates[1]) / na_h_tau,
+            (k_m_inf - gates[2]) / k_m_tau,
+            (k_h_inf - gates[3]) / k_h_tau,
+            (k_h_inf - gates[4]) / k_h2_tau,
+        ],
+        dtype=float,
+    )
+
+
+def _shared_voltage_cnexp_step(
+    gates: Any,
+    effective_voltage_mv: float,
+    dt_ms: float,
+    na_rate_table: tuple[Any, Any] | None = None,
+) -> Any:
+    import numpy as np
+
+    (
+        na_m_inf, na_m_tau, na_h_inf, na_h_tau,
+        k_m_inf, k_m_tau, k_h_inf, k_h_tau,
+        k_h_slow_recovery_tau, k_h_slow_inactivation_tau,
+    ) = _wilbers_gate_rate_bundle(effective_voltage_mv, na_rate_table)
+    k_h2_tau = k_h_slow_recovery_tau if k_h_inf > gates[4] else k_h_slow_inactivation_tau
+    steady_states = np.asarray([na_m_inf, na_h_inf, k_m_inf, k_h_inf, k_h_inf])
+    time_constants = np.asarray([na_m_tau, na_h_tau, k_m_tau, k_h_tau, k_h2_tau])
+    return steady_states + (gates - steady_states) * np.exp(-dt_ms / time_constants)
+
+
+def _shared_voltage_rk4_step(
+    gates: Any,
+    effective_voltage_mv: float,
+    dt_ms: float,
+    na_rate_table: tuple[Any, Any] | None = None,
+) -> Any:
+    import numpy as np
+
+    k1 = _shared_voltage_gate_derivative(gates, effective_voltage_mv, na_rate_table)
+    k2 = _shared_voltage_gate_derivative(
+        gates + 0.5 * dt_ms * k1, effective_voltage_mv, na_rate_table
+    )
+    k3 = _shared_voltage_gate_derivative(
+        gates + 0.5 * dt_ms * k2, effective_voltage_mv, na_rate_table
+    )
+    k4 = _shared_voltage_gate_derivative(
+        gates + dt_ms * k3, effective_voltage_mv, na_rate_table
+    )
+    return gates + (dt_ms / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4)
+
+
+def compare_gate_integrators_on_shared_voltage(
+    times_ms: Any,
+    voltage_mv: Any,
+    source_gates: dict[str, Any],
+    use_na_table: int,
+) -> dict[str, Any]:
+    """Compare cnexp and RK4 gate updates under an identical sampled voltage path.
+
+    Both methods receive the post-step voltage sample V[n+1] for the gate
+    update ending at t[n+1], as confirmed by replaying recorded NMODL states.
+    The method-only pair uses the same direct analytic source rates with the
+    Na lookup table disabled; a separate CNEXP pair quantifies the source's
+    200-node Na TABLE interpolation. This is a numerical-method experiment,
+    not a biological comparison.
+    """
+    import numpy as np
+
+    times = np.asarray(times_ms, dtype=float)
+    voltage = np.asarray(voltage_mv, dtype=float)
+    if len(times) < 2 or len(times) != len(voltage):
+        raise reproduction.ReproductionError("Shared-voltage input must have matching samples")
+    steps = np.diff(times)
+    if not np.isfinite(times).all() or not np.isfinite(voltage).all() or np.any(steps <= 0.0):
+        raise reproduction.ReproductionError("Shared-voltage samples must be finite with increasing times")
+
+    # Both counterfactual methods begin from the same actual NMODL state at t=0.
+    initial = np.asarray(
+        [source_gates[name][0] for name in SOURCE_GATE_NAMES],
+        dtype=float,
+    )
+    if not np.isfinite(initial).all() or np.any((initial < 0.0) | (initial > 1.0)):
+        raise reproduction.ReproductionError("Shared-voltage initial source gates must be finite and in [0, 1]")
+    na_rate_table = _build_source_na_rate_table()
+    cnexp = np.empty((len(times), 5), dtype=float)
+    rk4 = np.empty((len(times), 5), dtype=float)
+    cnexp_table = np.empty((len(times), 5), dtype=float)
+    cnexp[0] = initial
+    rk4[0] = initial
+    cnexp_table[0] = initial
+
+    for index, dt_ms in enumerate(steps):
+        effective_voltage = float(voltage[index + 1]) - 10.0
+        step = float(dt_ms)
+        cnexp[index + 1] = _shared_voltage_cnexp_step(
+            cnexp[index], effective_voltage, step
+        )
+        rk4[index + 1] = _shared_voltage_rk4_step(
+            rk4[index], effective_voltage, step
+        )
+        cnexp_table[index + 1] = _shared_voltage_cnexp_step(
+            cnexp_table[index], effective_voltage, step, na_rate_table
+        )
+
+    residual = rk4 - cnexp
+    table_residual = cnexp_table - cnexp
+    gate_metrics: dict[str, Any] = {}
+    for index, name in enumerate(HUMANJS_GATE_NAMES):
+        values = residual[:, index]
+        max_index = int(np.argmax(np.abs(values)))
+        gate_metrics[name] = {
+            "rmse_gate_fraction": float(np.sqrt(np.mean(values * values))),
+            "maximum_absolute_error_gate_fraction": float(np.max(np.abs(values))),
+            "maximum_absolute_error_time_ms": float(times[max_index]),
+            "final_cnexp_gate_fraction": float(cnexp[-1, index]),
+            "final_rk4_gate_fraction": float(rk4[-1, index]),
+        }
+
+    if not np.isfinite(cnexp).all() or not np.isfinite(rk4).all():
+        raise reproduction.ReproductionError("Shared-voltage gate integrations produced non-finite states")
+    if np.any((cnexp < 0.0) | (cnexp > 1.0)) or np.any((rk4 < 0.0) | (rk4 > 1.0)):
+        raise reproduction.ReproductionError("Shared-voltage gate integration left the [0, 1] state bounds")
+
+    table_gate_metrics: dict[str, Any] = {}
+    for index, name in enumerate(HUMANJS_GATE_NAMES):
+        values = table_residual[:, index]
+        max_index = int(np.argmax(np.abs(values)))
+        table_gate_metrics[name] = {
+            "rmse_gate_fraction": float(np.sqrt(np.mean(values * values))),
+            "maximum_absolute_error_gate_fraction": float(np.max(np.abs(values))),
+            "maximum_absolute_error_time_ms": float(times[max_index]),
+        }
+
+    source_replay_gates = cnexp_table if use_na_table == 1 else cnexp
+    source_residual = source_replay_gates - np.column_stack(
+        [source_gates[name] for name in SOURCE_GATE_NAMES]
+    )
+    source_replay_maximum = float(np.max(np.abs(source_residual)))
+    source_replay = {
+        "rate_mode": "200-node linear Na TABLE" if use_na_table == 1 else "direct analytic Na rates",
+        "comparison": "same voltage samples and matching Na rate mode; recorded NMODL gate states",
+        "maximum_absolute_error_tolerance_gate_fraction": 1.0e-4,
+        "overall_rmse_gate_fraction": float(np.sqrt(np.mean(source_residual * source_residual))),
+        "overall_maximum_absolute_error_gate_fraction": source_replay_maximum,
+        "per_gate_rmse_gate_fraction": {
+            name: float(np.sqrt(np.mean(source_residual[:, index] ** 2)))
+            for index, name in enumerate(HUMANJS_GATE_NAMES)
+        },
+    }
+    if source_replay_maximum > 1.0e-4:
+        raise reproduction.ReproductionError(
+            "Shared-voltage cnexp recurrence did not reproduce the matching "
+            f"NMODL gate states within 1e-4 (max {source_replay_maximum:.6g})"
+        )
+
+    return {
+        "method_a": "exact exponential gate update (cnexp equivalent)",
+        "method_b": "classical RK4 gate update",
+        "shared_voltage_contract": "post-step V[n+1] held for the gate update ending at t[n+1]",
+        "rate_contract": "direct analytic rates for the cnexp/RK4 pair; source-table interpolation evaluated separately",
+        "initial_state_contract": "same recorded NMODL gate state at t=0",
+        "comparison_to_recorded_nmodl_cnexp": source_replay,
+        "samples": int(len(times)),
+        "intervals": int(len(steps)),
+        "dt_min_ms": float(np.min(steps)),
+        "dt_max_ms": float(np.max(steps)),
+        "overall_gate_rmse_fraction": float(np.sqrt(np.mean(residual * residual))),
+        "overall_gate_maximum_absolute_error_fraction": float(np.max(np.abs(residual))),
+        "per_gate": gate_metrics,
+        "source_na_table_rate_sensitivity": {
+            "comparison": "cnexp with linear 200-node source Na TABLE versus direct analytic rates on the same voltage path",
+            "overall_gate_rmse_fraction": float(np.sqrt(np.mean(table_residual * table_residual))),
+            "overall_gate_maximum_absolute_error_fraction": float(np.max(np.abs(table_residual))),
+            "per_gate": table_gate_metrics,
+        },
+    }
+
 def run_variant(
     h: Any,
     cell: Any,
@@ -289,6 +573,9 @@ def run_variant(
         save_source_gate_trace(gate_path, times, gates)
         result["gate_trace_file"] = str(gate_path)
     result["gate_state_method"] = "Original NMODL state variables advanced by METHOD cnexp"
+    result["same_voltage_gate_integrator_sensitivity"] = compare_gate_integrators_on_shared_voltage(
+        times, voltage, gates, use_na_table
+    )
     result["comparison_to_author_baseline"] = compare_traces(
         baseline_times, baseline_voltage, times, voltage
     )
