@@ -282,3 +282,10 @@ The diagnostic now applies both cnexp-equivalent and RK4 gate updates to the sam
 ### 2026-11-12 — shared-voltage gate integrator and Na TABLE experiment committed
 
 Commit `eec5651c80b71e0d7706f617d944cfad772c38fb` (`research(neuro): isolate gate solver effects on shared voltage`) adds the identical sampled-voltage counterfactual and 200-node Na rate-table sensitivity to the NEURON diagnostic, records its results in the research/experiment notes, and updates the next handoff. GitHub Actions run `43149669478` passed on the exact main commit. The analysis remains numerical and does not alter the model's exploratory/unaccepted status.
+
+
+### 2026-11-12 — voltage-stage sampling counterfactual added
+
+The shared-voltage gate diagnostic now replays the recorded NEURON voltage path with four RK4 gate-voltage conventions: hold the left endpoint, hold the interval midpoint, hold the right endpoint (the previous comparison), or linearly interpolate voltage at the RK4 stage times. All four start from the same recorded NMODL gate state, use the same analytic Wilbers gate rates and fixed timestep sequence, and are compared against both the recorded NMODL gates and one another. The −10-mV channel shift is applied consistently. All replay trajectories are checked for finite gate fractions in [0, 1].
+
+This isolates sensitivity to voltage sampling on a prescribed source voltage trajectory; the linear ramp is not the actual intermediate voltage of the coupled HumanJS membrane solver. The diagnostic does not yet partition the feedback difference between voltage and gates in a fully coupled run. Numerical outputs require the pinned Python 3.10 / NEURON 9.0.2 environment; the available session runtime is Python 3.13.5 without NEURON, so no new source replay numbers are claimed here. Run the documented solver diagnostic with the pinned environment to obtain the four per-gate error profiles. The spike-capable HumanJS mechanism remains exploratory and scientifically unaccepted.
