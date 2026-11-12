@@ -1338,7 +1338,7 @@ mod tests {
     }
 
     #[test]
-    fn deposited_k_iv_fixed_slow_tau_fit_replays_human_fast_inactivation_curve() {
+    fn reconstructed_k_human_fixed_slow_tau_current_fit_matches_independent_reference() {
         let model = wilbers_voltage_clamp_model();
         let voltages_mv = [0.0, 10.0, 20.0, 30.0, 40.0, 50.0];
         // Independent SciPy references for K_IV's post-peak current fit:
@@ -1364,7 +1364,7 @@ mod tests {
     }
 
     #[test]
-    fn deposited_k_iv_fixed_slow_tau_fit_replays_mouse_fast_inactivation_curve() {
+    fn reconstructed_k_mouse_fixed_slow_tau_current_fit_matches_independent_reference() {
         let model = wilbers_mouse_voltage_clamp_model();
         let voltages_mv = [0.0, 10.0, 20.0, 30.0, 40.0, 50.0];
         // Independent SciPy references from k_mouse.mod, with the K_IV
