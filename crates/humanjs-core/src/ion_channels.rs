@@ -2024,6 +2024,12 @@ mod tests {
         let (amplitude, source_features, crossings, first_dvdt, max_dvdt) =
             source_current_clamp_ap_features(rheobase_pa);
 
+        println!(
+            "HumanJS source-protocol replay: rheobase={rheobase_pa:.3} pA, \
+             pulse={:.3} pA, peak={amplitude:.9} mV, \
+             first_dvdt={first_dvdt:.9} mV/ms, max_dvdt={max_dvdt:.9} mV/ms",
+            rheobase_pa * 1.5
+        );
         assert_eq!(
             crossings, 1,
             "1.5x-rheobase pulse at {rheobase_pa} pA should produce one AP"
