@@ -373,6 +373,48 @@ def _shared_voltage_rk4_step(
     return gates + (dt_ms / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4)
 
 
+def _shared_voltage_rk4_step_linear_voltage(
+    gates: Any,
+    voltage_start_mv: float,
+    voltage_end_mv: float,
+    dt_ms: float,
+    na_rate_table: tuple[Any, Any] | None = None,
+) -> Any:
+    """RK4 gate update with linearly interpolated voltage at RK stage times."""
+    import numpy as np
+
+    midpoint_mv = 0.5 * (voltage_start_mv + voltage_end_mv)
+    k1 = _shared_voltage_gate_derivative(gates, voltage_start_mv, na_rate_table)
+    k2 = _shared_voltage_gate_derivative(
+        gates + 0.5 * dt_ms * k1, midpoint_mv, na_rate_table
+    )
+    k3 = _shared_voltage_gate_derivative(
+        gates + 0.5 * dt_ms * k2, midpoint_mv, na_rate_table
+    )
+    k4 = _shared_voltage_gate_derivative(
+        gates + dt_ms * k3, voltage_end_mv, na_rate_table
+    )
+    return gates + (dt_ms / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4)
+
+
+def _gate_path_metrics(times: Any, actual: Any, reference: Any) -> dict[str, Any]:
+    import numpy as np
+
+    residual = np.asarray(actual, dtype=float) - np.asarray(reference, dtype=float)
+    return {
+        "overall_rmse_gate_fraction": float(np.sqrt(np.mean(residual * residual))),
+        "overall_maximum_absolute_error_gate_fraction": float(np.max(np.abs(residual))),
+        "per_gate_rmse_gate_fraction": {
+            name: float(np.sqrt(np.mean(residual[:, index] ** 2)))
+            for index, name in enumerate(HUMANJS_GATE_NAMES)
+        },
+        "per_gate_maximum_absolute_error_gate_fraction": {
+            name: float(np.max(np.abs(residual[:, index])))
+            for index, name in enumerate(HUMANJS_GATE_NAMES)
+        },
+    }
+
+
 def compare_gate_integrators_on_shared_voltage(
     times_ms: Any,
     voltage_mv: Any,
@@ -408,22 +450,39 @@ def compare_gate_integrators_on_shared_voltage(
     na_rate_table = _build_source_na_rate_table()
     cnexp = np.empty((len(times), 5), dtype=float)
     rk4 = np.empty((len(times), 5), dtype=float)
+    rk4_left = np.empty((len(times), 5), dtype=float)
+    rk4_midpoint = np.empty((len(times), 5), dtype=float)
+    rk4_linear = np.empty((len(times), 5), dtype=float)
     cnexp_table = np.empty((len(times), 5), dtype=float)
     cnexp[0] = initial
     rk4[0] = initial
+    rk4_left[0] = initial
+    rk4_midpoint[0] = initial
+    rk4_linear[0] = initial
     cnexp_table[0] = initial
 
     for index, dt_ms in enumerate(steps):
-        effective_voltage = float(voltage[index + 1]) - 10.0
+        voltage_left = float(voltage[index]) - 10.0
+        voltage_right = float(voltage[index + 1]) - 10.0
+        voltage_midpoint = 0.5 * (voltage_left + voltage_right)
         step = float(dt_ms)
         cnexp[index + 1] = _shared_voltage_cnexp_step(
-            cnexp[index], effective_voltage, step
+            cnexp[index], voltage_right, step
         )
         rk4[index + 1] = _shared_voltage_rk4_step(
-            rk4[index], effective_voltage, step
+            rk4[index], voltage_right, step
+        )
+        rk4_left[index + 1] = _shared_voltage_rk4_step(
+            rk4_left[index], voltage_left, step
+        )
+        rk4_midpoint[index + 1] = _shared_voltage_rk4_step(
+            rk4_midpoint[index], voltage_midpoint, step
+        )
+        rk4_linear[index + 1] = _shared_voltage_rk4_step_linear_voltage(
+            rk4_linear[index], voltage_left, voltage_right, step
         )
         cnexp_table[index + 1] = _shared_voltage_cnexp_step(
-            cnexp_table[index], effective_voltage, step, na_rate_table
+            cnexp_table[index], voltage_right, step, na_rate_table
         )
 
     residual = rk4 - cnexp
@@ -496,6 +555,26 @@ def compare_gate_integrators_on_shared_voltage(
             "overall_gate_rmse_fraction": float(np.sqrt(np.mean(table_residual * table_residual))),
             "overall_gate_maximum_absolute_error_fraction": float(np.max(np.abs(table_residual))),
             "per_gate": table_gate_metrics,
+        },
+        "voltage_stage_sampling_sensitivity": {
+            "purpose": "isolate gate sensitivity to voltage sampling while keeping the recorded source voltage trajectory, initial gates, rates, and RK4 gate update fixed",
+            "voltage_shift_mV": -10.0,
+            "methods_against_recorded_nmodl_gates": {
+                "left_endpoint_hold_rk4": _gate_path_metrics(
+                    times, rk4_left, np.column_stack([source_gates[name] for name in SOURCE_GATE_NAMES])
+                ),
+                "midpoint_hold_rk4": _gate_path_metrics(
+                    times, rk4_midpoint, np.column_stack([source_gates[name] for name in SOURCE_GATE_NAMES])
+                ),
+                "right_endpoint_hold_rk4": _gate_path_metrics(
+                    times, rk4, np.column_stack([source_gates[name] for name in SOURCE_GATE_NAMES])
+                ),
+                "linear_voltage_ramp_rk4": _gate_path_metrics(
+                    times, rk4_linear, np.column_stack([source_gates[name] for name in SOURCE_GATE_NAMES])
+                ),
+            },
+            "linear_ramp_vs_right_hold": _gate_path_metrics(times, rk4_linear, rk4),
+            "interpretation_limit": "The linear ramp is an externally prescribed interpolation of the NEURON voltage samples, not the actual intermediate voltage stages of the coupled HumanJS RK4 solver. It isolates a voltage-sampling counterfactual and does not partition full coupled feedback.",
         },
     }
 
