@@ -326,6 +326,22 @@ def validate_model_line_raster() -> None:
         "M": (115.0, 325.0, "rising"),
         "N": (2.70, 2.90, "flat"),
     }
+
+    j_values = [float(row["ordinate_estimate"]) for row in rows if row["panel"] == "J"]
+    expected_j_reconstruction = [46.92194621, 37.51356561, 30.36412676, 24.86697187, 20.60720825, 16.88295111]
+    j_rmse = math.sqrt(
+        sum((observed - expected) ** 2 for observed, expected in zip(j_values, expected_j_reconstruction))
+        / len(j_values)
+    )
+    if abs(j_rmse - 0.35648577) > 0.02:
+        raise SystemExit(f"{filename}: panel J raster/reconstruction RMSE changed: {j_rmse:.4f} ms")
+    k_values = [float(row["ordinate_estimate"]) for row in rows if row["panel"] == "K"]
+    if abs(sum(k_values) / len(k_values) - 450.0) > 6.0:
+        raise SystemExit(f"{filename}: panel K raster trace no longer agrees with the fixed 450-ms component")
+    n_values = [float(row["ordinate_estimate"]) for row in rows if row["panel"] == "N"]
+    pooled_slow_s = (1999.7294967866596 + 3579.8563888349777) / 2000.0
+    if abs(sum(n_values) / len(n_values) - pooled_slow_s) > 0.02:
+        raise SystemExit(f"{filename}: panel N raster trace differs from the pooled slow-recovery constant")
     for panel, (low, high, trend) in checks.items():
         values = [float(row["ordinate_estimate"]) for row in rows if row["panel"] == panel]
         if any(not low <= value <= high for value in values):
@@ -338,7 +354,7 @@ def validate_model_line_raster() -> None:
             raise SystemExit(f"{filename}: {panel} overlaid model trace should be nearly flat")
     print(
         f"{filename}: 23 model-line raster samples verified (J 6, K 9, M 4, N 4); "
-        "these are approximate combined red/blue traces, not experimental markers or exact fit outputs"
+        "combined red/blue traces; J reconstruction RMSE={j_rmse:.2f} ms; K≈450 ms and N≈pooled slow constant"
     )
 
 
