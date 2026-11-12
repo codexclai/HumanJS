@@ -35,7 +35,15 @@ jobs:
         run: cargo test --workspace --locked
       - name: Check Python experiment runner syntax
         run: |
-          python3 -c "import ast; from pathlib import Path; ast.parse(Path('experiments/reproduce_eyal_figure7a.py').read_text(encoding='utf-8'))"
+          python3 - <<'PY'
+          import ast
+          from pathlib import Path
+
+          scripts = sorted(Path("experiments").glob("*.py"))
+          for script in scripts:
+              ast.parse(script.read_text(encoding="utf-8"), filename=str(script))
+          print(f"Parsed {len(scripts)} Python experiment scripts")
+          PY
       - name: Validate Wilbers Figure S5 digitization
         run: python3 experiments/validate_wilbers_fig_s5_digitization.py
       - name: Validate Wilbers current-clamp conductance grid

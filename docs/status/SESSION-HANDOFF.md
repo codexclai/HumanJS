@@ -1,19 +1,20 @@
 # HumanJS — current session handoff
 
-**Updated:** 2026-11-12  
-**Canonical repository:** `codexclai/HumanJS`, branch `main` only.  
-**Latest implementation/test change:** `adfacd7f8d3f8b6e7088a00507af4e51832a80d8` (paired mouse K+ current-fit tests added in `42c32ca69b7167076171f9b0adcda5ed11148dc8`, formatted in `78246ee3c810092605e145604740b3ca40953d28`, then accurately renamed in `adfacd7f8d3f8b6e7088a00507af4e51832a80d8`).  
-**Latest research record:** `2c47917b407052c4cbe768ddda22ea08406c5462`.  
-**Latest documentation baseline before this handoff update:** `8a31e626f5f7c70892dae93acee94b634e0f979e` (BOOT/status refreshed; research provenance reconciled).  
+**Updated:** 2026-11-12
+**Canonical repository:** `codexclai/HumanJS`, branch `main` only.
+**Latest implementation/test change at baseline:** `3ea7cb43fcc0e9627cfc7b6cdde3c28055356dd0` (corrected independent Wilbers source replay, verified by Actions run `43139126138`).
+**Latest research record at baseline:** `d9b0b871e4aadacb3cc1b58e873a1c32fd11563f` (includes corrected independent NEURON AP1 replay).
+**Verified main baseline before this handoff update:** `d9b0b871e4aadacb3cc1b58e873a1c32fd11563f` (independently cloned for source inspection and local Rust tests).
 Verify the live HEAD and newest workflow before relying on this handoff.
 
 ## Verified repository state at handoff
 
-- Public repository; default branch `main`; verified live HEAD immediately before this handoff update: `8a31e626f5f7c70892dae93acee94b634e0f979e`.
-- Full recursive tree: 67 entries, not truncated. Live branch listing: exactly `main`. No open issues or pull requests.
-- GitHub Actions run `43128214721` passed on exact HEAD `8a31e626f5f7c70892dae93acee94b634e0f979e`: https://github.com/codexclai/HumanJS/actions/runs/43128214721. The job passed Rust formatting, Clippy, workspace tests, Python experiment-runner syntax, the Figure S5 validator, the current-clamp grid validator, and repository policy. This run predates the handoff-file commit; verify that final commit's own workflow after updating this file.
+- Public repository; default branch `main`; verified live HEAD immediately before the present solver-attribution work: `d9b0b871e4aadacb3cc1b58e873a1c32fd11563f`.
+- Full recursive tree: 71 entries, not truncated. Live branch listing: exactly `main`. No open issues or pull requests.
+- GitHub Actions run `43139246906` passed on exact HEAD `d9b0b871e4aadacb3cc1b58e873a1c32fd11563f`: https://github.com/codexclai/HumanJS/actions/runs/43139246906. The job passed Rust formatting, Clippy, workspace tests, Python experiment-runner syntax, the Figure S5 validator, the current-clamp grid validator, and repository policy. This is the verified upstream baseline; CI for the new trace-export and solver-diagnostic tools is pending the direct-to-main commit.
 - Fresh independent NEURON 9.0.2 `modlunit` invocation on unmodified `k_human.mod` and `k_mouse.mod` again failed at the untyped `trates(v+vshift)` call, line 82. Both species' repeated diagnostics are now recorded in `research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md`. The original files still compile with `nrnivmodl`; see ADR-014 for the temporary typed-probe findings. No source file was changed. The same research record clarifies that the article's public Dataverse data statement is satisfied by deposited summary/model files; it does not mean the missing per-cell K kinetic CSVs or raw voltage-clamp traces occur in the inspected 65-file v3.0 inventory.
-- No fresh local Rust test run is claimed; the Rust checks above were run in GitHub Actions.
+- On a clean clone of that exact baseline commit, `cargo test --workspace --locked` passed locally (31 unit tests, 3 synapse integration tests, 6 passive-membrane integration tests). After adding the new trace-export example, `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets --all-features -- -D warnings`, and the full workspace tests also passed; both the 20-µs and 1-µs example runs emitted the expected 1,450 and 29,000 trace samples respectively.
+- The NEURON 9.0.2 source baseline was independently rerun and the new diagnostic script passed end-to-end with pinned Python dependencies. A temporary counter-instrumented copy of the deposited mechanisms retained bit-identical baseline voltages and recorded zero entries into the flawed `trap0` fallback across the full source-helper AP1 execution.
 
 ## Current HumanJS implementation
 
@@ -108,10 +109,10 @@ Runner: `experiments/reproduce_eyal_figure7a.py`.
 
 ## Next concrete work
 
-1. Make a targeted request to the Wilbers corresponding authors for the exact Figure S5 J/K/M/N plotting/export source state, the per-cell human K kinetic CSVs, and the raw K voltage-clamp recordings; ask for an explicit availability statement if these cannot be shared. The final published availability statement points to Dataverse, whose verified v3.0 manifest does not list these inputs.
-2. Independently digitize model-line pixels in panels J/K/M/N from the official supplement when its page raster can be retrieved. Preserve these as raster-derived estimates distinct from measured group-mean markers, and do not present them as exact source fit outputs or substitutes for raw traces.
-3. Keep human-only recovery parameters unresolved: the source's 236.824345-ms fast and 2789.7929-ms slow model constants are pooled human/mouse means, not human-only targets. Do not refit on raster points or infer that missing data were withheld.
-4. Reassess the exploratory single-compartment spike model only after kinetic source, fit-objective, preparation-equivalence, and relevant human validation gates are independently satisfied. Keep AIS-resolved modeling separate; human NaV1.2/NaV1.6 immunostaining does not provide functional conductance densities or gating parameters.
+1. Keep the author-default NEURON run as the comparison baseline. Do not retune channel densities or claim the diagnostic Crank–Nicolson runs are the authors' reported configuration; the large trace residual is now mainly explained by the source's default first-order voltage solver at 20 µs.
+2. Resolve the remaining biological acceptance blockers by obtaining human-only per-cell K activation/inactivation/recovery data, raw voltage-clamp recordings and acquisition metadata, and the exact Figure S5 fitting/plotting state. The verified Dataverse v3.0 inventory does not contain the missing files; use additional public archives first. A corresponding-author request is prepared but **no email has been sent**; obtain the owner's authorization before sending.
+3. Keep the pooled 236.824345-ms/2789.7929-ms recovery constants, cross-species AP fitting targets, non-measured fitted conductance densities, source unit/`trap0` defects at other voltages, and single-compartment geometry as explicit acceptance blockers. Raster estimates must not substitute for raw recordings or human-only measurements.
+4. Reassess the exploratory single-compartment model only after the missing kinetics, fit objective, preparation equivalence and relevant human validation evidence are independently resolved. Preserve the present software-level source replay as a numerical regression, not a biological validation claim.
 
 No biological validation, clinical validity, whole-brain functionality, or consciousness claim is made. Save/restore, Rust-native concurrency, the configurable 10,000-unit default, JSON model loading, Python, C/C++, and WGSL remain unimplemented.
 
@@ -292,3 +293,13 @@ The previous 101-pA/59.594-mV/undefined-threshold conclusion is retracted. The f
 ### CI verification of corrected NEURON reference replay (2026-11-12)
 
 Commit 3ea7cb43fcc0e9627cfc7b6cdde3c28055356dd0 passed GitHub Actions run 43139126138. All required steps succeeded: Rust formatting, Clippy, complete Rust workspace tests, Python experiment-runner syntax, Figure S5 digitization validator, current-clamp conductance-grid validator, and repository policy. Two immediately preceding runs stopped at rustfmt because the source file lacked its terminal newline; that formatting-only issue was corrected. The source-model comparison assertions themselves passed unchanged. This CI validates the implementation and its pinned reference checks, not biological validity.
+
+### 2026-11-12 — Wilbers AP1 solver-residual attribution
+
+The unchanged `cc_tools.run_1AP` sets `h.dt=0.02` ms and leaves `h.secondorder` untouched; the NEURON 9.0.2 replay measured the default `secondorder=0` (fully implicit backward Euler). Both source NMODL channel mechanisms continue to use `METHOD cnexp` for their gates. The human Na mechanism has an active voltage-rate table (`FROM -120 TO 100 WITH 199`); the human K table code is commented out. NEURON's current reference documents the default and the Crank–Nicolson alternatives: https://www.neuronsimulator.org/en/latest/progref/simctrl/programmatic.html.
+
+A source-verified numerical sensitivity experiment now separates the major solver effect. The original 20-µs, secondorder=0, Na-table-on baseline remains 0.455221-mV RMSE / 4.615873-mV max residual against HumanJS. Changing only the diagnostic NEURON voltage solver to secondorder=1 at the same 20-µs step reduces this to 0.038124 / 0.594290 mV. With 5-µs CN and Na table off the residual is 0.004756 / 0.062958 mV against the 20-µs HumanJS trace; a separately matched 1-µs CN/table-off comparison gives 0.001515 / 0.005020 mV. No biological parameters were changed. Table on/off is a secondary, timestep-dependent effect; the original table-on source remains canonical. Temporary diagnostic-only counters around the unchanged source `trap0` predicate observed 800 Na calls (including table generation) and 13,188 K calls, with zero fallback entries; the instrumented and original source traces were bit-identical over all 1,451 samples. The source defect remains relevant to other voltage trajectories and protocols.
+
+New tools: `crates/humanjs-core/examples/wilbers_current_clamp_trace.rs` exports a HumanJS trace and independently replays the deposited rheobase search; `experiments/diagnose_wilbers_neuron_solver.py` downloads/checksums the five CC0 files, compiles unchanged NMODL, verifies the unmodified source baseline, then varies timestep, NEURON voltage integration order, and Na table use. Details and exact numbers are in `experiments/WILBERS-CURRENT-CLAMP-NEURON-REFERENCE.md` and Section 6 of the research record. This attribution is specific to a model-side AP1 numerical comparison, not biological validation; the human data/model-acceptance blockers remain open.
+
+The clean main clone at pre-change HEAD `d9b0b871e4aadacb3cc1b58e873a1c32fd11563f` passed `cargo test --workspace --locked` locally (31 unit + 3 synapse integration + 6 passive membrane integration tests). The new Rust trace example also ran, independently returned rheobase 20.0 pA / AP1 30.0 pA, and emitted 1,450 samples. The diagnostic script passed Python 3.10 syntax, CLI, and end-to-end execution against the checksum-verified NEURON 9.0.2 environment; its author-helper baseline reproduced the prior reference to floating-point precision. GitHub CI for these new paths is pending until the main commit is pushed.

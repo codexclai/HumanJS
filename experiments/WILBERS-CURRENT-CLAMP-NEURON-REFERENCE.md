@@ -51,7 +51,7 @@ The earlier Rust-only test reported 101 pA rheobase, a 151.5-pA AP1 pulse, a 59.
 
 ## Interpretation and limits
 
-This is independent model-side execution of the authors' deposited model and helper, compared against HumanJS. It is not a comparison to raw experimental recordings, not an optimizer rerun, and not biological validation. The remaining trace residual includes possible differences from NEURON cnexp versus HumanJS RK4 and the explicit analytic-limit correction in HumanJS's trap0 implementation; this experiment does not apportion the residual among those mechanisms.
+This is independent model-side execution of the authors' deposited model and helper, compared against HumanJS. It is not a comparison to raw experimental recordings, not an optimizer rerun, and not biological validation. The initial residual is now partially attributed by the controlled solver-sensitivity experiment below; it must not be interpreted as a biological model error or a parameter-fitting target.
 
 The model remains exploratory and unaccepted for the reasons in ADR-014/ADR-016 and the current research record: defective source trap0 behavior is not exactly reproduced, the public deposit lacks raw per-cell K voltage-clamp data and missing kinetic targets, the slow K recovery parameter is pooled human/mouse, the conductance optimizer targets cross-species midpoint AP features, fitted channel densities are not direct human measurements, and the model has no spatial AIS/axon/dendrite structure.
 
@@ -59,3 +59,38 @@ The model remains exploratory and unaccepted for the reasons in ADR-014/ADR-016 
 ### CI verification of corrected NEURON reference replay (2026-11-12)
 
 Commit 3ea7cb43fcc0e9627cfc7b6cdde3c28055356dd0 passed GitHub Actions run 43139126138. All required steps succeeded: Rust formatting, Clippy, complete Rust workspace tests, Python experiment-runner syntax, Figure S5 digitization validator, current-clamp conductance-grid validator, and repository policy. Two immediately preceding runs stopped at rustfmt because the source file lacked its terminal newline; that formatting-only issue was corrected. The source-model comparison assertions themselves passed unchanged. This CI validates the implementation and its pinned reference checks, not biological validity.
+
+
+## Numerical solver sensitivity follow-up (2026-11-12)
+
+The original source comparison's 0.455221-mV RMSE is dominated by an integration-method mismatch at the AP upstroke, not by a failure to reproduce the rheobase protocol. Inspection of the unchanged author helper and NMODL source found:
+
+- `cc_tools.run_1AP` sets `h.dt = 0.02` ms but never assigns `h.secondorder`. The independent NEURON 9.0.2 run confirmed `h.secondorder == 0`; the documented default is fully implicit backward Euler.
+- Both source mechanisms solve their channel state equations using `METHOD cnexp`. The human Na mechanism also has an active voltage-rate `TABLE` from −120 to +100 mV with `WITH 199`; the human K mechanism's table code is commented out and evaluates its rates directly.
+- HumanJS performs coupled RK4 steps over voltage and all five channel gates. No biological parameter was changed in the comparison below.
+
+NEURON's official `fadvance` documentation states that `secondorder=0` is fully implicit backward Euler, while `secondorder=1` and `2` are Crank–Nicolson variants; `secondorder=1` gives second-order-correct voltage while ionic currents remain first-order-correct, and `2` applies an additional current correction. See the [NEURON programmatic simulation-control reference](https://www.neuronsimulator.org/en/latest/progref/simctrl/programmatic.html).
+
+The diagnostic script `experiments/diagnose_wilbers_neuron_solver.py` re-downloads and verifies the same five CC0 source files, compiles the unchanged NMODL, preserves the authors' rheobase helper, and varies only fixed timestep, `secondorder`, and the human Na table switch. The executable Rust example `crates/humanjs-core/examples/wilbers_current_clamp_trace.rs` writes the HumanJS waveform to CSV while executing the same 20-pA rheobase search and 30-pA, 3-ms AP1 pulse. Reproduction commands:
+
+    cargo run -p humanjs-core --example wilbers_current_clamp_trace -- --step-us 20 > /tmp/humanjs-wilbers-ap1.csv
+    python3.10 experiments/diagnose_wilbers_neuron_solver.py --humanjs-trace /tmp/humanjs-wilbers-ap1.csv --dt-ms 0.02 0.01 0.005 --secondorder 0 1 --na-table 1 0 --output /tmp/wilbers-solver-sensitivity.json --trace-dir /tmp/wilbers-solver-traces
+
+All generated traces/results are outside the repository. The diagnostic baseline is checked against the unchanged source helper in the same run.
+
+| Controlled NEURON condition | Comparison to HumanJS RK4 20-µs trace | RMSE (mV) | Maximum absolute residual (mV) |
+|---|---|---:|---:|
+| Author default: `dt=0.02`, `secondorder=0`, Na table on | Original source baseline | 0.455221 | 4.615873 |
+| `dt=0.02`, `secondorder=1`, Na table on | Voltage Crank–Nicolson diagnostic | 0.038124 | 0.594290 |
+| `dt=0.005`, `secondorder=1`, Na table on | Smaller-step CN diagnostic | 0.024745 | 0.342662 |
+| `dt=0.005`, `secondorder=1`, Na table off | Direct Na rates, smaller-step CN diagnostic | 0.004756 | 0.062958 |
+
+The same-step `secondorder=1` diagnostic reduces RMSE by about 12-fold versus the authors' default numerical configuration. With the source Na table disabled and a 5-µs CN step, the voltage trace approaches the HumanJS continuous-rate RK4 trace much more closely. A separate 1-µs comparison (CN, Na table off, against a 1-µs HumanJS trace) measured 0.001515-mV RMSE and 0.005020-mV maximum residual. HumanJS's own 20-µs trace differs from its 1-µs trace by only 0.000185-mV RMSE and 0.003502-mV maximum residual. These are numerical convergence observations under this one stimulus and parameterization, not biological accuracy estimates.
+
+The Na table is a secondary numerical contributor, not a universal explanation of the mismatch: toggling it changes the source trace by about 0.0292-mV RMSE at `secondorder=1`, `dt=0.005` ms, but its effect on HumanJS residual depends on integration order and timestep. The author's table-on source execution remains the unchanged reference; table-off runs are diagnostic counterfactuals only.
+
+The source `trap0` predicate was then instrumented in temporary copies of `na_human.mod` and `k_human.mod` by adding counters/minimum-distance diagnostics only; the original branch predicate, fallback expression, rate equations, and source helper were left intact. The instrumented default-source execution recorded 800 Na `trap0` calls (the four rate calls at each of the 200 Na table nodes) and 13,188 K calls across the two rheobase searches and AP1 replay. Neither mechanism entered its fallback branch: both fallback counters remained zero. The minimum observed `abs((v+theta)/q)` was 0.0142343 for Na and 0.00248676 for K, both above the 1e-6 branch threshold. The diagnostic-copy and unmodified-source voltage traces were bit-identical over all 1,451 recorded samples (maximum difference 0 mV). This establishes that the known wrong-sign predicate was not exercised in this specific source AP1 replay, including Na table generation and internal calls to the rate function. It does not make the source implementation generally safe or correct at other voltages/protocols, and does not justify changing HumanJS to reproduce the flawed fallback.
+
+The maximum original residual occurs at 3.94 ms during the rapid upstroke. Before 2 ms, RMSE is 0.00367 mV; during the 3–4-ms upstroke it is 1.4645 mV. The mismatch then declines through repolarization and the late tail. Taken together, the step/order controls identify the source's default first-order voltage integration at 20 µs as the dominant observed cause for this AP1 trace. The diagnostic does not make the non-default CN configuration the authors' reported model, and it does not justify changing model parameters or silently replacing the reference baseline.
+
+The model remains exploratory and unaccepted. All prior biological evidence gates remain open: incomplete per-cell K data, pooled slow recovery, cross-species optimizer targets, fitted rather than directly measured conductance densities, lack of spatial AIS/axon/dendrite structure, and the unresolved source `trap0` discrepancy. This numerical attribution is software-model comparison only.
