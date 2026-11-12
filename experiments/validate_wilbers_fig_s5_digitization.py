@@ -219,7 +219,13 @@ def validate_recovery_model_replay() -> None:
 
 
 def validate_k_inactivation_model_vs_group_means() -> None:
-    """Compare source-protocol model outputs with digitized group means, without refitting."""
+    """Compare transparent model-equation reconstructions with group means, without refitting.
+
+    The deposited channel_tools.get_tau_inact_double_fixedtau2 helper passes five
+    initial values to a four-parameter curve, catches the resulting SciPy error,
+    and returns NaNs. These comparisons therefore do not claim to reproduce the
+    exact red/blue Figure S5J/K plotted model lines.
+    """
     _, fast_rows = read_rows("HUMAN-L23-WILBERS-FIG-S5-J-FAST-INACTIVATION.csv")
     expected_fast_model_ms = [
         52.28040780,
@@ -272,12 +278,12 @@ def validate_k_inactivation_model_vs_group_means() -> None:
             f"RMSE={rmse:.2f} ms; {within_plot_error}/10 within ±25-ms plot-reading estimate"
         )
     print(
-        f"panel J human: source-protocol model vs digitized group means "
+        f"panel J human: reconstructed K-current fit vs digitized group means "
         f"RMSE={fast_rmse:.2f} ms; {fast_within_plot_error}/6 within ±2-ms plot-reading estimate"
     )
     print(
-        "Panel J/K comparisons are group-mean discrepancy summaries, not refits, "
-        "biological SD tests, or biological validation."
+        "Panel J/K comparisons are reconstructed model-vs-group-mean discrepancy summaries, "
+        "not exact source-plot reproductions, refits, biological SD tests, or biological validation."
     )
 
 
