@@ -730,9 +730,8 @@ mod tests {
     fn source_rheobase_trial_spikes(current_pa: f64) -> bool {
         let model =
             wilbers_model().with_max_internal_step(SimDuration::from_microseconds(100).unwrap());
-        let initial = HumanL23SingleCompartmentInitialConditions::new(
-            Volts::from_millivolts(-70.0).unwrap(),
-        );
+        let initial =
+            HumanL23SingleCompartmentInitialConditions::new(Volts::from_millivolts(-70.0).unwrap());
         let mut simulation = HumanL23SingleCompartmentSimulation::new(model, initial).unwrap();
         let dt = SimDuration::from_microseconds(100).unwrap();
         let current = Amperes::from_picoamperes(current_pa).unwrap();
