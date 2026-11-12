@@ -62,16 +62,25 @@ fn source_protocol_rheobase_pa() -> Result<f64, Box<dyn Error>> {
 
 fn main() -> Result<(), Box<dyn Error>> {
     let mut arguments = std::env::args().skip(1);
-    let mut step_us = 20;
+    let mut step_ns = 20_000_u64;
     let mut gates_output: Option<PathBuf> = None;
     let mut stages_output: Option<PathBuf> = None;
     let mut currents_output: Option<PathBuf> = None;
     while let Some(argument) = arguments.next() {
         match argument.as_str() {
             "--step-us" => {
-                step_us = arguments
+                let microseconds = arguments
                     .next()
                     .ok_or("--step-us requires a microsecond value")?
+                    .parse::<u64>()?;
+                step_ns = microseconds
+                    .checked_mul(1_000)
+                    .ok_or("the --step-us value overflows nanoseconds")?;
+            }
+            "--step-ns" => {
+                step_ns = arguments
+                    .next()
+                    .ok_or("--step-ns requires a nanosecond value")?
                     .parse::<u64>()?;
             }
             "--gates-output" => {
@@ -97,7 +106,12 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
             _ => {
                 if let Some(value) = argument.strip_prefix("--step-us=") {
-                    step_us = value.parse::<u64>()?;
+                    let microseconds = value.parse::<u64>()?;
+                    step_ns = microseconds
+                        .checked_mul(1_000)
+                        .ok_or("the --step-us value overflows nanoseconds")?;
+                } else if let Some(value) = argument.strip_prefix("--step-ns=") {
+                    step_ns = value.parse::<u64>()?;
                 } else if let Some(path) = argument.strip_prefix("--gates-output=") {
                     gates_output = Some(PathBuf::from(path));
                 } else if let Some(path) = argument.strip_prefix("--stages-output=") {
@@ -110,12 +124,21 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
         }
     }
-    if step_us == 0 || 1_000 % step_us != 0 || 29_000 % step_us != 0 {
-        return Err("--step-us must be positive and divide 1,000 and 29,000 microseconds".into());
+    const PULSE_START_NS: u64 = 1_000_000;
+    const PULSE_END_NS: u64 = 4_000_000;
+    const PROTOCOL_DURATION_NS: u64 = 29_000_000;
+    if step_ns == 0
+        || PULSE_START_NS % step_ns != 0
+        || PULSE_END_NS % step_ns != 0
+        || PROTOCOL_DURATION_NS % step_ns != 0
+    {
+        return Err(
+            "--step-ns must be positive and divide the 1-ms pulse onset, 4-ms pulse offset, and 29-ms protocol duration".into(),
+        );
     }
 
     let rheobase_pa = source_protocol_rheobase_pa()?;
-    let dt = SimDuration::from_microseconds(step_us)?;
+    let dt = SimDuration::from_nanoseconds(step_ns)?;
     let model = HumanL23SingleCompartmentModel::wilbers_2023_human_l23_current_clamp_fit()?
         .with_max_internal_step(dt);
     let initial = HumanL23SingleCompartmentInitialConditions::new(Volts::from_millivolts(-70.0)?);
@@ -153,12 +176,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     eprintln!(
         "# HumanJS Wilbers current-clamp trace: rheobase={rheobase_pa:.1} pA, AP1 current={:.1} pA, dt={:.6} ms",
         rheobase_pa * 1.5,
-        step_us as f64 / 1_000.0
+        step_ns as f64 / 1_000_000.0
     );
     println!("time_ms,voltage_mv");
-    for index in 0..(29_000 / step_us) {
-        let time_us = index * step_us;
-        let injected = if (1_000..4_000).contains(&time_us) {
+    for index in 0..(PROTOCOL_DURATION_NS / step_ns) {
+        let interval_start_ns = index * step_ns;
+        let injected = if (PULSE_START_NS..PULSE_END_NS).contains(&interval_start_ns) {
             current
         } else {
             zero
@@ -178,7 +201,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         } else {
             (simulation.step(dt, injected)?, None, None)
         };
-        let time_ms = (index + 1) as f64 * step_us as f64 / 1_000.0;
+        let time_ms = (index + 1) as f64 * step_ns as f64 / 1_000_000.0;
         println!("{time_ms:.6},{:.12}", state.voltage().as_volts() * 1_000.0);
         if let Some(writer) = gates_writer.as_mut() {
             writeln!(

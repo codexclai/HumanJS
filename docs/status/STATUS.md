@@ -1,12 +1,12 @@
 # HumanJS — current status
 
-**As of:** 2026-11-12  
+**As of:** 2026-11-13
 **Stage:** two foundational Rust CPU mechanisms plus one exploratory, unaccepted human L2/L3 single-compartment spike-capable mechanism. HumanJS is not a whole-brain simulator.
 
 ## Canonical repository and live state
 
 - Repository: `codexclai/HumanJS`, public, default branch `main`.
-- Live verification on 2026-11-12: default branch `main`; complete 75-entry tree; exactly one branch (`main`); zero open issues and zero open pull requests. The live HEAD must be re-fetched each session.
+- Live verification on 2026-11-13 before the current work: default branch main; HEAD 9344ccfa47cd82d308d10c44305d8176d82410f9; complete non-truncated 75-entry tree; exactly one branch (main); zero open issues and zero open pull requests. Workflow run 43213722785 completed successfully on that exact HEAD. Re-fetch the resulting HEAD/workflow after this change before claiming a repository write or CI result.
 - Latest code/test and research change: `32b5438f3e4ec26dcf91920e7505815c3ea556d0` (AP1 current-balance stages, source-order replay, and matched-state solver attribution).
 - GitHub Actions run `43213115000` passed on implementation commit `32b5438f3e4ec26dcf91920e7505815c3ea556d0`: https://github.com/codexclai/HumanJS/actions/runs/43213115000. Subsequent documentation-only refreshes also passed runs `43213384881` and `43213562532`. Rust formatting, Clippy, all Rust workspace tests, Python experiment syntax, Wilbers current-balance/source-order regressions, both scientific-data validators, and repository policy passed. The local pinned environment also passed all 16 Python experiment unit tests. These are software/evidence-integrity checks, not biological validation.
 - A fresh NEURON 9.0.2 check independently reconfirmed that unchanged `k_human.mod` and `k_mouse.mod` compile with `nrnivmodl` but fail unmodified `modlunit` at the untyped `trates(v+vshift)` call (line 82). This is a source unit-annotation failure, not a HumanJS CI failure; ADR-014 records the typed temporary diagnostic findings. No deposited source was modified.
@@ -168,9 +168,9 @@ The human/mouse mixture semantics were additionally verified against the unrestr
 - Latest research commits: `2e0b0cc3b83aa43ec4a331355d5bae2bf1b5a108` (manifest/source availability) and `2c47917b407052c4cbe768ddda22ea08406c5462` (ModelDB accession identification). Latest CI run `43128024657` passed on the latter.
 
 
-### 2026-11-12 — Wilbers corresponding-author route verified
+### 2026-11-12 — historical public contact-route lookup (retired)
 
-The final Science Advances publisher page was queried directly and confirms the corresponding-author contacts Huibert D. Mansvelder (h.d.mansvelder@vu.nl) and Natalia A. Goriounova (n.a.goriounova@vu.nl). Its data-availability statement points to Dataverse DOI 10.34894/L5J0SD. The v3.0/65-file inventory audit above still applies: the specific K kinetic CSVs, data_fig5.xlsx, raw K voltage-clamp traces, and a separate final Figure S5 plotting generator are not listed. This gives us a legitimate, non-accusatory route to request the missing provenance and an explicit availability statement. No message has been sent and no new experimental data have been received. The HumanJS spike-capable mechanism remains exploratory and unaccepted.
+A public publisher-page lookup established that a corresponding-author contact route was available and that the article's data statement points to Dataverse DOI 10.34894/L5J0SD. The project owner subsequently directed that no authors or researchers be contacted. No message was sent; outreach is not an intended follow-up. The v3.0/65-file inventory audit remains unchanged: the specific K kinetic CSVs, data_fig5.xlsx, raw K voltage-clamp traces, and a separate final Figure S5 plotting generator were not listed. The HumanJS spike-capable mechanism remains exploratory and unaccepted.
 
 
 ### 2026-11-12 — Figure S5 model-line raster estimates
@@ -383,7 +383,7 @@ The complete 12-variant NEURON matrix (20/10/5 µs, secondorder 0/1, Na TABLE on
 
 Interpretation: this is strong numerical evidence that the gate-update equations and RK4 gate-stage handling in HumanJS match the replayed Wilbers gate equations when supplied with HumanJS's actual coupled voltage stages. It does not explain away the remaining membrane-voltage trajectory difference, validate either solver biologically, or change the exploratory/unaccepted status of the single-compartment model. All stage traces and diagnostic JSON remained outside Git.
 
-The matched-state current equations and source update ordering are now accounted for. Next, compare the source-order first-order trajectory and coupled HumanJS RK4 under timestep refinement at matched 1/2/5/10-µs grids, separating the source Na TABLE contribution from update-order convergence; keep all biological parameters fixed and retain the author-default baseline.
+The source-order and CN replays now reproduce the corresponding NEURON fixed-step trajectories; matched current balances close. Next, quantify same-path midpoint/left-gate current versus RK4-weighted current and the fully evolved source/HumanJS current mismatch across timestep refinement and Na TABLE settings. Keep biological parameters fixed and retain the author-default baseline.
 
 
 ### Matched-state membrane-current balance and source-order replay (2026-11-12)
@@ -421,3 +421,7 @@ Reproduce the 20-µs current-balance comparison and Na TABLE toggle (pinned Ubun
     python3.10 experiments/diagnose_wilbers_neuron_solver.py --humanjs-trace /tmp/humanjs-voltage.csv --humanjs-gates /tmp/humanjs-gates.csv --humanjs-voltage-stages /tmp/humanjs-stages.csv --humanjs-current-stages /tmp/humanjs-currents.csv --dt-ms 0.02 --secondorder 0 --na-table 1 0 --trace-dir /tmp/wilbers-voltage --gate-dir /tmp/wilbers-gates --current-dir /tmp/wilbers-currents --output /tmp/wilbers-current-balance-results.json
 
 The 10-µs and 5-µs matched-step convergence runs use the same exporter with --step-us 10 / --step-us 5 and the corresponding --dt-ms 0.01 / --dt-ms 0.005, without --humanjs-current-stages. All generated traces and JSON remain outside Git. The spike-capable single-compartment mechanism remains exploratory and unaccepted; these are numerical source-reproduction and software regression results, not biological validation.
+
+### AP1 CN midpoint current and state-history attribution (2026-11-13)
+
+A new independent secondorder=1 replay evaluates source currents at the voltage midpoint using G[n], then advances the five CNEXP gates using V[n+1]. At 1 µs and 250 ns it reproduces actual NEURON within 0.000558 mV voltage RMSE and 2.87e-6 aggregate gate RMSE. At 250 ns, source CN current balance and HumanJS RK4 weighted current balance close below 1.1e-12 A/m²; their actual voltage-residual/current-difference identity closes to 4.2e-11 A/m² maximum. Actual source/HumanJS total current RMSE is 1.742e-5 A/m². A prescribed-HumanJS-path midpoint/left-gate counterfactual yields 4.023e-4 A/m²; this is a distinct counterfactual, not the coupled source path, and shows that state-history feedback changes the residual. The 125-ns HumanJS stage/current trace generated, but the expanded NEURON diagnostic hit the VM memory limit (exit 137); no 125-ns current-balance result is claimed. Numerical analysis only; no parameter change or biological acceptance.

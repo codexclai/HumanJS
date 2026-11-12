@@ -429,6 +429,431 @@ def replay_wilbers_source_order(
     return voltage, gate_path
 
 
+
+def replay_wilbers_crank_nicolson(
+    times_ms: Any,
+    initial_voltage_mv: float,
+    initial_gates: Any,
+    injected_current_pa: float,
+    gbar_na: float,
+    gbar_k: float,
+    na_rate_table: tuple[Any, Any] | None,
+) -> tuple[Any, Any]:
+    """Replay secondorder=1 with midpoint ionic currents and CNEXP gates.
+
+    The membrane solve evaluates the deposited current laws at the interval
+    midpoint voltage using G[n]. The source then advances its five CNEXP
+    states with the new endpoint voltage V[n+1].
+    """
+    import numpy as np
+
+    times = np.asarray(times_ms, dtype=float)
+    gates = np.asarray(initial_gates, dtype=float)
+    if (
+        times.ndim != 1
+        or len(times) < 2
+        or not np.isfinite(times).all()
+        or np.any(np.diff(times) <= 0.0)
+        or not np.isfinite(initial_voltage_mv)
+        or gates.shape != (5,)
+        or not np.isfinite(gates).all()
+        or np.any((gates < 0.0) | (gates > 1.0))
+        or not np.isfinite(injected_current_pa)
+        or not np.isfinite(gbar_na)
+        or not np.isfinite(gbar_k)
+        or gbar_na <= 0.0
+        or gbar_k <= 0.0
+    ):
+        raise reproduction.ReproductionError(
+            "Crank-Nicolson replay requires finite, bounded initial states and positive conductances"
+        )
+    steps_ms = np.diff(times)
+    if not np.allclose(steps_ms, steps_ms[0], rtol=0.0, atol=1.0e-9):
+        raise reproduction.ReproductionError(
+            "Crank-Nicolson replay requires a uniform fixed timestep"
+        )
+
+    dt_seconds = float(steps_ms[0]) * 1.0e-3
+    capacitance_f_per_m2 = 0.01
+    area_m2 = np.pi * 100.0e-12
+    injected_density = injected_current_pa * 1.0e-12 / area_m2
+    voltage_v = float(initial_voltage_mv) * 1.0e-3
+    voltage_path = np.empty(len(times), dtype=float)
+    gate_path = np.empty((len(times), 5), dtype=float)
+    voltage_path[0] = initial_voltage_mv
+    gate_path[0] = gates
+
+    for index, interval_start_ms in enumerate(times[:-1]):
+        applied_density = (
+            injected_density
+            if 1.0 - 1.0e-9 <= interval_start_ms < 4.0 - 1.0e-9
+            else 0.0
+        )
+        sodium_gate, sodium_inactivation, potassium_gate, fast_inactivation, slow_inactivation = (
+            gates
+        )
+        sodium_conductance = (
+            gbar_na
+            * (2.3 ** 0.9)
+            * sodium_gate**3
+            * sodium_inactivation
+        )
+        potassium_conductance = gbar_k * potassium_gate**2 * (
+            fast_inactivation * 0.85 * 0.60
+            + slow_inactivation * 0.85 * 0.40
+            + 0.15
+        )
+        leak_conductance = 1.0
+        total_conductance = (
+            sodium_conductance + potassium_conductance + leak_conductance
+        )
+
+        # C*(V[n+1]-V[n])/dt = Iinj - Iion((V[n]+V[n+1])/2, G[n]).
+        voltage_next_v = (
+            (capacitance_f_per_m2 / dt_seconds - 0.5 * total_conductance)
+            * voltage_v
+            + applied_density
+            + sodium_conductance * 0.068
+            - potassium_conductance * 0.086
+            - leak_conductance * 0.070
+        ) / (
+            capacitance_f_per_m2 / dt_seconds + 0.5 * total_conductance
+        )
+        gates = _shared_voltage_cnexp_step(
+            gates,
+            voltage_next_v * 1.0e3 - 10.0,
+            float(steps_ms[index]),
+            na_rate_table,
+        )
+        if not np.isfinite(gates).all() or np.any((gates < 0.0) | (gates > 1.0)):
+            raise reproduction.ReproductionError(
+                "Crank-Nicolson replay produced invalid gate fractions"
+            )
+        voltage_v = voltage_next_v
+        voltage_path[index + 1] = voltage_v * 1.0e3
+        gate_path[index + 1] = gates
+
+    return voltage_path, gate_path
+
+
+
+def compare_cn_midpoint_current_on_humanjs_path(
+    humanjs_voltage_times_ms: Any,
+    humanjs_voltage_mv: Any,
+    humanjs_gate_times_ms: Any,
+    humanjs_gates: dict[str, Any],
+    humanjs_current_times_ms: Any,
+    humanjs_current_stages: Any,
+    gbar_na: float,
+    gbar_k: float,
+) -> dict[str, Any]:
+    """Evaluate CN midpoint/left-gate currents on the prescribed HumanJS path.
+
+    This deliberately does not solve a second membrane trajectory. It holds
+    the HumanJS gate state at the left endpoint G[n], evaluates the source
+    current law at the midpoint of adjacent HumanJS voltage samples, and
+    compares that current with HumanJS's actual RK4-weighted stage currents.
+    It isolates a current-evaluation counterfactual on one shared voltage
+    path; it is not a full coupled CN simulation.
+    """
+    import numpy as np
+
+    times = np.asarray(humanjs_voltage_times_ms, dtype=float)
+    voltage = np.asarray(humanjs_voltage_mv, dtype=float)
+    gate_times = np.asarray(humanjs_gate_times_ms, dtype=float)
+    gate_matrix = np.column_stack(
+        [np.asarray(humanjs_gates[name], dtype=float) for name in HUMANJS_GATE_NAMES]
+    )
+    current_times = np.asarray(humanjs_current_times_ms, dtype=float)
+    stages = np.asarray(humanjs_current_stages, dtype=float)
+    if (
+        times.ndim != 1
+        or len(times) < 2
+        or voltage.shape != times.shape
+        or gate_times.shape != times.shape
+        or gate_matrix.shape != (len(times), 5)
+        or current_times.shape != times.shape
+        or stages.shape != (len(times), 4, 5)
+        or not np.isfinite(times).all()
+        or not np.isfinite(voltage).all()
+        or not np.isfinite(gate_times).all()
+        or not np.isfinite(gate_matrix).all()
+        or not np.isfinite(current_times).all()
+        or not np.isfinite(stages).all()
+        or np.any(np.diff(times) <= 0.0)
+        or np.any((gate_matrix < 0.0) | (gate_matrix > 1.0))
+        or not np.allclose(gate_times, times, rtol=0.0, atol=1.0e-9)
+        or not np.allclose(current_times, times, rtol=0.0, atol=1.0e-9)
+    ):
+        raise reproduction.ReproductionError(
+            "Prescribed HumanJS CN-current comparison requires aligned finite voltage, five-gate, and RK4-current samples"
+        )
+
+    initial_rates = _wilbers_gate_rate_bundle(-80.0)
+    initial_gates = np.asarray(
+        [
+            initial_rates[0],
+            initial_rates[2],
+            initial_rates[4],
+            initial_rates[6],
+            initial_rates[6],
+        ],
+        dtype=float,
+    )
+    left_gate_path = np.vstack((initial_gates, gate_matrix[:-1]))
+    left_voltage_path = np.concatenate(([-70.0], voltage[:-1]))
+    midpoint_voltage = 0.5 * (left_voltage_path + voltage)
+    cn_midpoint_current = _wilbers_current_density_a_per_m2(
+        midpoint_voltage, left_gate_path, gbar_na, gbar_k
+    )
+    rk4_weighted_current = (
+        stages[:, 0, :3]
+        + 2.0 * stages[:, 1, :3]
+        + 2.0 * stages[:, 2, :3]
+        + stages[:, 3, :3]
+    ) / 6.0
+
+    intervals = {}
+    for label, lower, upper in (
+        ("baseline_0_to_1_ms", 0.0, 1.0),
+        ("pulse_1_to_3_ms", 1.0, 3.0),
+        ("upstroke_3_to_4_ms", 3.0, 4.0),
+        ("early_repolarization_4_to_5_ms", 4.0, 5.0),
+        ("late_repolarization_5_to_10_ms", 5.0, 10.0),
+        ("post_spike_tail_10_to_29_ms", 10.0, 29.0),
+    ):
+        mask = (times > lower) & (times <= upper)
+        if np.any(mask):
+            intervals[label] = {
+                "samples": int(np.count_nonzero(mask)),
+                "current_difference": {
+                    name: _current_component_metrics(
+                        cn_midpoint_current[mask, index],
+                        rk4_weighted_current[mask, index],
+                    )
+                    for index, name in enumerate(("sodium", "potassium", "leak"))
+                },
+                "total_current_difference": _current_component_metrics(
+                    np.sum(cn_midpoint_current[mask], axis=1),
+                    np.sum(rk4_weighted_current[mask], axis=1),
+                ),
+            }
+
+    return {
+        "method": (
+            "source current law at midpoint HumanJS voltage using the previous HumanJS gate state G[n]"
+        ),
+        "comparison": (
+            "shared prescribed HumanJS voltage path versus the exact HumanJS RK4-weighted stage currents"
+        ),
+        "initial_state": "steady-state HumanJS gates at -70 mV membrane voltage with the source -10-mV channel shift",
+        "total_current_difference": _current_component_metrics(
+            np.sum(cn_midpoint_current, axis=1),
+            np.sum(rk4_weighted_current, axis=1),
+        ),
+        "per_component_current_difference": {
+            name: _current_component_metrics(
+                cn_midpoint_current[:, index],
+                rk4_weighted_current[:, index],
+            )
+            for index, name in enumerate(("sodium", "potassium", "leak"))
+        },
+        "intervals": intervals,
+        "interpretation_limit": (
+            "This prescribed-path counterfactual isolates midpoint-voltage/left-gate current evaluation "
+            "from a full coupled CN simulation. It does not establish which numerical trajectory is "
+            "biologically more accurate."
+        ),
+    }
+
+
+def compare_crank_nicolson_current_balance(
+    source_times_ms: Any,
+    source_voltage_mv: Any,
+    source_gates: Any,
+    humanjs_voltage_times_ms: Any,
+    humanjs_voltage_mv: Any,
+    humanjs_current_times_ms: Any,
+    humanjs_current_stages: Any,
+    injected_current_pa: float,
+    gbar_na: float,
+    gbar_k: float,
+) -> dict[str, Any]:
+    """Compare CN midpoint ionic currents with HumanJS RK4-weighted currents."""
+    import numpy as np
+
+    source_times = np.asarray(source_times_ms, dtype=float)
+    source_voltage = np.asarray(source_voltage_mv, dtype=float)
+    gates = np.asarray(source_gates, dtype=float)
+    hj_times = np.asarray(humanjs_voltage_times_ms, dtype=float)
+    hj_voltage = np.asarray(humanjs_voltage_mv, dtype=float)
+    current_times = np.asarray(humanjs_current_times_ms, dtype=float)
+    stages = np.asarray(humanjs_current_stages, dtype=float)
+    if (
+        source_times.ndim != 1
+        or len(source_times) < 3
+        or source_voltage.shape != source_times.shape
+        or gates.shape != (len(source_times), 5)
+        or not np.isfinite(source_times).all()
+        or not np.isfinite(source_voltage).all()
+        or not np.isfinite(gates).all()
+        or np.any(np.diff(source_times) <= 0.0)
+        or np.any((gates < 0.0) | (gates > 1.0))
+    ):
+        raise reproduction.ReproductionError(
+            "CN current comparison requires finite, aligned source voltage and gate samples"
+        )
+    steps_ms = np.diff(source_times)
+    if not np.allclose(steps_ms, steps_ms[0], rtol=0.0, atol=1.0e-9):
+        raise reproduction.ReproductionError(
+            "CN current comparison requires a uniform fixed timestep"
+        )
+    if (
+        hj_times.shape != hj_voltage.shape
+        or current_times.shape != hj_times.shape
+        or stages.shape != (len(hj_times), 4, 5)
+        or not np.allclose(hj_times, source_times[1:], rtol=0.0, atol=1.0e-9)
+        or not np.allclose(current_times, hj_times, rtol=0.0, atol=1.0e-9)
+        or not np.isfinite(hj_times).all()
+        or not np.isfinite(hj_voltage).all()
+        or not np.isfinite(stages).all()
+    ):
+        raise reproduction.ReproductionError(
+            "CN source, HumanJS voltage, and current-stage traces must have exactly aligned finite timestamps"
+        )
+    if not np.isfinite(injected_current_pa) or injected_current_pa < 0.0:
+        raise reproduction.ReproductionError("Injected AP1 current must be finite and non-negative")
+
+    # The source CN voltage solve uses Vmid and G[n]. HumanJS uses RK4
+    # quadrature over the actual four coupled derivative-stage currents.
+    midpoint_voltage = 0.5 * (source_voltage[:-1] + source_voltage[1:])
+    source_midpoint_current = _wilbers_current_density_a_per_m2(
+        midpoint_voltage, gates[:-1], gbar_na, gbar_k
+    )
+    area_m2 = np.pi * 100.0e-12
+    injected_density = np.where(
+        (source_times[:-1] >= 1.0 - 1.0e-9)
+        & (source_times[:-1] < 4.0 - 1.0e-9),
+        injected_current_pa * 1.0e-12 / area_m2,
+        0.0,
+    )
+    dt_seconds = float(steps_ms[0]) * 1.0e-3
+    specific_capacitance = 0.01
+    source_voltage_derivative = np.diff(source_voltage) * 1.0e-3 / dt_seconds
+    source_capacitance_current = specific_capacitance * source_voltage_derivative
+    source_voltage_rhs = injected_density - np.sum(source_midpoint_current, axis=1)
+
+    humanjs_weighted_current = (
+        stages[:, 0, :3]
+        + 2.0 * stages[:, 1, :3]
+        + 2.0 * stages[:, 2, :3]
+        + stages[:, 3, :3]
+    ) / 6.0
+    humanjs_weighted_injected = (
+        stages[:, 0, 3]
+        + 2.0 * stages[:, 1, 3]
+        + 2.0 * stages[:, 2, 3]
+        + stages[:, 3, 3]
+    ) / 6.0
+    humanjs_weighted_dvdt = (
+        stages[:, 0, 4]
+        + 2.0 * stages[:, 1, 4]
+        + 2.0 * stages[:, 2, 4]
+        + stages[:, 3, 4]
+    ) / 6.0
+    humanjs_capacitance_current = specific_capacitance * humanjs_weighted_dvdt
+
+    # Both paths share the same initial voltage. Differentiating their
+    # post-step voltage residual yields the current difference below.
+    residual_voltage_v = np.concatenate(
+        ([0.0], (source_voltage[1:] - hj_voltage) * 1.0e-3)
+    )
+    residual_voltage_current = (
+        specific_capacitance * np.diff(residual_voltage_v) / dt_seconds
+    )
+    negative_current_difference = -(
+        np.sum(source_midpoint_current, axis=1)
+        - np.sum(humanjs_weighted_current, axis=1)
+    )
+
+    intervals = {}
+    for label, lower, upper in (
+        ("baseline_0_to_1_ms", 0.0, 1.0),
+        ("pulse_1_to_3_ms", 1.0, 3.0),
+        ("upstroke_3_to_4_ms", 3.0, 4.0),
+        ("early_repolarization_4_to_5_ms", 4.0, 5.0),
+        ("late_repolarization_5_to_10_ms", 5.0, 10.0),
+        ("post_spike_tail_10_to_29_ms", 10.0, 29.0),
+    ):
+        mask = (source_times[1:] > lower) & (source_times[1:] <= upper)
+        if np.any(mask):
+            intervals[label] = {
+                "samples": int(np.count_nonzero(mask)),
+                "voltage_residual_mean_mV": float(
+                    np.mean(residual_voltage_v[1:][mask]) * 1.0e3
+                ),
+                "voltage_residual_rmse_mV": float(
+                    np.sqrt(np.mean(residual_voltage_v[1:][mask] ** 2)) * 1.0e3
+                ),
+                "source_midpoint_vs_humanjs_weighted_current": {
+                    name: _current_component_metrics(
+                        source_midpoint_current[mask, index],
+                        humanjs_weighted_current[mask, index],
+                    )
+                    for index, name in enumerate(("sodium", "potassium", "leak"))
+                },
+                "total_current_difference": _current_component_metrics(
+                    np.sum(source_midpoint_current[mask], axis=1),
+                    np.sum(humanjs_weighted_current[mask], axis=1),
+                ),
+                "voltage_residual_current_identity": _current_component_metrics(
+                    residual_voltage_current[mask],
+                    negative_current_difference[mask],
+                ),
+            }
+
+    return {
+        "source_voltage_method": (
+            "Crank-Nicolson midpoint membrane voltage using G[n]"
+        ),
+        "source_gate_method": (
+            "CNEXP gate update using endpoint voltage V[n+1] and the source -10-mV shift"
+        ),
+        "humanjs_current_method": (
+            "RK4 weights (1,2,2,1)/6 over the four actual coupled derivative stages"
+        ),
+        "source_cn_midpoint_capacitance_balance": _current_component_metrics(
+            source_capacitance_current, source_voltage_rhs
+        ),
+        "humanjs_rk4_weighted_capacitance_balance": _current_component_metrics(
+            humanjs_capacitance_current,
+            humanjs_weighted_injected - np.sum(humanjs_weighted_current, axis=1),
+        ),
+        "source_midpoint_vs_humanjs_rk4_weighted_current": {
+            name: _current_component_metrics(
+                source_midpoint_current[:, index],
+                humanjs_weighted_current[:, index],
+            )
+            for index, name in enumerate(("sodium", "potassium", "leak"))
+        },
+        "total_source_vs_humanjs_current_difference": _current_component_metrics(
+            np.sum(source_midpoint_current, axis=1),
+            np.sum(humanjs_weighted_current, axis=1),
+        ),
+        "voltage_residual_derivative_vs_negative_current_difference": (
+            _current_component_metrics(
+                residual_voltage_current, negative_current_difference
+            )
+        ),
+        "intervals": intervals,
+        "interpretation_limit": (
+            "This is a numerical current quadrature comparison between source CN midpoint "
+            "currents and HumanJS RK4-weighted currents for one replay. It is not biological "
+            "validation or evidence that either method is biologically superior."
+        ),
+    }
+
+
 def compare_membrane_current_balance(
     source_times_ms: Any,
     source_voltage_mv: Any,
@@ -1237,9 +1662,9 @@ def run_variant(
 
     if dt_ms <= 0.0:
         raise reproduction.ReproductionError("dt-ms must be positive")
-    if humanjs_current_data is not None and secondorder != 0:
+    if humanjs_current_data is not None and secondorder not in (0, 1):
         raise reproduction.ReproductionError(
-            "The matched current-balance comparison currently requires NEURON secondorder=0"
+            "The matched current-balance comparison supports NEURON secondorder=0 or 1"
         )
     sample_count = round(29.0 / dt_ms)
     if abs(sample_count * dt_ms - 29.0) > 1.0e-8:
@@ -1264,7 +1689,9 @@ def run_variant(
     gate_vectors = {name: h.Vector() for name in SOURCE_GATE_NAMES}
     for name, vector in gate_vectors.items():
         vector.record(getattr(cell(0.5), "_ref_" + name))
-    capture_currents = current_path is not None or humanjs_current_data is not None
+    capture_currents = current_path is not None or (
+        humanjs_current_data is not None and secondorder == 0
+    )
     h.finitialize(-70.0)
     segment = cell(0.5)
     current_samples = None
@@ -1341,24 +1768,46 @@ def run_variant(
     if current_path is not None:
         result["membrane_current_trace_file"] = str(current_path)
 
-    if secondorder == 0 and na_ratio == 1.0 and k_ratio == 1.0:
+    replay_voltage = None
+    replay_gates = None
+    replay_key = None
+    if secondorder in (0, 1) and na_ratio == 1.0 and k_ratio == 1.0:
         source_gate_matrix = np.column_stack(
             [gates[name] for name in SOURCE_GATE_NAMES]
         )
-        replay_voltage, replay_gates = replay_wilbers_source_order(
-            times,
-            float(voltage[0]),
-            source_gate_matrix[0],
-            rheobase_pa * 1.5,
-            gbar_na,
-            gbar_k,
-            _build_source_na_rate_table() if use_na_table == 1 else None,
-        )
-        result["source_order_replay"] = {
-            "method": (
+        na_rate_table = _build_source_na_rate_table() if use_na_table == 1 else None
+        if secondorder == 0:
+            replay_voltage, replay_gates = replay_wilbers_source_order(
+                times,
+                float(voltage[0]),
+                source_gate_matrix[0],
+                rheobase_pa * 1.5,
+                gbar_na,
+                gbar_k,
+                na_rate_table,
+            )
+            replay_key = "source_order_replay"
+            replay_method = (
                 "implicit endpoint voltage using G[n], followed by CNEXP gate advancement "
                 "using V[n+1] and the selected Na rate mode"
-            ),
+            )
+        else:
+            replay_voltage, replay_gates = replay_wilbers_crank_nicolson(
+                times,
+                float(voltage[0]),
+                source_gate_matrix[0],
+                rheobase_pa * 1.5,
+                gbar_na,
+                gbar_k,
+                na_rate_table,
+            )
+            replay_key = "crank_nicolson_replay"
+            replay_method = (
+                "Crank-Nicolson membrane voltage using midpoint voltage and G[n], "
+                "followed by CNEXP gate advancement using V[n+1]"
+            )
+        result[replay_key] = {
+            "method": replay_method,
             "voltage_vs_neuron": _numeric_metrics(replay_voltage, voltage),
             "voltage_vs_neuron_units": "mV",
             "gates_vs_neuron": _gate_path_metrics(replay_gates, source_gate_matrix),
@@ -1369,25 +1818,57 @@ def run_variant(
             ),
             "interpretation_limit": (
                 "This is an independently coded numerical replay of the source's observed "
-                "secondorder=0 update ordering; it is not biological validation."
+                "voltage/state integration ordering; it is not biological validation."
             ),
         }
 
     if humanjs_current_data is not None and humanjs_path is not None:
         humanjs_current_times, humanjs_current_stages, humanjs_endpoint = humanjs_current_data
-        result["membrane_current_balance"] = compare_membrane_current_balance(
-            times,
-            voltage,
-            gates,
-            currents,
-            *load_trace(humanjs_path),
-            humanjs_current_times,
-            humanjs_current_stages,
-            humanjs_endpoint,
-            rheobase_pa * 1.5,
-            gbar_na,
-            gbar_k,
-        )
+        humanjs_voltage_times, humanjs_voltage = load_trace(humanjs_path)
+        if secondorder == 0:
+            result["membrane_current_balance"] = compare_membrane_current_balance(
+                times,
+                voltage,
+                gates,
+                currents,
+                humanjs_voltage_times,
+                humanjs_voltage,
+                humanjs_current_times,
+                humanjs_current_stages,
+                humanjs_endpoint,
+                rheobase_pa * 1.5,
+                gbar_na,
+                gbar_k,
+            )
+        elif secondorder == 1 and replay_voltage is not None and replay_gates is not None:
+            result["membrane_current_balance"] = compare_crank_nicolson_current_balance(
+                times,
+                voltage,
+                source_gate_matrix,
+                humanjs_voltage_times,
+                humanjs_voltage,
+                humanjs_current_times,
+                humanjs_current_stages,
+                rheobase_pa * 1.5,
+                gbar_na,
+                gbar_k,
+            )
+            if humanjs_gates_path is not None:
+                humanjs_gate_times, humanjs_gate_values = load_humanjs_gate_trace(
+                    humanjs_gates_path
+                )
+                result["humanjs_path_cn_midpoint_current"] = (
+                    compare_cn_midpoint_current_on_humanjs_path(
+                        humanjs_voltage_times,
+                        humanjs_voltage,
+                        humanjs_gate_times,
+                        humanjs_gate_values,
+                        humanjs_current_times,
+                        humanjs_current_stages,
+                        gbar_na,
+                        gbar_k,
+                    )
+                )
     result["gate_state_method"] = "Original NMODL state variables advanced by METHOD cnexp"
     result["same_voltage_gate_integrator_sensitivity"] = compare_gate_integrators_on_shared_voltage(
         times, voltage, gates, use_na_table
@@ -1444,7 +1925,7 @@ def parse_args() -> argparse.Namespace:
         type=int,
         choices=(0, 1, 2),
         default=[0, 1],
-        help="NEURON integration modes to test; 0 is the unchanged default",
+        help="NEURON integration modes: 0 author-default, 1 Crank-Nicolson, 2 CN with ionic-current output correction",
     )
     parser.add_argument(
         "--na-table",

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Unit tests for the prescribed-voltage gate-sampling counterfactuals."""
+"""Regression tests for Wilbers AP1 voltage, gate, and current diagnostics."""
 
 from __future__ import annotations
 
@@ -363,6 +363,205 @@ class VoltageSamplingTests(unittest.TestCase):
             result["humanjs_rk4_current_balance"]["weighted_capacitance_current_vs_weighted_stage_rhs"]["maximum_absolute_error_A_per_m2"],
             1.0e-12,
         )
+
+    def test_crank_nicolson_replay_converges_on_nested_submicrosecond_grids(self) -> None:
+        rates = diagnostic._wilbers_gate_rate_bundle(-80.0)
+        initial_gates = np.asarray(
+            [rates[0], rates[2], rates[4], rates[6], rates[6]],
+            dtype=float,
+        )
+        step_sizes_ms = (0.01, 0.005, 0.002, 0.001, 0.0005, 0.00025)
+        trajectories = {}
+        for step_ms in step_sizes_ms:
+            sample_count = round(29.0 / step_ms)
+            times = np.arange(sample_count + 1, dtype=float) * step_ms
+            voltage, gates = diagnostic.replay_wilbers_crank_nicolson(
+                times,
+                -70.0,
+                initial_gates,
+                30.0,
+                114.47654963753565,
+                29.045736151752504,
+                None,
+            )
+            self.assertEqual(voltage.shape, times.shape)
+            self.assertEqual(gates.shape, (len(times), 5))
+            self.assertTrue(np.isfinite(voltage).all())
+            self.assertTrue(np.isfinite(gates).all())
+            self.assertTrue(np.all((gates >= 0.0) & (gates <= 1.0)))
+            trajectories[step_ms] = voltage
+
+        fine_step_ms = step_sizes_ms[-1]
+        fine_voltage = trajectories[fine_step_ms]
+        errors = []
+        for step_ms in step_sizes_ms[:-1]:
+            stride = round(step_ms / fine_step_ms)
+            coarse_error = trajectories[step_ms] - fine_voltage[::stride]
+            errors.append(float(np.sqrt(np.mean(coarse_error * coarse_error))))
+        self.assertTrue(
+            all(coarse > fine for coarse, fine in zip(errors, errors[1:])),
+            f"Crank-Nicolson replay error must decrease on nested grids; observed {errors}",
+        )
+        self.assertGreater(errors[0] / errors[1], 3.5)
+
+    def test_cn_midpoint_current_balance_closes_against_matching_rk4_stages(self) -> None:
+        times = np.asarray([0.0, 0.02, 0.04, 0.06], dtype=float)
+        rates = diagnostic._wilbers_gate_rate_bundle(-80.0)
+        initial_gates = np.asarray(
+            [rates[0], rates[2], rates[4], rates[6], rates[6]],
+            dtype=float,
+        )
+        gbar_na = 114.47654963753565
+        gbar_k = 29.045736151752504
+        injected_pa = 30.0
+        voltage, gates = diagnostic.replay_wilbers_crank_nicolson(
+            times, -70.0, initial_gates, injected_pa, gbar_na, gbar_k, None
+        )
+        midpoint_voltage = 0.5 * (voltage[:-1] + voltage[1:])
+        midpoint_currents = diagnostic._wilbers_current_density_a_per_m2(
+            midpoint_voltage, gates[:-1], gbar_na, gbar_k
+        )
+        injection = np.where(
+            (times[:-1] >= 1.0) & (times[:-1] < 4.0),
+            injected_pa * 1.0e-12 / (np.pi * 100.0e-12),
+            0.0,
+        )
+        dt_seconds = (times[1] - times[0]) * 1.0e-3
+        voltage_derivative = np.diff(voltage) * 1.0e-3 / dt_seconds
+        stages = np.zeros((len(times) - 1, 4, 5), dtype=float)
+        stages[:, :, :3] = midpoint_currents[:, None, :]
+        stages[:, :, 3] = injection[:, None]
+        stages[:, :, 4] = voltage_derivative[:, None]
+        result = diagnostic.compare_crank_nicolson_current_balance(
+            times,
+            voltage,
+            gates,
+            times[1:],
+            voltage[1:],
+            times[1:],
+            stages,
+            injected_pa,
+            gbar_na,
+            gbar_k,
+        )
+        self.assertLess(
+            result["source_cn_midpoint_capacitance_balance"][
+                "maximum_absolute_error_A_per_m2"
+            ],
+            1.0e-9,
+        )
+        self.assertLess(
+            result["humanjs_rk4_weighted_capacitance_balance"][
+                "maximum_absolute_error_A_per_m2"
+            ],
+            1.0e-9,
+        )
+        self.assertLess(
+            result["voltage_residual_derivative_vs_negative_current_difference"][
+                "maximum_absolute_error_A_per_m2"
+            ],
+            1.0e-9,
+        )
+        self.assertLess(
+            result["total_source_vs_humanjs_current_difference"][
+                "maximum_absolute_error_A_per_m2"
+            ],
+            1.0e-12,
+        )
+
+    def test_cn_midpoint_current_on_humanjs_path_matches_identical_midpoint_currents(self) -> None:
+        times = np.asarray([0.02, 0.04], dtype=float)
+        rates = diagnostic._wilbers_gate_rate_bundle(-80.0)
+        initial = np.asarray(
+            [rates[0], rates[2], rates[4], rates[6], rates[6]],
+            dtype=float,
+        )
+        left_gates = initial.copy()
+        gate_after_first = diagnostic._shared_voltage_cnexp_step(
+            initial, -80.0, 0.02, None
+        )
+        gates = np.vstack((gate_after_first, gate_after_first))
+        midpoint_voltage = np.full(2, -70.0, dtype=float)
+        left_gate_path = np.vstack((left_gates, gates[:-1]))
+        midpoint_current = diagnostic._wilbers_current_density_a_per_m2(
+            midpoint_voltage,
+            left_gate_path,
+            114.47654963753565,
+            29.045736151752504,
+        )
+        stages = np.zeros((2, 4, 5), dtype=float)
+        stages[:, :, :3] = midpoint_current[:, None, :]
+        result = diagnostic.compare_cn_midpoint_current_on_humanjs_path(
+            times,
+            np.full(2, -70.0, dtype=float),
+            times,
+            {
+                name: gates[:, index].copy()
+                for index, name in enumerate(diagnostic.HUMANJS_GATE_NAMES)
+            },
+            times,
+            stages,
+            114.47654963753565,
+            29.045736151752504,
+        )
+        self.assertLess(
+            result["total_current_difference"]["rmse_A_per_m2"],
+            1.0e-18,
+        )
+        self.assertLess(
+            result["total_current_difference"]["maximum_absolute_error_A_per_m2"],
+            1.0e-18,
+        )
+
+    def test_cn_midpoint_current_on_humanjs_path_rejects_misaligned_gates(self) -> None:
+        times = np.asarray([0.02, 0.04], dtype=float)
+        rates = diagnostic._wilbers_gate_rate_bundle(-80.0)
+        initial = np.asarray(
+            [rates[0], rates[2], rates[4], rates[6], rates[6]],
+            dtype=float,
+        )
+        gates = np.tile(initial, (2, 1))
+        with self.assertRaises(reproduction.ReproductionError):
+            diagnostic.compare_cn_midpoint_current_on_humanjs_path(
+                times,
+                np.full(2, -70.0, dtype=float),
+                times + 0.001,
+                {
+                    name: gates[:, index].copy()
+                    for index, name in enumerate(diagnostic.HUMANJS_GATE_NAMES)
+                },
+                times,
+                np.zeros((2, 4, 5), dtype=float),
+                114.47654963753565,
+                29.045736151752504,
+            )
+
+    def test_cn_midpoint_current_balance_rejects_misaligned_timestamps(self) -> None:
+        times = np.asarray([0.0, 0.02, 0.04], dtype=float)
+        rates = diagnostic._wilbers_gate_rate_bundle(-80.0)
+        initial_gates = np.asarray(
+            [rates[0], rates[2], rates[4], rates[6], rates[6]],
+            dtype=float,
+        )
+        gbar_na = 114.47654963753565
+        gbar_k = 29.045736151752504
+        voltage, gates = diagnostic.replay_wilbers_crank_nicolson(
+            times, -70.0, initial_gates, 30.0, gbar_na, gbar_k, None
+        )
+        stages = np.zeros((len(times) - 1, 4, 5), dtype=float)
+        with self.assertRaises(reproduction.ReproductionError):
+            diagnostic.compare_crank_nicolson_current_balance(
+                times,
+                voltage,
+                gates,
+                times[1:],
+                voltage[1:],
+                times[1:] + 0.001,
+                stages,
+                30.0,
+                gbar_na,
+                gbar_k,
+            )
 
     def test_source_order_replay_preserves_zero_current_reversal_state(self) -> None:
         voltage, gates = diagnostic.replay_wilbers_source_order(

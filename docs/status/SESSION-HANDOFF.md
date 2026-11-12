@@ -110,10 +110,10 @@ Runner: `experiments/reproduce_eyal_figure7a.py`.
 ## Next concrete work
 
 1. Keep the author-default NEURON run as the comparison baseline. Do not retune channel densities or claim the diagnostic Crank–Nicolson runs are the authors' reported configuration; the large trace residual is now mainly explained by the source's default first-order voltage solver at 20 µs.
-2. Resolve the remaining biological acceptance blockers by obtaining human-only per-cell K activation/inactivation/recovery data, raw voltage-clamp recordings and acquisition metadata, and the exact Figure S5 fitting/plotting state. The verified Dataverse v3.0 inventory does not contain the missing files; use additional public archives first. A corresponding-author request is prepared but **no email has been sent**; obtain the owner's authorization before sending.
+2. Keep the biological evidence gaps explicit: human-only per-cell K activation/inactivation/recovery data, raw voltage-clamp recordings and acquisition metadata, and the exact Figure S5 fitting/plotting state remain absent from the inspected Dataverse v3.0 inventory. Continue only with independently accessible public sources; do not contact authors or researchers.
 3. Keep the pooled 236.824345-ms/2789.7929-ms recovery constants, cross-species AP fitting targets, non-measured fitted conductance densities, source unit/`trap0` defects at other voltages, and single-compartment geometry as explicit acceptance blockers. Raster estimates must not substitute for raw recordings or human-only measurements.
 4. Reassess the exploratory single-compartment model only after the missing kinetics, fit objective, preparation equivalence and relevant human validation evidence are independently resolved. Preserve the present software-level source replay as a numerical regression, not a biological validation claim.
-5. The shared-voltage gate experiment found the isolated gate-update difference far smaller than the full dynamic source-vs-HumanJS gate residual. The next bounded numerical step is to inspect voltage-stage sampling/coupled feedback under a common continuous voltage interpolation, keeping the author's default dynamic source run as the baseline. Do not infer biological superiority or alter fitted channel parameters.
+5. The next bounded numerical step is to compare the prescribed-path CN midpoint/left-gate current counterfactual with the fully evolved source/HumanJS current paths across matched timestep refinement and Na TABLE settings. Keep the author's default dynamic source run as the baseline, do not alter fitted channel parameters, and do not infer biological superiority.
 
 No biological validation, clinical validity, whole-brain functionality, or consciousness claim is made. Save/restore, Rust-native concurrency, the configurable 10,000-unit default, JSON model loading, Python, C/C++, and WGSL remain unimplemented.
 
@@ -157,13 +157,9 @@ The 2026-11-11 missing-helper conclusion was based on an incomplete extraction. 
 - Latest verified workflow: run `43124314513` passed on exact HEAD `c73a90270cc92979add481b00856ea2848eea98c`; formatting, Clippy, Rust workspace tests, Python syntax, both research validators, and repository policy all succeeded.
 
 
-### 2026-11-12 — corresponding-author contact verified; next action ready
+### 2026-11-12 — historical public contact-route lookup retired
 
-- Queried the final publisher page for DOI 10.1126/sciadv.ade3300. It names Huibert D. Mansvelder (h.d.mansvelder@vu.nl) and Natalia A. Goriounova (n.a.goriounova@vu.nl) as corresponding authors.
-- The publisher's data-availability statement points to Dataverse DOI 10.34894/L5J0SD. The previously audited released v3.0 manifest contains 65 files and does not list the K kinetic mean CSVs, data_fig5.xlsx, raw K voltage-clamp recordings, or a separate Figure S5 plotting/export script.
-- A targeted request is now ready: ask for the exact J/K/M/N plotting/export code and parameter state; the missing per-cell human K activation/inactivation/recovery tables; raw K voltage-clamp recordings plus acquisition/protocol metadata if shareable; and an explicit availability statement for anything not retained or not distributable. Acknowledge the published Dataverse deposit and keep the tone neutral.
-- **No email has been sent.** Contact discovery is not new experimental evidence and does not change the exploratory/unaccepted status of the Rust spike mechanism.
-- Next: send the focused request only with the owner's authorization, then record any response and provenance. Independently digitize J/K/M/N model-line pixels as raster estimates only; do not substitute them for source code or raw recordings.
+A public publisher-page lookup established that a corresponding-author contact route existed and that the article's data statement points to Dataverse DOI 10.34894/L5J0SD. The project owner directed that no authors or researchers be contacted. No message was sent, and outreach is not a planned action. The missing per-cell K kinetic tables, raw K voltage-clamp recordings and exact Figure S5 plotting state remain unresolved in the inspected public inventory.
 
 
 ### 2026-11-12 — Figure S5 model-line raster digitization completed
@@ -358,7 +354,7 @@ These are deterministic software tests of the counterfactual implementation, not
 
 ## Next concrete research action
 
-The exact four coupled RK4 voltage stages are now captured and replayed. The source-order replay now reproduces NEURON within 0.00054 mV while preserving the 0.455-mV author-default versus HumanJS discrepancy. Next, quantify source-order and coupled-RK4 convergence at matched finer timesteps and separate Na TABLE interpolation from update-order effects, without changing biological parameters. Do not interpret numerical agreement as biological validation.
+The source-order and CN replays now reproduce their NEURON variants within about 0.00056 mV. At 250 ns, actual CN midpoint and HumanJS RK4 current balances close; the actual source/HumanJS voltage-residual derivative is accounted for by their current difference. Next, compare the prescribed-path CN midpoint/left-gate current with fully evolved source/HumanJS current paths across timestep refinement and Na TABLE modes.
 
 
 ## 2026-11-12 paired source/HumanJS voltage-path gate attribution
@@ -391,7 +387,7 @@ The complete 12-variant NEURON matrix (20/10/5 µs, secondorder 0/1, Na TABLE on
 
 Interpretation: this is strong numerical evidence that the gate-update equations and RK4 gate-stage handling in HumanJS match the replayed Wilbers gate equations when supplied with HumanJS's actual coupled voltage stages. It does not explain away the remaining membrane-voltage trajectory difference, validate either solver biologically, or change the exploratory/unaccepted status of the single-compartment model. All stage traces and diagnostic JSON remained outside Git.
 
-The matched-state current equations and source update ordering are now accounted for. Next, compare the source-order first-order trajectory and coupled HumanJS RK4 under timestep refinement at matched 1/2/5/10-µs grids, separating the source Na TABLE contribution from update-order convergence; keep all biological parameters fixed and retain the author-default baseline.
+The source-order and CN replays now reproduce their NEURON variants within about 0.00056 mV. The 250-ns current-balance identities close, and the actual source/HumanJS voltage-residual derivative is accounted for by their current difference. Next, compare prescribed-path CN midpoint/left-gate current and fully evolved source/HumanJS current mismatch across timestep refinement and Na TABLE modes.
 
 
 ### Matched-state membrane-current balance and source-order replay (2026-11-12)
@@ -429,3 +425,18 @@ Reproduce the 20-µs current-balance comparison and Na TABLE toggle (pinned Ubun
     python3.10 experiments/diagnose_wilbers_neuron_solver.py --humanjs-trace /tmp/humanjs-voltage.csv --humanjs-gates /tmp/humanjs-gates.csv --humanjs-voltage-stages /tmp/humanjs-stages.csv --humanjs-current-stages /tmp/humanjs-currents.csv --dt-ms 0.02 --secondorder 0 --na-table 1 0 --trace-dir /tmp/wilbers-voltage --gate-dir /tmp/wilbers-gates --current-dir /tmp/wilbers-currents --output /tmp/wilbers-current-balance-results.json
 
 The 10-µs and 5-µs matched-step convergence runs use the same exporter with --step-us 10 / --step-us 5 and the corresponding --dt-ms 0.01 / --dt-ms 0.005, without --humanjs-current-stages. All generated traces and JSON remain outside Git. The spike-capable single-compartment mechanism remains exploratory and unaccepted; these are numerical source-reproduction and software regression results, not biological validation.
+
+
+
+### AP1 CN current replay — 2026-11-13
+
+- The AP1 exporter now accepts integer nanoseconds while retaining the microsecond option. The 20-µs voltage CSVs from the old and new options were byte-identical; a 333-ns step is rejected because pulse/protocol boundaries do not align.
+- The new independent CN replay uses the midpoint membrane voltage with G[n], then advances NMODL gates by CNEXP using V[n+1]. At 1 µs and 250 ns, replay-vs-NEURON voltage RMSE is approximately 0.000557 mV, and aggregate gate RMSE is approximately 2.862e-6.
+- At 250 ns, the actual source CN midpoint-current balance closes to 1.48e-13 A/m² RMSE and HumanJS RK4 weighted current balance to 2.96e-13 A/m². The derivative of their actual voltage residual equals the negative source/HumanJS current difference to 4.12e-11 A/m² maximum.
+- Actual source/HumanJS current mismatch is 1.742e-5 A/m² RMSE. In the upstroke, sodium dominates; during early repolarization, potassium dominates; in the post-spike tail, leak dominates.
+- The same-HumanJS-path midpoint/left-gate current counterfactual gives 4.023e-4 A/m² total RMSE against RK4-weighted currents. This is a separate held-gate counterfactual, not a coupled CN run. Its difference from the actual source-path result shows why evolving state history must be retained in the interpretation.
+- Exact HumanJS RK4-stage gate replay still matches HumanJS live gates at 250 ns with 2.5055e-8 aggregate gate RMSE.
+- The 125-ns HumanJS voltage/gate/stage/current CSVs were generated (232,000 rows each), but the expanded NEURON run was killed by the 1-GiB VM memory limit (exit 137); no 125-ns current-balance result is claimed.
+- Final local verification: 22 Python experiment tests, Python syntax, Rust format/Clippy/workspace tests, both Wilbers validators, repository policy and diff checks passed before documentation cleanup.
+
+Next concrete step: compare prescribed-path CN midpoint/left-gate currents and fully evolved source/HumanJS current mismatch across matched timestep refinement and both Na TABLE settings. Keep biological parameters fixed and retain the author-default NEURON configuration.

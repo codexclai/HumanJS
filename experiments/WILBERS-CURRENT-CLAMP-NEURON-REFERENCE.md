@@ -200,7 +200,7 @@ The complete 12-variant NEURON matrix (20/10/5 µs, secondorder 0/1, Na TABLE on
 
 Interpretation: this is strong numerical evidence that the gate-update equations and RK4 gate-stage handling in HumanJS match the replayed Wilbers gate equations when supplied with HumanJS's actual coupled voltage stages. It does not explain away the remaining membrane-voltage trajectory difference, validate either solver biologically, or change the exploratory/unaccepted status of the single-compartment model. All stage traces and diagnostic JSON remained outside Git.
 
-The matched-state current equations and source update ordering are now accounted for. Next, compare the source-order first-order trajectory and coupled HumanJS RK4 under timestep refinement at matched 1/2/5/10-µs grids, separating the source Na TABLE contribution from update-order convergence; keep all biological parameters fixed and retain the author-default baseline.
+The source-order and CN replay methods now reproduce their NEURON variants within 0.00056 mV. The 250-ns current-balance identities close, and the residual is numerically accounted for by actual source midpoint currents versus HumanJS RK4-weighted currents. Next compare same-path midpoint/left-gate current and fully evolved source/HumanJS current mismatch across timestep refinement and Na TABLE settings.
 
 
 ### Matched-state membrane-current balance and source-order replay (2026-11-12)
@@ -238,3 +238,36 @@ Reproduce the 20-µs current-balance comparison and Na TABLE toggle (pinned Ubun
     python3.10 experiments/diagnose_wilbers_neuron_solver.py --humanjs-trace /tmp/humanjs-voltage.csv --humanjs-gates /tmp/humanjs-gates.csv --humanjs-voltage-stages /tmp/humanjs-stages.csv --humanjs-current-stages /tmp/humanjs-currents.csv --dt-ms 0.02 --secondorder 0 --na-table 1 0 --trace-dir /tmp/wilbers-voltage --gate-dir /tmp/wilbers-gates --current-dir /tmp/wilbers-currents --output /tmp/wilbers-current-balance-results.json
 
 The 10-µs and 5-µs matched-step convergence runs use the same exporter with --step-us 10 / --step-us 5 and the corresponding --dt-ms 0.01 / --dt-ms 0.005, without --humanjs-current-stages. All generated traces and JSON remain outside Git. The spike-capable single-compartment mechanism remains exploratory and unaccepted; these are numerical source-reproduction and software regression results, not biological validation.
+
+### Crank–Nicolson midpoint-current replay and matched-path quadrature (2026-11-13)
+
+The AP1 diagnostic now implements a separate secondorder=1 replay. For each interval, it solves the deposited membrane equation with ionic conductances fixed at G[n] and ionic driving force evaluated at the midpoint voltage, then advances the five NMODL gates with CNEXP using the new endpoint voltage V[n+1] and the source -10-mV channel shift. This is separate from the secondorder=0 backward-Euler replay; the authors' unchanged 20-µs / secondorder=0 / Na-TABLE-on helper remains the reference.
+
+The source integration-mode mapping follows NEURON's programmatic fadvance documentation: secondorder=1 is the Crank–Nicolson scheme (ionic currents first-order accurate and channel conductances second-order accurate at the interval midpoint); secondorder=2 adds the ionic-current output correction. See https://www.neuronsimulator.org/en/latest/progref/simctrl/programmatic.html.
+
+The independent CN replay was checked against actual NEURON 9.0.2 direct-rate CN outputs at both 1 µs and 250 ns:
+- At 1 µs, voltage RMSE 0.000557252 mV and maximum 0.00769237 mV; five-gate RMSE 2.86183×10⁻⁶ and maximum 6.76770×10⁻⁵ gate fraction.
+- At 250 ns, voltage RMSE 0.000557258 mV and maximum 0.00769172 mV; five-gate RMSE 2.86169×10⁻⁶ and maximum 6.76001×10⁻⁵ gate fraction.
+
+At 250 ns / direct-rate CN, the actual source CN midpoint-current capacitor identity closes to 1.48×10⁻¹³ A/m² RMSE / 2.84×10⁻¹³ A/m² maximum. HumanJS's exact four-stage RK4 weighted current identity closes to 2.96×10⁻¹³ A/m² RMSE / 1.10×10⁻¹² A/m² maximum. The difference between the derivative of the actual source-minus-HumanJS voltage residual and the negative difference between source CN midpoint currents and HumanJS RK4-weighted currents is 1.64×10⁻¹¹ A/m² RMSE / 4.12×10⁻¹¹ A/m² maximum. Thus, for this AP1 run and current definitions, the observed inter-solver voltage-path difference is numerically accounted for by the difference in current evaluation/quadrature, without a residual sign or units mismatch.
+
+At the same 250-ns condition, source CN midpoint currents versus HumanJS RK4-weighted currents have total RMSE 1.74232×10⁻⁵ A/m² and maximum 2.39224×10⁻⁴ A/m². Interval detail:
+- Upstroke, 3–4 ms: total current RMSE 7.16403×10⁻⁵ A/m²; sodium is dominant at 7.22564×10⁻⁵, potassium 1.49083×10⁻⁶, leak 7.07477×10⁻⁷ A/m².
+- Early repolarization, 4–5 ms: total 5.47228×10⁻⁵; potassium 6.28213×10⁻⁵, sodium 2.71011×10⁻⁵, leak 2.42433×10⁻⁶ A/m².
+- Late repolarization, 5–10 ms: total 1.15445×10⁻⁵; sodium 1.31111×10⁻⁵, potassium 1.31717×10⁻⁵, leak 3.07192×10⁻⁶ A/m².
+- Post-spike tail, 10–29 ms: total 6.91008×10⁻⁷; leak dominates at 7.16022×10⁻⁷, sodium 8.16136×10⁻⁸, potassium 1.04786×10⁻⁷ A/m².
+
+A further controlled counterfactual evaluates the CN-style current law on the prescribed HumanJS path: the source current law is evaluated at the midpoint of adjacent HumanJS voltages using the previous HumanJS live gate state G[n], then compared against the exact HumanJS RK4-weighted stage currents. This does not run a separate CN membrane simulation. Across the full 29-ms trace, its total current RMSE is 4.02293×10⁻⁴ A/m² (maximum 7.57115×10⁻³); sodium RMSE is 3.96583×10⁻⁴, potassium 4.34073×10⁻⁵, and leak 1.49820×10⁻⁹ A/m². During the 3–4-ms upstroke, total RMSE is 2.09938×10⁻³ A/m² and is sodium-dominated; during 4–5-ms early repolarization it is 5.31656×10⁻⁴ A/m², with sodium and potassium both contributing. This prescribed-path current difference is much larger than the 1.74232×10⁻⁵ A/m² actual source-path current mismatch. The contrast demonstrates that current quadrature on a held-left-gate HumanJS path and the fully evolved source/HumanJS state histories are not interchangeable: state-history feedback changes the current residual. It does not show that quadrature alone explains the source/HumanJS voltage difference, and it does not identify either solver as biologically superior.
+
+At 250 ns, exact HumanJS RK4-stage replay of the source gate equations still matches HumanJS live gates with aggregate five-gate RMSE 2.50549×10⁻⁸ / maximum 5.04566×10⁻⁷. The live source-versus-HumanJS gate paths remain farther apart (Na activation 3.53941×10⁻⁵ RMSE, Na inactivation 3.15885×10⁻⁵, K activation 1.51490×10⁻⁵). This is consistent with the gate-rate equations matching on identical voltage stages while the coupled source and HumanJS voltage/gate histories differ.
+
+A fresh 125-ns HumanJS voltage/gate/stage/current trace was generated successfully (232,000 post-step samples in each CSV). The expanded 125-ns NEURON diagnostic was then killed by the VM's memory limit (exit 137) before producing its output JSON; no new 125-ns source current-balance or exact-stage results are claimed. Earlier CSV-only 125-ns voltage RMSE values remain separately recorded in the timestep-convergence section and must not be conflated with this incomplete current run.
+
+Reproduce the completed 250-ns paired current analysis from the repository root:
+
+    cargo run -p humanjs-core --release --example wilbers_current_clamp_trace -- --step-ns 250 --gates-output /tmp/humanjs-250ns-gates.csv --stages-output /tmp/humanjs-250ns-stages.csv --currents-output /tmp/humanjs-250ns-currents.csv > /tmp/humanjs-250ns.csv
+    python3.10 experiments/diagnose_wilbers_neuron_solver.py --humanjs-trace /tmp/humanjs-250ns.csv --humanjs-gates /tmp/humanjs-250ns-gates.csv --humanjs-voltage-stages /tmp/humanjs-250ns-stages.csv --humanjs-current-stages /tmp/humanjs-250ns-currents.csv --dt-ms 0.00025 --secondorder 1 --na-table 0 --trace-dir /tmp/wilbers-cn-direct-250ns --gate-dir /tmp/wilbers-cn-direct-gates-250ns --output /tmp/wilbers-cn-direct-250ns.json
+
+The --step-ns option retains --step-us; --step-us 20 and --step-ns 20000 voltage CSVs were byte-identical, and 333 ns is rejected because it does not divide the protocol pulse boundaries. Generated CSVs and JSON remain outside Git. The 125-ns full diagnostic is memory-limited in the 1-GiB VM. The single-compartment mechanism remains exploratory and unaccepted; none of these numerical checks constitutes biological validation.
+
+Next, compare the prescribed-path midpoint/left-gate current counterfactual and fully evolved source/HumanJS current paths across timestep refinement and Na TABLE settings. Keep the author-default solver as the reference, do not alter biological parameters, and distinguish current-evaluation effects from coupled state-history feedback.

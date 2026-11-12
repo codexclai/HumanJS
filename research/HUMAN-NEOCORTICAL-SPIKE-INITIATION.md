@@ -652,22 +652,12 @@ The six scripts that are present under `Figures5_6/Channel_fitting` are `channel
 
 This recheck closes the *inventory question*, not the experimental-data gap. It strengthens the existing finding that the available public v3.0 deposit does not contain the named per-cell K tau tables, raw K voltage-clamp NWB traces, `data_fig5.xlsx`, or a separate S5 plot generator. The source helper defect and the reconstructed-versus-plotted-line distinction remain as recorded above. The paper's availability statement is not contradicted by this inventory: it says the evidence needed to evaluate the published conclusions is in the paper and supplement, while this HumanJS audit asks the narrower question of whether the public deposit supplies every input needed to independently reproduce the K-channel fitting and plotted S5 model curves.
 
-Do not infer that data were withheld, do not manufacture replacement observations from raster markers, and do not promote the exploratory Rust spike mechanism on these summaries. The next useful evidence action is a targeted request to the corresponding authors for (i) the exact script/version or export state that generated Figure S5J/K/M/N, (ii) the per-cell K kinetic CSVs or a stable alternative source for them, and (iii) the raw K voltage-clamp recordings or an explicit description of why they are unavailable. Until a response or independently verifiable copy is obtained, retain the current limitations and keep the single-compartment spike mechanism unaccepted.
+Do not infer that data were withheld, manufacture replacement observations from raster markers, or promote the exploratory Rust spike mechanism on these summaries. The next evidence work is limited to independently accessible public repositories, articles, supplements and data archives. Do not contact authors or researchers. Until missing sources are found independently, retain the current limitations and keep the single-compartment spike mechanism unaccepted.
 
 
-### Wilbers corresponding-author contact route (2026-11-12)
+### Historical public contact-route lookup — retired (2026-11-12)
 
-The publisher's full-text page for the final Science Advances article (DOI https://doi.org/10.1126/sciadv.ade3300) explicitly lists two corresponding authors and their public institutional email addresses:
-
-- Huibert D. Mansvelder — h.d.mansvelder@vu.nl
-- Natalia A. Goriounova — n.a.goriounova@vu.nl
-
-The same publisher page states that all data, model files, and scripts used in the work are publicly available at Dataverse repository DOI 10.34894/L5J0SD. This is the authors' published availability statement, not evidence that every intermediate plotting input or raw recording is present in the deposit. The released Dataverse v3.0 manifest remains the 65-file inventory audited above.
-
-A focused clarification request is now actionable through these corresponding-author contacts. It should ask for (1) the exact script/notebook and parameter state that generated Figure S5 panels J/K/M/N model curves, including intermediate exports; (2) the human per-cell K+ activation, fast/slow inactivation, and recovery measurements or source tables behind the absent Experimental means/k_tau_*.csv files; (3) raw K+ voltage-clamp recordings and acquisition/protocol metadata, if distributable; and (4) an explicit statement identifying which materials were never retained, are unavailable, or cannot be shared. It should acknowledge the existing Dataverse DOI and avoid implying misconduct or intentional withholding.
-
-**Contact verification only:** these addresses are printed by the publisher as corresponding-author contacts. No email has been sent, no response has been received, and no additional data have been obtained. The HumanJS K+ model remains exploratory; contact discovery does not change its acceptance or validation status.
-
+A prior public-source lookup established that the final Science Advances publisher page provides a corresponding-author route and points to Dataverse DOI 10.34894/L5J0SD. This is only provenance for the earlier inventory work; the project owner has directed that no authors or researchers be contacted. No message was sent, no response was received, and outreach is not part of the project plan. The released Dataverse v3.0 manifest remains the 65-file inventory audited above. The missing K kinetic tables, raw K voltage-clamp recordings and exact plotting state remain explicitly unresolved. The HumanJS K+ model remains exploratory and unaccepted.
 
 ### Figure S5 model-line raster digitization (2026-11-12)
 
@@ -751,7 +741,7 @@ Keep HumanL23SingleCompartmentModel exploratory and unaccepted because:
 5. The model is a lumped nucleated-somatic-patch equivalent, with no spatial AIS, axon, or dendrites. It cannot support a claim about anatomical spike-initiation location or a complete human pyramidal neuron.
 6. The independent AP1 source execution now constrains the all-human grid endpoint, but the HumanJS RK4 trace still differs from NEURON cnexp (0.4552-mV RMSE; 4.6159-mV maximum absolute residual). The source trap0 correction and different integration methods remain explicit differences requiring further numerical analysis; no raw experimental current trace was recovered.
 
-**Next concrete evidence step:** isolate the remaining 0.4552-mV trace RMSE / 4.6159-mV maximum residual between the source's NEURON cnexp execution and HumanJS RK4, separating integration error from the deliberate trap0 analytic-limit correction without fitting to rasterized curves or changing source parameters. In parallel, obtain the missing per-cell K kinetic data/plot state if available. The independent AP1 reproduction does not close the other evidence gaps; do not promote this spike-capable mechanism or infer AIS biology from it.
+**Next concrete numerical step:** continue the source/HumanJS AP1 current-evaluation attribution at matched timesteps, separating CN midpoint/left-gate current from RK4 stage-weighted current and the fully evolved source/HumanJS state histories. Keep source parameters unchanged and retain the author-default NEURON configuration. Public biological evidence gaps remain unresolved; do not contact authors or researchers, promote this spike-capable mechanism, or infer AIS biology from these numerical comparisons.
 
 
 ### Superseded interim finding — faulty Rust rheobase transcription (2026-11-12)
@@ -947,3 +937,15 @@ Reproduce the 20-µs current-balance comparison and Na TABLE toggle (pinned Ubun
     python3.10 experiments/diagnose_wilbers_neuron_solver.py --humanjs-trace /tmp/humanjs-voltage.csv --humanjs-gates /tmp/humanjs-gates.csv --humanjs-voltage-stages /tmp/humanjs-stages.csv --humanjs-current-stages /tmp/humanjs-currents.csv --dt-ms 0.02 --secondorder 0 --na-table 1 0 --trace-dir /tmp/wilbers-voltage --gate-dir /tmp/wilbers-gates --current-dir /tmp/wilbers-currents --output /tmp/wilbers-current-balance-results.json
 
 The 10-µs and 5-µs matched-step convergence runs use the same exporter with --step-us 10 / --step-us 5 and the corresponding --dt-ms 0.01 / --dt-ms 0.005, without --humanjs-current-stages. All generated traces and JSON remain outside Git. The spike-capable single-compartment mechanism remains exploratory and unaccepted; these are numerical source-reproduction and software regression results, not biological validation.
+
+### CN midpoint-current replay and current-history decomposition (2026-11-13)
+
+A separate source replay now reconstructs NEURON secondorder=1: the membrane solve uses the midpoint voltage and previous gate state G[n], then CNEXP advances the five gates using the endpoint voltage V[n+1] with the source -10-mV shift. Against actual NEURON direct-rate CN traces, it reproduces voltage to 0.0005573 mV RMSE (maximum 0.00769 mV) and gates to 2.86×10⁻⁶ aggregate RMSE (maximum 6.76×10⁻⁵) at both 1 µs and 250 ns.
+
+At 250 ns, the actual source CN midpoint-current balance closes to 1.48×10⁻¹³ A/m² RMSE; the HumanJS RK4 weighted balance closes to 2.96×10⁻¹³ A/m². The derivative of the actual source-minus-HumanJS voltage residual is accounted for by the negative difference between source midpoint currents and HumanJS RK4-weighted stage currents to 1.64×10⁻¹¹ A/m² RMSE / 4.12×10⁻¹¹ maximum. The total source/HumanJS current difference is 1.742×10⁻⁵ A/m², dominated by sodium during the upstroke and potassium during early repolarization; leak dominates the late post-spike tail.
+
+The diagnostic also evaluates the CN midpoint/left-gate current law on the prescribed HumanJS voltage/gate path and compares it with actual HumanJS RK4-weighted currents. This counterfactual's total current RMSE is 4.023×10⁻⁴ A/m² (Na 3.966×10⁻⁴, K 4.341×10⁻⁵, leak negligible), much larger than the 1.742×10⁻⁵ A/m² actual source-path current mismatch. The discrepancy is not evidence of a current-law error: it demonstrates that a held-left-gate current evaluation on the HumanJS path and the fully evolved source/HumanJS gate histories are different comparisons. State-history feedback changes the current residual, so the actual voltage mismatch cannot be attributed to the midpoint quadrature alone.
+
+Exact HumanJS voltage-stage replay still reproduces HumanJS live gates at 250 ns with aggregate five-gate RMSE 2.5055×10⁻⁸ / maximum 5.0457×10⁻⁷. The current comparison and gate replay remain numerical source/model analyses, not biological validation.
+
+A fresh 125-ns HumanJS voltage/gate/stage/current trace was generated. The expanded 125-ns NEURON run was killed by the 1-GiB VM memory limit (exit 137) before writing diagnostic JSON, so no 125-ns current-balance results are claimed. Earlier 125-ns CSV-only voltage figures remain separate. Next, compare same-path midpoint/left-gate currents and fully evolved source/HumanJS current paths across timestep refinement and Na TABLE settings, without modifying biological parameters or replacing the author's default baseline.
