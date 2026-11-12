@@ -15,8 +15,9 @@ mod units;
 
 pub use error::SimulationError;
 pub use ion_channels::{
-    HumanL23SingleCompartmentInitialConditions, HumanL23SingleCompartmentModel,
-    HumanL23SingleCompartmentRuntimeState, HumanL23SingleCompartmentSimulation,
+    HumanL23SingleCompartmentCurrentBalance, HumanL23SingleCompartmentInitialConditions,
+    HumanL23SingleCompartmentModel, HumanL23SingleCompartmentRuntimeState,
+    HumanL23SingleCompartmentSimulation,
 };
 pub use membrane::{
     MembranePatchInitialConditions, MembranePatchRuntimeState, PassiveMembraneModel,

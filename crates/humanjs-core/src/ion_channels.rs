@@ -24,6 +24,47 @@ struct PotassiumRates {
     slow_inactivation_time_constant_ms: f64,
 }
 
+/// Outward membrane-current balance at one coupled RK4 derivative stage.
+/// Current densities use A/m² and voltage derivative uses V/s.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct HumanL23SingleCompartmentCurrentBalance {
+    sodium_current_density_a_per_m2: f64,
+    potassium_current_density_a_per_m2: f64,
+    leak_current_density_a_per_m2: f64,
+    injected_current_density_a_per_m2: f64,
+    voltage_derivative_v_per_s: f64,
+}
+
+impl HumanL23SingleCompartmentCurrentBalance {
+    const ZERO: Self = Self {
+        sodium_current_density_a_per_m2: 0.0,
+        potassium_current_density_a_per_m2: 0.0,
+        leak_current_density_a_per_m2: 0.0,
+        injected_current_density_a_per_m2: 0.0,
+        voltage_derivative_v_per_s: 0.0,
+    };
+    pub const fn sodium_current_density_a_per_m2(self) -> f64 {
+        self.sodium_current_density_a_per_m2
+    }
+    pub const fn potassium_current_density_a_per_m2(self) -> f64 {
+        self.potassium_current_density_a_per_m2
+    }
+    pub const fn leak_current_density_a_per_m2(self) -> f64 {
+        self.leak_current_density_a_per_m2
+    }
+    pub const fn injected_current_density_a_per_m2(self) -> f64 {
+        self.injected_current_density_a_per_m2
+    }
+    pub const fn voltage_derivative_v_per_s(self) -> f64 {
+        self.voltage_derivative_v_per_s
+    }
+    pub const fn total_ionic_current_density_a_per_m2(self) -> f64 {
+        self.sodium_current_density_a_per_m2
+            + self.potassium_current_density_a_per_m2
+            + self.leak_current_density_a_per_m2
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 struct RatePrefactor {
     // The pure NMODL files and Table S2 declare these prefactors as ms^-1.
@@ -395,12 +436,12 @@ impl HumanL23SingleCompartmentModel {
         self,
         state: [f64; 6],
         injected_current: Amperes,
+        current_balance: Option<&mut HumanL23SingleCompartmentCurrentBalance>,
     ) -> Result<[f64; 6], SimulationError> {
         let voltage_v = state[0];
         let voltage_mv = voltage_v * 1_000.0;
         let sodium = self.sodium_rates(voltage_mv)?;
         let potassium = self.potassium_rates(voltage_mv, state[5])?;
-
         let g_na = self
             .sodium_max_conductance_density
             .as_siemens_per_square_meter()
@@ -419,16 +460,16 @@ impl HumanL23SingleCompartmentModel {
             .as_siemens_per_square_meter()
             * state[3].powi(2)
             * (k_fast + k_slow + k_non_inactivating);
-
-        let ionic_current_density = g_na * (voltage_v - self.sodium_reversal.as_volts())
-            + g_k * (voltage_v - self.potassium_reversal.as_volts())
-            + self.leak_conductance_density.as_siemens_per_square_meter()
-                * (voltage_v - self.leak_reversal.as_volts());
+        let sodium_current_density = g_na * (voltage_v - self.sodium_reversal.as_volts());
+        let potassium_current_density = g_k * (voltage_v - self.potassium_reversal.as_volts());
+        let leak_current_density = self.leak_conductance_density.as_siemens_per_square_meter()
+            * (voltage_v - self.leak_reversal.as_volts());
         let injected_current_density =
             injected_current.as_amperes() / self.surface_area.as_square_meters();
+        let ionic_current_density =
+            sodium_current_density + potassium_current_density + leak_current_density;
         let voltage_derivative = (injected_current_density - ionic_current_density)
             / self.specific_capacitance.as_farads_per_square_meter();
-
         let derivatives = [
             voltage_derivative,
             gate_derivative(sodium.activation, state[1]),
@@ -441,6 +482,15 @@ impl HumanL23SingleCompartmentModel {
         for derivative in derivatives {
             require_finite("human single-compartment derivative", derivative)
                 .map_err(|_| SimulationError::NumericalOverflow)?;
+        }
+        if let Some(balance) = current_balance {
+            *balance = HumanL23SingleCompartmentCurrentBalance {
+                sodium_current_density_a_per_m2: sodium_current_density,
+                potassium_current_density_a_per_m2: potassium_current_density,
+                leak_current_density_a_per_m2: leak_current_density,
+                injected_current_density_a_per_m2: injected_current_density,
+                voltage_derivative_v_per_s: voltage_derivative,
+            };
         }
         Ok(derivatives)
     }
@@ -595,6 +645,17 @@ impl HumanL23SingleCompartmentSimulation {
         self.state
     }
 
+    /// Evaluate the current balance at the committed live state without advancing time.
+    pub fn current_balance(
+        &self,
+        injected_current: Amperes,
+    ) -> Result<HumanL23SingleCompartmentCurrentBalance, SimulationError> {
+        let mut balance = HumanL23SingleCompartmentCurrentBalance::ZERO;
+        self.model
+            .derivatives(self.state.as_array(), injected_current, Some(&mut balance))?;
+        Ok(balance)
+    }
+
     /// Advance one fixed RK4 step and return the four voltage values actually
     /// supplied to the coupled derivative evaluations.
     ///
@@ -612,8 +673,53 @@ impl HumanL23SingleCompartmentSimulation {
         injected_current: Amperes,
     ) -> Result<(HumanL23SingleCompartmentRuntimeState, [Volts; 4]), SimulationError> {
         let mut voltage_stages = [Volts::from_volts(0.0)?; 4];
-        let state = self.integrate_step(duration, injected_current, Some(&mut voltage_stages))?;
+        let state =
+            self.integrate_step(duration, injected_current, Some(&mut voltage_stages), None)?;
         Ok((state, voltage_stages))
+    }
+
+    /// Advance one RK4 step and expose the four coupled voltage and current stages.
+    /// Current densities are A/m²; voltage derivatives are V/s.
+    pub fn step_with_voltage_and_current_stages(
+        &mut self,
+        duration: SimDuration,
+        injected_current: Amperes,
+    ) -> Result<
+        (
+            HumanL23SingleCompartmentRuntimeState,
+            [Volts; 4],
+            [HumanL23SingleCompartmentCurrentBalance; 4],
+        ),
+        SimulationError,
+    > {
+        let mut voltage_stages = [Volts::from_volts(0.0)?; 4];
+        let mut current_stages = [HumanL23SingleCompartmentCurrentBalance::ZERO; 4];
+        let state = self.integrate_step(
+            duration,
+            injected_current,
+            Some(&mut voltage_stages),
+            Some(&mut current_stages),
+        )?;
+        Ok((state, voltage_stages, current_stages))
+    }
+
+    /// Advance one RK4 step and expose current balance at its four derivative stages.
+    /// Current densities are A/m²; voltage derivatives are V/s.
+    pub fn step_with_current_balance_stages(
+        &mut self,
+        duration: SimDuration,
+        injected_current: Amperes,
+    ) -> Result<
+        (
+            HumanL23SingleCompartmentRuntimeState,
+            [HumanL23SingleCompartmentCurrentBalance; 4],
+        ),
+        SimulationError,
+    > {
+        let mut current_stages = [HumanL23SingleCompartmentCurrentBalance::ZERO; 4];
+        let state =
+            self.integrate_step(duration, injected_current, None, Some(&mut current_stages))?;
+        Ok((state, current_stages))
     }
 
     /// Advance one fixed RK4 step with constant injected current.
@@ -626,7 +732,7 @@ impl HumanL23SingleCompartmentSimulation {
         duration: SimDuration,
         injected_current: Amperes,
     ) -> Result<HumanL23SingleCompartmentRuntimeState, SimulationError> {
-        self.integrate_step(duration, injected_current, None)
+        self.integrate_step(duration, injected_current, None, None)
     }
 
     fn integrate_step(
@@ -634,6 +740,7 @@ impl HumanL23SingleCompartmentSimulation {
         duration: SimDuration,
         injected_current: Amperes,
         voltage_stages: Option<&mut [Volts; 4]>,
+        mut current_stages: Option<&mut [HumanL23SingleCompartmentCurrentBalance; 4]>,
     ) -> Result<HumanL23SingleCompartmentRuntimeState, SimulationError> {
         if duration.as_nanoseconds() > self.model.max_internal_step.as_nanoseconds() {
             return Err(SimulationError::OutOfRangeValue {
@@ -648,13 +755,33 @@ impl HumanL23SingleCompartmentSimulation {
         let dt = duration.as_seconds();
         let y = self.state.as_array();
         let stage_1 = y;
-        let k1 = self.model.derivatives(stage_1, injected_current)?;
+        let k1 = if let Some(stages) = current_stages.as_mut() {
+            self.model
+                .derivatives(stage_1, injected_current, Some(&mut stages[0]))?
+        } else {
+            self.model.derivatives(stage_1, injected_current, None)?
+        };
         let stage_2 = add_scaled(y, k1, dt * 0.5);
-        let k2 = self.model.derivatives(stage_2, injected_current)?;
+        let k2 = if let Some(stages) = current_stages.as_mut() {
+            self.model
+                .derivatives(stage_2, injected_current, Some(&mut stages[1]))?
+        } else {
+            self.model.derivatives(stage_2, injected_current, None)?
+        };
         let stage_3 = add_scaled(y, k2, dt * 0.5);
-        let k3 = self.model.derivatives(stage_3, injected_current)?;
+        let k3 = if let Some(stages) = current_stages.as_mut() {
+            self.model
+                .derivatives(stage_3, injected_current, Some(&mut stages[2]))?
+        } else {
+            self.model.derivatives(stage_3, injected_current, None)?
+        };
         let stage_4 = add_scaled(y, k3, dt);
-        let k4 = self.model.derivatives(stage_4, injected_current)?;
+        let k4 = if let Some(stages) = current_stages.as_mut() {
+            self.model
+                .derivatives(stage_4, injected_current, Some(&mut stages[3]))?
+        } else {
+            self.model.derivatives(stage_4, injected_current, None)?
+        };
         if let Some(stages) = voltage_stages {
             *stages = [
                 Volts::from_volts(stage_1[0])?,
@@ -663,7 +790,6 @@ impl HumanL23SingleCompartmentSimulation {
                 Volts::from_volts(stage_4[0])?,
             ];
         }
-
         let next = std::array::from_fn(|index| {
             y[index] + dt * (k1[index] + 2.0 * k2[index] + 2.0 * k3[index] + k4[index]) / 6.0
         });
@@ -778,18 +904,24 @@ mod tests {
 
         let y = diagnostic.state.as_array();
         let dt = duration.as_seconds();
-        let k1 = model.derivatives(y, current).unwrap();
+        let k1 = model.derivatives(y, current, None).unwrap();
         let stage_2 = super::add_scaled(y, k1, dt * 0.5);
-        let k2 = model.derivatives(stage_2, current).unwrap();
+        let k2 = model.derivatives(stage_2, current, None).unwrap();
         let stage_3 = super::add_scaled(y, k2, dt * 0.5);
-        let k3 = model.derivatives(stage_3, current).unwrap();
+        let k3 = model.derivatives(stage_3, current, None).unwrap();
         let stage_4 = super::add_scaled(y, k3, dt);
 
-        let (diagnostic_state, voltage_stages) = diagnostic
-            .step_with_voltage_stages(duration, current)
+        let (diagnostic_state, voltage_stages, current_stages) = diagnostic
+            .step_with_voltage_and_current_stages(duration, current)
             .unwrap();
         let ordinary_state = ordinary.step(duration, current).unwrap();
+        let state_before_query = diagnostic.state();
+        let endpoint_balance = diagnostic
+            .current_balance(Amperes::from_amperes(0.0).unwrap())
+            .unwrap();
 
+        assert_eq!(diagnostic.state(), state_before_query);
+        assert!(endpoint_balance.voltage_derivative_v_per_s().is_finite());
         assert_eq!(diagnostic_state, ordinary_state);
         assert_eq!(diagnostic_state, diagnostic.state());
         assert_eq!(
@@ -801,6 +933,21 @@ mod tests {
                 Volts::from_volts(stage_4[0]).unwrap(),
             ]
         );
+
+        for balance in current_stages {
+            let residual = model.specific_capacitance.as_farads_per_square_meter()
+                * balance.voltage_derivative_v_per_s()
+                + balance.total_ionic_current_density_a_per_m2()
+                - balance.injected_current_density_a_per_m2();
+            assert!(residual.abs() < 1.0e-12);
+        }
+        let weighted_voltage_change = dt / 6.0
+            * (current_stages[0].voltage_derivative_v_per_s()
+                + 2.0 * current_stages[1].voltage_derivative_v_per_s()
+                + 2.0 * current_stages[2].voltage_derivative_v_per_s()
+                + current_stages[3].voltage_derivative_v_per_s());
+        let actual_voltage_change = diagnostic_state.voltage().as_volts() - y[0];
+        assert!((weighted_voltage_change - actual_voltage_change).abs() < 1.0e-14);
     }
 
     fn source_rheobase_trial_spikes(current_pa: f64) -> bool {
