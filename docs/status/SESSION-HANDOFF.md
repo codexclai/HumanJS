@@ -183,3 +183,12 @@ The 2026-11-11 missing-helper conclusion was based on an incomplete extraction. 
 ### CI correction and verified rerun
 
 Run 43130214819 exposed an overly restrictive validator lower bound (18 ms) for the 17.51-ms final panel-J sample. The data point was not altered; the accepted plotted range was corrected to 17 ms. Follow-up run 43130293760 passed formatting, Clippy, all Rust tests, Python syntax, both Wilbers validators, repository policy, and cleanup on its exact commit. Preserve this failure/fix history.
+
+
+### 2026-11-12 — historical archive audit completed
+
+- Owner-provided `HumanJSProject.zip` was inspected read-only; SHA-256 `0deb7789a8df444ea6a4e957dc63520cf6e786c18887286c3a31a319f61eccdf`; 422 entries, 375 files, 26,045,082 uncompressed bytes.
+- Inventory: 16 old JavaScript source files, 28 architecture notes, 143 experiment documents, 92 simulator-result JSONs, three test files, historical requirements/decisions, and a large scientific dossier.
+- Archive remains outside GitHub. Do not port the legacy runtime or treat its old simulator outputs as current HumanJS or biological evidence. Selectively reuse a research citation only after checking the primary source; re-run a historical experiment in the Rust core before relying on its outcome.
+- This was triage, not exhaustive scientific revalidation of every old source/note. ADR-017 records the scope and policy. Future chats do not need the ZIP to continue current work.
+- Current active task: complete Figure S5 panel-M comparison using the deposited K_IV -> K_recovery source path and report the raster/polyline residual without conflating it with raw experimental evidence.
