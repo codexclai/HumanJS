@@ -41,7 +41,7 @@ Do not search for or request old uploads or copied source snapshots. If evidence
 
 `main` is the only branch to use, permanently. Never create, check out, update, merge, or otherwise use another branch. Make authorized changes directly on `main`. Do not create branches, PRs, or automation that opens non-main update branches. No branch protection, rulesets, or deletion-prevention settings are required. Force pushes are permitted but exceptional and must be inspected and verified.
 
-The live repository check immediately before this gate-state update verified default branch `main`, HEAD `6bcdd3c6d90536162323f253232f9ba9e96c573e`, a complete 74-entry tree, exactly one branch (`main`), and no open issues or pull requests. GitHub Actions run `43146166519` passed on that exact HEAD. Recheck all live state at the start of every session.
+The live repository check after the gate-state implementation verified default branch `main`, HEAD `ada7a9e8ecd478adfd3b411d2ccd0bdefbd1b137`, tree `4756de3378f291634acfea4058f27b0868ee0a44` with 74 entries (`truncated=false`), exactly one branch (`main`), and no open issues or pull requests. GitHub Actions run `43147714885` passed on that exact HEAD. Recheck all live state at the start of every session.
 
 ## Session procedure
 
@@ -268,3 +268,8 @@ The NEURON 9.0.2 diagnostic script was re-run end-to-end from this synchronized 
 The AP1 diagnostic now exports and compares the five source NMODL STATE variables (Na m/h, K m/h1/h2) with the five HumanJS live gate fractions. In the author-default 20-µs, secondorder=0, Na-table-on run, gate RMSEs are 0.003213 Na activation, 0.002729 Na inactivation, 0.001386 K activation, 0.0000810 K fast inactivation, and 0.0000770 K slow inactivation (dimensionless fractions). The largest state differences occur during the 3–4.2-ms spike upstroke/peak; pre-spike state differences are small. Applying the deposited conductance equations to gate traces gives derived Na/K conductance-density RMSEs of 0.1436/0.02367 pS/µm². These are model outputs, not measurements.
 
 A 1-µs CN/table-off convergence diagnostic compared all 29,000 post-step samples against 1-µs HumanJS: gate RMSEs were 0.0001406 Na activation, 0.0000990 Na inactivation, 0.0000544 K activation, 0.00000352 K fast inactivation, and 0.000000572 K slow inactivation. This does not make the non-default NEURON solver the paper's baseline or establish biological fidelity. The Rust trace example and Python source diagnostic now optionally emit/compare gate CSVs; details and reproducible commands are in the Wilbers experiment note and research Section 6. The gate-integrator-only difference under identical externally prescribed voltage remains unisolated.
+
+
+### 2026-11-12 — internal AP1 gate-state diagnostic committed and CI verified
+
+Commit `ada7a9e8ecd478adfd3b411d2ccd0bdefbd1b137` (`feat(neuro): compare AP1 channel-gate trajectories`) extends the Rust trace example and NEURON diagnostic to export/compare all five live channel gates, documents author-default and high-resolution results, and refreshes scientific handoff notes. GitHub Actions run `43147714885` passed on this exact main commit: Rust format, Clippy, all Rust tests, experiment Python syntax, both Wilbers evidence validators, and repository policy. This is numerical model-to-model analysis only; the single-compartment spike mechanism remains exploratory and not biologically accepted.
