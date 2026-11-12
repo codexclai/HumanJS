@@ -234,3 +234,8 @@ The next workflow (43134383535) again stopped at rustfmt only. The CI diff showe
 ### Verification correction — remaining rustfmt constructor
 
 Workflow run 43134461510 reached the formatter and identified one remaining copy of the initial-condition constructor with the same rustfmt reflow. That exact formatting-only correction is now applied. No compilation or Rust test result was obtained from the previous run; use the next workflow as the verification gate.
+
+
+### Verification correction — strongly typed voltage comparisons
+
+Workflow run 43134527862 passed rustfmt but Clippy/compilation rejected direct ordering comparisons on the intentionally non-ordered Volts newtype. The regression now compares its explicit SI values via as_volts(), retaining dimensional types everywhere else. The failure was a compile-time API misuse, not a numerical test result.
