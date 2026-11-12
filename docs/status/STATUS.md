@@ -239,3 +239,8 @@ Workflow run 43134461510 reached the formatter and identified one remaining copy
 ### Verification correction — strongly typed voltage comparisons
 
 Workflow run 43134527862 passed rustfmt but Clippy/compilation rejected direct ordering comparisons on the intentionally non-ordered Volts newtype. The regression now compares its explicit SI values via as_volts(), retaining dimensional types everywhere else. The failure was a compile-time API misuse, not a numerical test result.
+
+
+### Verification correction — voltage-crossing condition formatting
+
+Workflow run 43134596362 identified only the formatter's preferred single-line layout for the two SI-value threshold-crossing conditions. The logic remains the same; exact rustfmt output is now applied. The type-corrected regression still awaits compilation and execution.

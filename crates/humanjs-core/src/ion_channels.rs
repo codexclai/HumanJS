@@ -747,9 +747,7 @@ mod tests {
                 zero
             };
             let after = simulation.step(dt, injected).unwrap().voltage();
-            if before.as_volts() < threshold.as_volts()
-                && after.as_volts() >= threshold.as_volts()
-            {
+            if before.as_volts() < threshold.as_volts() && after.as_volts() >= threshold.as_volts() {
                 return true;
             }
         }
@@ -804,9 +802,7 @@ mod tests {
                 zero
             };
             let after = simulation.step(dt, injected).unwrap().voltage();
-            if before.as_volts() < threshold.as_volts()
-                && after.as_volts() >= threshold.as_volts()
-            {
+            if before.as_volts() < threshold.as_volts() && after.as_volts() >= threshold.as_volts() {
                 threshold_crossings += 1;
             }
             trace.push(after.as_volts() * 1_000.0);
