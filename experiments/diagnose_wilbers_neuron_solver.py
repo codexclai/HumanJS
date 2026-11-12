@@ -455,12 +455,16 @@ def compare_gate_integrators_on_shared_voltage(
 
     # Validate the complete recorded NMODL state path before constructing any
     # counterfactual, so malformed traces cannot be silently broadcast or sliced.
-    recorded_source_gates = np.column_stack(
-        [np.asarray(source_gates[name], dtype=float) for name in SOURCE_GATE_NAMES]
-    )
+    source_gate_columns = [
+        np.asarray(source_gates[name], dtype=float) for name in SOURCE_GATE_NAMES
+    ]
+    if any(column.shape != times.shape for column in source_gate_columns):
+        raise reproduction.ReproductionError(
+            "Shared-voltage source gates must match the voltage sample count"
+        )
+    recorded_source_gates = np.column_stack(source_gate_columns)
     if (
-        recorded_source_gates.shape != (len(times), len(SOURCE_GATE_NAMES))
-        or not np.isfinite(recorded_source_gates).all()
+        not np.isfinite(recorded_source_gates).all()
         or np.any((recorded_source_gates < 0.0) | (recorded_source_gates > 1.0))
     ):
         raise reproduction.ReproductionError(
