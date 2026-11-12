@@ -204,3 +204,8 @@ Workflow run 43134731123 passed formatting and Clippy and executed 30 of 31 test
 ### 2026-11-12 — author current-clamp protocol replay diagnostic
 
 A Rust-side replay of the published rheobase search and 1.5×-rheobase pulse now reaches one −20-mV crossing and a 48–53-mV peak. The published 40-mV/ms threshold heuristic is undefined on this HumanJS trace: its peak-centred window begins with 47.44865 mV/ms and no pre-maximum derivative below 40. This mismatch is preserved as a regression, not hidden by relaxing the criterion or inventing a threshold. See the detailed finding in research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md. This is HumanJS model output, not a biological result or source-exact NEURON reproduction.
+
+
+### Author current-clamp replay — quantitative mismatch
+
+The 1.5×-rheobase Rust replay finds one −20-mV crossing, but the HumanJS peak is 59.594103 mV, outside the existing 48–53-mV published-scale test band. The source threshold extractor is also undefined: its first derivative sample is 47.448652 mV/ms, already above the strict 40-mV/ms criterion, and maximum derivative is 526.597377 mV/ms. This mismatch is now asserted explicitly; no tolerance or target was widened. It is HumanJS RK4 output, not an original NEURON source run or biological result.

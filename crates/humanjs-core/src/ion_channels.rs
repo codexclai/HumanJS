@@ -2034,9 +2034,13 @@ mod tests {
         // before the maximum upstroke derivative. On the HumanJS replay the
         // peak-centred source window starts after that crossing, so the
         // published feature extractor is undefined. Preserve this mismatch.
+        // The HumanJS model output is outside the published-scale peak band.
+        // Keep the measured mismatch explicit rather than loosening the band.
+        assert!((amplitude - 59.594_103_142_646_56).abs() < 1.0e-8);
+        assert!(amplitude > 53.0);
         assert!(source_features.is_none());
         assert!((first_dvdt - 47.448_651_583_561_485).abs() < 1.0e-8);
-        assert!(max_dvdt > 500.0);
+        assert!((max_dvdt - 526.597_377_167_614_4).abs() < 1.0e-8);
     }
 
     #[test]

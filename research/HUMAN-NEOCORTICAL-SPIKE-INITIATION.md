@@ -756,8 +756,13 @@ Keep HumanL23SingleCompartmentModel exploratory and unaccepted because:
 
 ### Author current-clamp protocol replay — threshold extraction mismatch (2026-11-12)
 
-The Rust test now runs the author helper's rheobase search sequence (initial 0.1 nA, 0.1/0.01/0.001 nA increments, APCount threshold −20 mV, 3-ms pulse after 2-ms delay, 0.1-ms steps), then applies 1.5× the resulting HumanJS rheobase as a 3-ms pulse after 1-ms delay at 0.02-ms steps for 29 ms. It finds exactly one −20-mV upward crossing and a peak in the existing 48–53-mV regression band.
+The Rust test now runs the author helper's rheobase search sequence (initial 0.1 nA, 0.1/0.01/0.001 nA increments, APCount threshold −20 mV, 3-ms pulse after 2-ms delay, 0.1-ms steps), then applies 1.5× the resulting HumanJS rheobase as a 3-ms pulse after 1-ms delay at 0.02-ms steps for 29 ms. It finds exactly one −20-mV upward crossing, but its 59.594-mV peak is outside the existing 48–53-mV regression band.
 
 However, the deposited `get_outcomes_full` threshold heuristic is not defined for this HumanJS trace: its peak-centred window begins at sample 57 (1.14 ms), the first derivative is 47.448651583561485 mV/ms, and the maximum derivative is 526.5973771676144 mV/ms at local derivative index 34. Thus there is no pre-maximum derivative below the source's strict 40-mV/ms criterion in that window. The published source code would index an empty selection at this point; HumanJS must not silently substitute another threshold or claim the source's upstroke/downstroke features were reproduced.
 
 The test now explicitly asserts this unresolved source-feature-extraction mismatch, alongside one spike and peak scale. This is a computational observation on the HumanJS integration, not a reported biological result, not proof the authors' code failed on their own NEURON traces, and not a biological validation. The current HumanJS single-spike waveform test remains separate.
+
+
+#### Follow-up: measured protocol mismatch (2026-11-12)
+
+The first executable replay exposed two independent source-feature mismatches. The first 8 derivative samples of the author-style peak-centred window are all above the source threshold (first derivative 47.448651583561485 mV/ms); there is no pre-maximum-slope sample below 40 mV/ms. Separately, the HumanJS peak is 59.59410314264656 mV, which exceeds the existing published-scale regression band upper edge (53 mV) by 6.594 mV. The original published AP1 medians in the checked source table are human 46.186 mV and mouse 50.540 mV; the HumanJS result is also 11.231 mV above their 50:50 median midpoint (48.363 mV). This comparison is diagnostic only: the current replay uses the fitted all-human channel endpoint and HumanJS RK4, not the authors' original NEURON execution. Keep the discrepancy as a failure of present model acceptance, not as a new target to fit against.
