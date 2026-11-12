@@ -727,6 +727,152 @@ mod tests {
         super::HumanL23SingleCompartmentModel::wilbers_2023_human_l23_current_clamp_fit().unwrap()
     }
 
+    fn source_rheobase_trial_spikes(current_pa: f64) -> bool {
+        let model = wilbers_model()
+            .with_max_internal_step(SimDuration::from_microseconds(100).unwrap());
+        let initial = HumanL23SingleCompartmentInitialConditions::new(
+            Volts::from_millivolts(-70.0).unwrap(),
+        );
+        let mut simulation = HumanL23SingleCompartmentSimulation::new(model, initial).unwrap();
+        let dt = SimDuration::from_microseconds(100).unwrap();
+        let current = Amperes::from_picoamperes(current_pa).unwrap();
+        let zero = Amperes::from_amperes(0.0).unwrap();
+        let threshold = Volts::from_millivolts(-20.0).unwrap();
+
+        // Source getrheo: 7 ms total, 3-ms pulse after a 2-ms delay.
+        for index in 0..70 {
+            let before = simulation.state().voltage();
+            let injected = if (20..50).contains(&index) {
+                current
+            } else {
+                zero
+            };
+            let after = simulation.step(dt, injected).unwrap().voltage();
+            if before < threshold && after >= threshold {
+                return true;
+            }
+        }
+        false
+    }
+
+    fn source_protocol_rheobase_pa() -> f64 {
+        let mut current_pa = 100.0; // source starts at 0.1 nA
+        for increment_pa in [100.0, 10.0, 1.0] {
+            let mut found = false;
+            for _ in 0..=200 {
+                if source_rheobase_trial_spikes(current_pa) {
+                    found = true;
+                    break;
+                }
+                current_pa += increment_pa;
+                assert!(
+                    current_pa <= 20_000.0,
+                    "source-protocol rheobase search exceeded the safe 20-nA bound"
+                );
+            }
+            assert!(found, "source-protocol rheobase search did not converge");
+            // The deposited Python helper backs off the step after coarse and
+            // medium searches, then refines at 1-pA resolution.
+            if increment_pa > 1.0 {
+                current_pa -= increment_pa;
+            }
+        }
+        current_pa.round()
+    }
+
+    fn source_current_clamp_ap_features(rheobase_pa: f64) -> (f64, f64, f64, usize) {
+        let model = wilbers_model();
+        let initial = HumanL23SingleCompartmentInitialConditions::new(
+            Volts::from_millivolts(-70.0).unwrap(),
+        );
+        let mut simulation = HumanL23SingleCompartmentSimulation::new(model, initial).unwrap();
+        let dt = SimDuration::from_microseconds(20).unwrap();
+        let current = Amperes::from_picoamperes(rheobase_pa * 1.5).unwrap();
+        let zero = Amperes::from_amperes(0.0).unwrap();
+        let threshold = Volts::from_millivolts(-20.0).unwrap();
+        let mut trace = Vec::with_capacity(1_450);
+        let mut threshold_crossings = 0;
+
+        // Source run_1AP: 29 ms total, 3-ms pulse after a 1-ms delay.
+        for index in 0..1_450 {
+            let before = simulation.state().voltage();
+            let injected = if (50..200).contains(&index) {
+                current
+            } else {
+                zero
+            };
+            let after = simulation.step(dt, injected).unwrap().voltage();
+            if before < threshold && after >= threshold {
+                threshold_crossings += 1;
+            }
+            trace.push(after.as_volts() * 1_000.0);
+        }
+
+        let peak_index = trace
+            .iter()
+            .enumerate()
+            .max_by(|left, right| left.1.total_cmp(right.1))
+            .unwrap()
+            .0;
+        let window_start = peak_index.saturating_sub(49);
+        let window_end = (peak_index + 150).min(trace.len());
+        let window = &trace[window_start..window_end];
+        let derivatives: Vec<f64> = window
+            .windows(2)
+            .map(|pair| (pair[1] - pair[0]) / 0.02)
+            .collect();
+        let peak_local_index = window
+            .iter()
+            .enumerate()
+            .max_by(|left, right| left.1.total_cmp(right.1))
+            .unwrap()
+            .0;
+        let max_derivative_index = derivatives
+            .iter()
+            .enumerate()
+            .max_by(|left, right| left.1.total_cmp(right.1))
+            .unwrap()
+            .0;
+        let threshold_index = derivatives[..max_derivative_index]
+            .iter()
+            .rposition(|rate| *rate < 40.0)
+            .unwrap()
+            + 1;
+        let spike_threshold = window[threshold_index];
+        let peak = window[peak_local_index];
+        let amplitude = peak;
+        let up_v = &window[..peak_local_index];
+        let up_30 = up_v
+            .iter()
+            .rposition(|voltage| *voltage < spike_threshold + (amplitude - spike_threshold) * 0.3)
+            .unwrap()
+            + 1;
+        let up_70 = up_v
+            .iter()
+            .rposition(|voltage| *voltage < spike_threshold + (amplitude - spike_threshold) * 0.7)
+            .unwrap()
+            + 1;
+        let upstroke = derivatives[up_30..up_70].iter().sum::<f64>() / (up_70 - up_30) as f64;
+
+        let down_v = &window[peak_local_index..];
+        let down_30 = peak_local_index
+            + down_v
+                .iter()
+                .rposition(|voltage| *voltage > spike_threshold + (amplitude - spike_threshold) * 0.7)
+                .unwrap()
+            + 1;
+        let down_70 = peak_local_index
+            + down_v
+                .iter()
+                .rposition(|voltage| *voltage > spike_threshold + (amplitude - spike_threshold) * 0.3)
+                .unwrap()
+            + 1;
+        let downstroke =
+            derivatives[down_30..down_70].iter().sum::<f64>() / (down_70 - down_30) as f64;
+
+        (amplitude, upstroke, downstroke, threshold_crossings)
+    }
+
     #[derive(Debug, Clone, Copy)]
     struct PotassiumClampGates {
         activation: f64,
@@ -1842,6 +1988,29 @@ mod tests {
 
         assert!((sodium - 2.3_f64.powf(0.9)).abs() < 1.0e-12);
         assert!((potassium - 1.0).abs() < 1.0e-12);
+    }
+
+    #[test]
+    fn author_current_clamp_rheobase_protocol_generates_one_published_scale_spike() {
+        let rheobase_pa = source_protocol_rheobase_pa();
+        assert!(rheobase_pa > 0.0 && rheobase_pa <= 20_000.0);
+
+        let (amplitude, upstroke, downstroke, crossings) =
+            source_current_clamp_ap_features(rheobase_pa);
+
+        assert_eq!(
+            crossings, 1,
+            "1.5x-rheobase pulse at {rheobase_pa} pA should produce one AP"
+        );
+        // These are the existing published-scale regression bands, not a new
+        // fit and not species-specific validation (the optimizer target is a
+        // 50:50 human/mouse median summary).
+        assert!((48.0..=53.0).contains(&amplitude), "peak={amplitude} mV");
+        assert!((360.0..=480.0).contains(&upstroke), "upstroke={upstroke} mV/ms");
+        assert!(
+            (60.0..=90.0).contains(&downstroke.abs()),
+            "downstroke={downstroke} mV/ms"
+        );
     }
 
     #[test]
