@@ -41,7 +41,7 @@ Do not search for or request old uploads or copied source snapshots. If evidence
 
 `main` is the only branch to use, permanently. Never create, check out, update, merge, or otherwise use another branch. Make authorized changes directly on `main`. Do not create branches, PRs, or automation that opens non-main update branches. No branch protection, rulesets, or deletion-prevention settings are required. Force pushes are permitted but exceptional and must be inspected and verified.
 
-The live repository check on 2026-11-12 verified default branch `main`, current HEAD `32b5438f3e4ec26dcf91920e7505815c3ea556d0`, a complete 75-entry tree, exactly one branch (`main`), and no open issues or pull requests. GitHub Actions run `43213115000` passed on that exact commit, including Rust formatting, Clippy, workspace tests, Python experiment syntax, Wilbers current-balance/source-order regressions, both scientific-data validators, and repository policy. Recheck all live state at the start of every session.
+The live repository check on 2026-11-12 verified default branch `main`, current repository HEAD `5a020f31b458e75354dbc0a330a524db70237cea` (documentation refresh), latest implementation commit `32b5438f3e4ec26dcf91920e7505815c3ea556d0`, a complete 75-entry tree, exactly one branch (`main`), and no open issues or pull requests. GitHub Actions run `43213384881` passed on the documentation refresh and run `43213115000` passed on the implementation commit. The implementation run covered Rust formatting, Clippy, workspace tests, Python experiment syntax, Wilbers current-balance/source-order regressions, both scientific-data validators, and repository policy. Recheck all live state at the start of every session.
 
 ## Session procedure
 
