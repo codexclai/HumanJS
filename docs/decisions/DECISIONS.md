@@ -133,3 +133,20 @@ Do not remove or extend this exploratory mechanism merely to make the documentat
 ### ADR-016 follow-up — current-clamp conductance source mapping (2026-11-12)
 
 The current-clamp conductance values are no longer provenance-ambiguous. The unrestricted Dataverse v3.0 files `AP1comparison.csv`, `gbar_na.csv`, `gbar_k.csv`, and the complete `cc_tools.py` helper were retrieved and SHA-1 verified. The exact all-human-kinetics (Na ratio=1, K ratio=1) endpoint is 114.47654963753565 pS/μm² Na and 29.045736151752504 pS/μm² K, matching the Rust preset after rounding. However, the optimizer's three AP targets remain the 50:50 human/mouse median values. The preset is therefore an all-human kinetic mixture fitted to cross-species midpoint AP features—not a human-only AP fit and not a direct measurement of human channel density. This resolves the conductance preset's source-table provenance but does not pass ADR-014's broader spike-mechanism scientific acceptance gate. The original NEURON/SciPy optimizer was not rerun in the available environment; the deposited grid outputs were verified instead.
+
+
+## ADR-017 — Pre-migration JavaScript archive is reference-only
+
+**Status:** Accepted · **Date:** 2026-11-12
+
+The owner supplied a historical `HumanJSProject.zip` for a one-time migration-loss audit. Its SHA-256 is `0deb7789a8df444ea6a4e957dc63520cf6e786c18887286c3a31a319f61eccdf`; the inspected archive contains 422 ZIP entries (375 files; 26,045,082 uncompressed bytes). It includes the former JavaScript/Node.js runtime, 16 files under `src/`, 28 architecture notes, 143 experiment documents, 92 raw simulator-result JSON files, three test files, extensive scientific research notes, and historical requirements/decision/handoff records.
+
+The archive is a historical reference, not a current implementation baseline or dependency. The owner has confirmed that the archive itself is to remain outside the public repository. Do not copy the ZIP, duplicate its source tree, import its Node.js/JavaScript implementation, restore npm packaging, or treat its old simulator outputs as current HumanJS results. These directions are already superseded by the current Rust/WGSL/Python/C/C++ architecture and the main-only GitHub source-of-truth policy.
+
+Useful information is to be recovered selectively, with provenance and scientific limits:
+- historical human-evidence citations and anatomy reviews may seed new research only after the primary source and current relevance are rechecked;
+- experiment protocols may inform new Rust experiments, but old JavaScript simulator outcomes are software-history evidence only and must be independently reproduced before reuse;
+- old requirements/prompts that conflict with current accepted requirements remain historical and do not override them;
+- failed, rejected, and incomplete experiments are useful as design warnings, not evidence of biological behavior.
+
+This audit was a structural and documentation triage, not a line-by-line scientific revalidation of all 715-kB research material or all legacy source files. No legacy source, raw result, or unverified citation was imported. The ZIP is not required for future sessions: this decision and the triage findings are recorded in current GitHub documentation. If a specific historical file becomes necessary later, request only that file or relevant source material rather than making the archive a standing dependency.
