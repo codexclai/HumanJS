@@ -838,7 +838,13 @@ mod tests {
         let threshold_index = derivatives[..max_derivative_index]
             .iter()
             .rposition(|rate| *rate < 40.0)
-            .unwrap()
+            .unwrap_or_else(|| {
+                panic!(
+                    "source threshold heuristic undefined: peak_index={peak_index},                      window_start={window_start}, peak_local_index={peak_local_index},                      max_derivative_index={max_derivative_index}, max_dvdt={},                      first_derivatives={:?}",
+                    derivatives[max_derivative_index],
+                    &derivatives[..derivatives.len().min(8)]
+                )
+            })
             + 1;
         let spike_threshold = window[threshold_index];
         let peak = window[peak_local_index];
