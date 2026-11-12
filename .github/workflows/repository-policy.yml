@@ -44,6 +44,10 @@ jobs:
               ast.parse(script.read_text(encoding="utf-8"), filename=str(script))
           print(f"Parsed {len(scripts)} Python experiment scripts")
           PY
+      - name: Test Wilbers voltage-sampling counterfactuals
+        run: |
+          python3 -m pip install --disable-pip-version-check numpy==1.26.4
+          python3 -m unittest discover -s experiments -p 'test_*.py' -v
       - name: Validate Wilbers Figure S5 digitization
         run: python3 experiments/validate_wilbers_fig_s5_digitization.py
       - name: Validate Wilbers current-clamp conductance grid
