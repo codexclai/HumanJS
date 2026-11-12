@@ -184,3 +184,10 @@ The panel-J raster axis was refined against the six existing marker centers. Its
 ### Verification correction — Figure S5 raster validator
 
 The first CI run after the refined panel-J samples (run 43130214819) failed only because the validator's lower plotted-range bound was set to 18 ms while the final 55-mV sample is 17.51 ms. The raster point was retained; the validator bound was corrected to 17 ms. The follow-up run 43130293760 passed all workflow steps on its exact commit. This was a test-boundary correction, not a change to scientific observations or model parameters.
+
+
+### 2026-11-12 — pre-migration archive reconciliation
+
+The owner supplied `HumanJSProject.zip` for a one-time audit. It was inspected read-only; SHA-256 `0deb7789a8df444ea6a4e957dc63520cf6e786c18887286c3a31a319f61eccdf`, 422 ZIP entries / 375 files / 26,045,082 uncompressed bytes. It contains the discontinued Node.js/JavaScript implementation (16 `src/` files), 28 architecture notes, 143 experiment documents, 92 raw simulator-result JSONs, three test files, and a large historical scientific research dossier.
+
+**Disposition:** archive excluded from GitHub and not needed as a future-session dependency. No legacy implementation, old runtime result, or unreviewed research bundle was imported. The previous simulator's outputs are not biological evidence and cannot be treated as results from the current Rust core. The historical architecture and prompts contain designs superseded by current owner requirements; current Rust/WGSL/Python/C/C++ direction remains authoritative. The archive contains potentially useful human-evidence citations and experiment protocols, but these require source-level revalidation and independent Rust reproduction before influencing current mechanisms. This was an inventory and documentation triage, not a line-by-line revalidation of every legacy source or the 715-kB research dossier. See ADR-017 for the policy and scope.
