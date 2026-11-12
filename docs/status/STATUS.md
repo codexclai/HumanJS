@@ -179,3 +179,8 @@ The official 13-page supplement was fetched from the public PMC open-access obje
 
 
 The panel-J raster axis was refined against the six existing marker centers. Its six inter-marker model-line estimates now agree with the existing human and mouse equation-level current-fit reconstructions at about 0.36 ms RMSE; because the two plotted species lines overlap, this is a consistency check and cannot identify the sampled species. The panel-K raster is approximately 444.8 ms (near the fixed 450-ms component), and panel-N is approximately 2.78–2.79 s (near the pooled slow-recovery constant). Panel M remains a raster-only estimate pending an explicit method-equivalence comparison with the Rust K_recovery replay. All values remain raster-derived estimates, not raw measurements or biological validation.
+
+
+### Verification correction — Figure S5 raster validator
+
+The first CI run after the refined panel-J samples (run 43130214819) failed only because the validator's lower plotted-range bound was set to 18 ms while the final 55-mV sample is 17.51 ms. The raster point was retained; the validator bound was corrected to 17 ms. The follow-up run 43130293760 passed all workflow steps on its exact commit. This was a test-boundary correction, not a change to scientific observations or model parameters.
