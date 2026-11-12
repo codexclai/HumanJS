@@ -727,6 +727,9 @@ mod tests {
         super::HumanL23SingleCompartmentModel::wilbers_2023_human_l23_current_clamp_fit().unwrap()
     }
 
+    type SourceApFeatureMetrics = (f64, f64, f64, f64);
+    type SourceApReplay = (f64, Option<SourceApFeatureMetrics>, usize);
+
     fn source_rheobase_trial_spikes(current_pa: f64) -> bool {
         let model =
             wilbers_model().with_max_internal_step(SimDuration::from_microseconds(100).unwrap());
@@ -756,35 +759,34 @@ mod tests {
     }
 
     fn source_protocol_rheobase_pa() -> f64 {
-        let mut current_pa = 100.0; // source initializes IClamp at 0.1 nA
+        // The deposited helper first runs the initial 0.1-nA stimulus before
+        // entering its 0.1/0.01/0.001-nA increment phases.
+        let mut current_pa = 100.0;
+        let mut found = source_rheobase_trial_spikes(current_pa);
+
         for increment_pa in [100.0, 10.0, 1.0] {
-            let mut found = false;
-            // The deposited while-loop increments before its first trial in
-            // each phase. Preserve that order and cap each phase at 200 steps.
-            for _ in 0..200 {
+            let mut attempts = 0;
+            while !found && attempts < 200 {
                 current_pa += increment_pa;
                 assert!(
                     current_pa <= 20_000.0,
                     "source-protocol rheobase search exceeded the safe 20-nA bound"
                 );
-                if source_rheobase_trial_spikes(current_pa) {
-                    found = true;
-                    break;
-                }
+                found = source_rheobase_trial_spikes(current_pa);
+                attempts += 1;
             }
             assert!(found, "source-protocol rheobase search did not converge");
-            // The source backs off one increment after coarse and medium
-            // phases, then retains the first successful 1-pA result.
+
+            // The source backs off after coarse/medium phases and resets APCount.
             if increment_pa > 1.0 {
                 current_pa -= increment_pa;
+                found = false;
             }
         }
         current_pa.round()
     }
 
-    fn source_current_clamp_ap_features(
-        rheobase_pa: f64,
-    ) -> (f64, Option<(f64, f64)>, usize, f64, f64) {
+    fn source_current_clamp_ap_features(rheobase_pa: f64) -> SourceApReplay {
         let model = wilbers_model();
         let initial =
             HumanL23SingleCompartmentInitialConditions::new(Volts::from_millivolts(-70.0).unwrap());
@@ -837,8 +839,6 @@ mod tests {
             .max_by(|left, right| left.1.total_cmp(right.1))
             .unwrap()
             .0;
-        let first_dvdt = derivatives[0];
-        let max_dvdt = derivatives[max_derivative_index];
         let Some(threshold_index) = derivatives[..max_derivative_index]
             .iter()
             .rposition(|rate| *rate < 40.0)
@@ -846,13 +846,7 @@ mod tests {
         else {
             // Preserve the source extractor's undefined case as an explicit
             // result. Do not substitute a threshold or relax its 40-mV/ms rule.
-            return (
-                window[peak_local_index],
-                None,
-                threshold_crossings,
-                first_dvdt,
-                max_dvdt,
-            );
+            return (window[peak_local_index], None, threshold_crossings);
         };
         let spike_threshold = window[threshold_index];
         let peak = window[peak_local_index];
@@ -889,13 +883,16 @@ mod tests {
             + 1;
         let downstroke =
             derivatives[down_30..down_70].iter().sum::<f64>() / (down_70 - down_30) as f64;
+        let ahp_end = (peak_index + 1_250).min(trace.len());
+        let ahp = trace[peak_index + 1..ahp_end]
+            .iter()
+            .copied()
+            .fold(f64::INFINITY, f64::min);
 
         (
             amplitude,
-            Some((upstroke, downstroke)),
+            Some((spike_threshold, upstroke, downstroke, ahp)),
             threshold_crossings,
-            first_dvdt,
-            max_dvdt,
         )
     }
 
@@ -2017,34 +2014,25 @@ mod tests {
     }
 
     #[test]
-    fn author_current_clamp_rheobase_protocol_preserves_published_feature_mismatch() {
+    fn author_current_clamp_rheobase_protocol_matches_neuron_reference_features() {
         let rheobase_pa = source_protocol_rheobase_pa();
-        assert!(rheobase_pa > 0.0 && rheobase_pa <= 20_000.0);
+        assert_eq!(rheobase_pa, 20.0);
 
-        let (amplitude, source_features, crossings, first_dvdt, max_dvdt) =
-            source_current_clamp_ap_features(rheobase_pa);
+        let (amplitude, source_features, crossings) = source_current_clamp_ap_features(rheobase_pa);
+        assert_eq!(crossings, 1);
 
-        println!(
-            "HumanJS source-protocol replay: rheobase={rheobase_pa:.3} pA, \
-             pulse={:.3} pA, peak={amplitude:.9} mV, \
-             first_dvdt={first_dvdt:.9} mV/ms, max_dvdt={max_dvdt:.9} mV/ms",
-            rheobase_pa * 1.5
-        );
-        assert_eq!(
-            crossings, 1,
-            "1.5x-rheobase pulse at {rheobase_pa} pA should produce one AP"
-        );
-        // The author's threshold rule selects the last derivative <40 mV/ms
-        // before the maximum upstroke derivative. On the HumanJS replay the
-        // peak-centred source window starts after that crossing, so the
-        // published feature extractor is undefined. Preserve this mismatch.
-        // The HumanJS model output is outside the published-scale peak band.
-        // Keep the measured mismatch explicit rather than loosening the band.
-        assert!((amplitude - 59.594_103_142_646_56).abs() < 1.0e-8);
-        assert!(amplitude > 53.0);
-        assert!(source_features.is_none());
-        assert!((first_dvdt - 47.448_651_583_561_485).abs() < 1.0e-8);
-        assert!((max_dvdt - 526.597_377_167_614_4).abs() < 1.0e-8);
+        let (threshold, upstroke, downstroke, ahp) = source_features
+            .expect("the source 40-mV/ms threshold extractor is defined for this run");
+
+        // Independent reference: unchanged Dataverse v3.0 current-clamp
+        // NMODL and cc_tools.py, compiled/executed with NEURON 9.0.2.
+        // These tolerances cover the measured RK4-vs-cnexp differences;
+        // they are not biological uncertainty intervals.
+        assert!((amplitude - 49.743_162_123_837_09).abs() <= 1.2);
+        assert!((threshold - (-39.997_188_687_643_36)).abs() <= 0.2);
+        assert!((upstroke - 414.571_518_695_368_8).abs() <= 8.0);
+        assert!((downstroke - (-73.026_082_189_255_53)).abs() <= 3.0);
+        assert!((ahp - (-69.604_161_439_013_38)).abs() <= 0.1);
     }
 
     #[test]

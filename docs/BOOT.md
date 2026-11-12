@@ -226,3 +226,8 @@ GitHub Actions run 43135180538 completed successfully on exact commit b44a0650b7
 ### Follow-up documentation verification
 
 The documentation commit `5767d020cc096002a3afd83bf014018b6e30e880` is also CI-clean: GitHub Actions run `43135290117` completed successfully on that exact SHA. Formatting, Clippy, the full Rust test suite, Python syntax, both Wilbers scientific validators and repository policy all passed. The protocol-mismatch test is a passing regression because it deliberately preserves the observed out-of-band HumanJS output; it does not imply scientific acceptance.
+
+
+### 2026-11-12 — independent Wilbers NEURON AP1 execution and corrected rheobase replay
+
+The earlier 101-pA / 59.594-mV / undefined-threshold diagnosis is retracted: the Rust test helper had omitted cc_tools.getrheo's initial 0.1-nA trial. The corrected search finds 20.0-pA rheobase in both source NEURON 9.0.2 and HumanJS; both then use a 30.0-pA AP1 pulse. The exact deposited NMODL files and cc_tools.py were SHA-1 verified, compiled unchanged, and executed by the new pinned runner. HumanJS matches source peak, threshold, upstroke, downstroke, and AHP features within measured solver differences. Full trace comparison: 0.455221-mV RMSE, 4.615873-mV maximum absolute error. See the Section 6 research record and reproducible experiment runner. This is model-to-model reproduction, not biological validation; the spike-capable model remains exploratory and unaccepted.

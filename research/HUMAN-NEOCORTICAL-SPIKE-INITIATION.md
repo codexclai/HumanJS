@@ -736,7 +736,7 @@ The RatePrefactor representation deliberately treats the coefficients as mV⁻¹
 
 The source cc_tools.py rheobase procedure uses a 3-ms pulse at 2 ms, dt=0.1 ms, an APCount threshold of −20 mV, and coarse-to-fine current increments of 0.1, 0.01, and 0.001 nA. It then initializes at −70 mV and runs a 3-ms pulse at 1 ms with amplitude 1.5× rheobase using dt=0.02 ms.
 
-The current HumanJS behavioral test instead applies a fixed 25-pA pulse from 1 to 4 ms, checks one upward 0-mV crossing, and applies broad ranges to peak and rise/fall speeds. That is a useful spike-generation and numerical regression check, but it is not the deposited rheobase/1.5×-rheobase protocol, does not replay the exact fitting runner, and does not compare the complete trace to released recordings or a fresh NEURON execution. The existing step-halving test establishes numerical convergence between two RK4 step sizes for this one stimulus; it does not establish convergence to NEURON cnexp or to measured cell traces.
+The separate HumanJS behavioral smoke test still applies a fixed 25-pA pulse from 1 to 4 ms. In addition, a new source-protocol regression now reproduces the deposited helper's initial 0.1-nA rheobase trial, 0.1/0.01/0.001-nA refinement, and 1.5×-rheobase AP1 pulse. It compares all five extracted AP1 features against an independent execution of the unmodified deposited NMODL and cc_tools.py under NEURON 9.0.2. A full sample-aligned model trace comparison is also recorded below. These are model-to-model execution checks, not comparisons to raw experimental recordings. The RK4-versus-cnexp discrepancy remains measurable and is not erased by matching the summary features.
 
 ### Acceptance decision and blockers
 
@@ -749,12 +749,12 @@ Keep HumanL23SingleCompartmentModel exploratory and unaccepted because:
 3. The 2,789.79-ms K slow-recovery parameter is the pooled human/mouse group mean, not a human-specific parameter. The all-human kinetic conductance-grid corner still targets the paper's 50:50 human/mouse AP summary features; it is not a human-only AP fit.
 4. The fitted Na conductance density (114.48 pS/μm²) is not the direct human nucleated-patch mean (5.9 ± 0.8 pS/μm²). The paper reports this fitting distinction; do not present the model value as a measured channel density.
 5. The model is a lumped nucleated-somatic-patch equivalent, with no spatial AIS, axon, or dendrites. It cannot support a claim about anatomical spike-initiation location or a complete human pyramidal neuron.
-6. The existing 25-pA behavioral test is not the paper's rheobase-derived current-clamp runner, and the RK4-vs-cnexp trajectory discrepancy has not been quantified against an independent source execution or the released traces.
+6. The independent AP1 source execution now constrains the all-human grid endpoint, but the HumanJS RK4 trace still differs from NEURON cnexp (0.4552-mV RMSE; 4.6159-mV maximum absolute residual). The source trap0 correction and different integration methods remain explicit differences requiring further numerical analysis; no raw experimental current trace was recovered.
 
-**Next concrete evidence step:** run the deposited hybrid NMODL and `cc_tools.py` in an independently pinned NEURON environment using the author rheobase and AP1 protocols, then compare voltage traces, threshold crossing, peak, upstroke, downstroke and AHP against this HumanJS RK4 replay. Investigate why the HumanJS trace begins the source peak window above the source's 40-mV/ms threshold and why its peak is 59.594 mV. Do not tune the model to the raster or widen acceptance bands. In parallel, obtain the exact missing K per-cell data/plot state from the authors if available. Until those independent comparisons and data gaps are resolved, do not promote this spike-capable mechanism or infer AIS biology from it.
+**Next concrete evidence step:** isolate the remaining 0.4552-mV trace RMSE / 4.6159-mV maximum residual between the source's NEURON cnexp execution and HumanJS RK4, separating integration error from the deliberate trap0 analytic-limit correction without fitting to rasterized curves or changing source parameters. In parallel, obtain the missing per-cell K kinetic data/plot state if available. The independent AP1 reproduction does not close the other evidence gaps; do not promote this spike-capable mechanism or infer AIS biology from it.
 
 
-### Author current-clamp protocol replay — threshold extraction mismatch (2026-11-12)
+### Superseded interim finding — faulty Rust rheobase transcription (2026-11-12)
 
 The Rust test now runs the author helper's rheobase search sequence (initial 0.1 nA, 0.1/0.01/0.001 nA increments, APCount threshold −20 mV, 3-ms pulse after 2-ms delay, 0.1-ms steps), then applies 1.5× the resulting HumanJS rheobase as a 3-ms pulse after 1-ms delay at 0.02-ms steps for 29 ms. It finds exactly one −20-mV upward crossing, but its 59.594-mV peak is outside the existing 48–53-mV regression band.
 
@@ -763,12 +763,12 @@ However, the deposited `get_outcomes_full` threshold heuristic is not defined fo
 The test now explicitly asserts this unresolved source-feature-extraction mismatch, alongside one spike and the out-of-band model peak. This is a computational observation on the HumanJS integration, not a reported biological result, not proof the authors' code failed on their own NEURON traces, and not a biological validation. The current HumanJS single-spike waveform test remains separate.
 
 
-#### Follow-up: measured protocol mismatch (2026-11-12)
+#### Superseded measurements from the same faulty transcription
 
 The first executable replay exposed two independent source-feature mismatches. The first 8 derivative samples of the author-style peak-centred window are all above the source threshold (first derivative 47.448651583561485 mV/ms); there is no pre-maximum-slope sample below 40 mV/ms. Separately, the HumanJS peak is 59.59410314264656 mV, which exceeds the existing published-scale regression band upper edge (53 mV) by 6.594 mV. The original published AP1 medians in the checked source table are human 46.186 mV and mouse 50.540 mV; the HumanJS result is also 11.231 mV above their 50:50 median midpoint (48.363 mV). This comparison is diagnostic only: the current replay uses the fitted all-human channel endpoint and HumanJS RK4, not the authors' original NEURON execution. Keep the discrepancy as a failure of present model acceptance, not as a new target to fit against.
 
 
-### Verified protocol mismatch regression — CI success (2026-11-12)
+### Historical CI for the superseded mismatch regression
 
 Commit b44a0650b72501f76864f68ef593a772e16c779f removes the stale peak-band success assertion and renames the new test to `author_current_clamp_rheobase_protocol_preserves_published_feature_mismatch`. The test now checks exactly one −20-mV crossing, pins the HumanJS RK4 peak at 59.59410314264656 mV, asserts it remains above the 53-mV upper regression bound, and preserves the undefined source-threshold case (first derivative 47.448651583561485 mV/ms; max 526.5973771676144 mV/ms). It does not claim the 50:50 AP1 target is met.
 
@@ -778,3 +778,45 @@ GitHub Actions run 43135180538 completed successfully on exact commit b44a0650b7
 ### Follow-up documentation verification
 
 The documentation commit `5767d020cc096002a3afd83bf014018b6e30e880` is also CI-clean: GitHub Actions run `43135290117` completed successfully on that exact SHA. Formatting, Clippy, the full Rust test suite, Python syntax, both Wilbers scientific validators and repository policy all passed. The protocol-mismatch test is a passing regression because it deliberately preserves the observed out-of-band HumanJS output; it does not imply scientific acceptance.
+
+
+## 6. Corrected independent NEURON current-clamp execution and Rust comparison (2026-11-12)
+
+**This section supersedes the interim 101-pA / 59.594-mV / undefined-threshold diagnosis recorded in the earlier appended notes below.** That diagnosis came from an error in the newly written Rust test helper, not from the HumanJS model. The source helper first tests its initial 0.1-nA (100-pA) IClamp before entering the 0.1/0.01/0.001-nA increment loops. The first Rust transcription omitted that initial trial and immediately increased the current, incorrectly returning 101 pA. When the same 1.5× pulse was consequently simulated at 151.5 pA, it produced the spurious 59.594-mV peak and an undefined 40-mV/ms threshold crossing. The source's initial 100-pA trial actually spikes; the coarse phase backs off, and the subsequent 10-pA and 1-pA phases find 20 pA. The source helper and the corrected Rust test now agree on rheobase.
+
+### Exact independent source execution
+
+The authors' DataverseNL release (DOI 10.34894/L5J0SD, version 3.0, CC0-1.0) was downloaded into a temporary directory. The unchanged four current-clamp hybrid NMODL mechanisms were compiled with nrnivmodl and run with the original cc_tools.py helpers unchanged under NEURON 9.0.2. The checked source file identities are:
+
+| File | Dataverse file ID | Bytes | SHA-1 |
+|---|---:|---:|---|
+| cc_tools.py | 318557 | 10,448 | f64162577fa5dd86892b46570d597e58e083a02b |
+| na_human.mod | 318563 | 3,711 | ef158980e4bb427c97cfb8f379cd63006130b3b2 |
+| na_mouse.mod | 318561 | 3,726 | 84cc161f3c38fc71d399cc998d91f0c60cbd2df1 |
+| k_human.mod | 318566 | 4,326 | 622f7c9867e727a3dc7dea1f9ba2efbfb94cfd3a |
+| k_mouse.mod | 318560 | 4,303 | 8b1761352a44cc57c29f3345242a4060186d84eb |
+
+The source run used the exact all-human-kinetic conductance-grid endpoint (Na 114.47654963753565 pS/μm², K 29.045736151752504 pS/μm²; both human ratios 1.0), 34°C, initial voltage −70 mV, and the source helper's membrane, reversal-potential, and channel-shift settings. It called cc_tools.getrheo and cc_tools.run_1AP without patching the mechanism or helper source.
+
+### Source and HumanJS AP1 comparison
+
+Both executions return 20.0-pA rheobase, then use a 30.0-pA pulse (1.5× rheobase), 3 ms after a 1-ms delay, at 0.02-ms timestep. The source records 1,451 samples from 0 to 29 ms; HumanJS has 1,450 post-step samples from 0.02 to 29 ms.
+
+| Feature | NEURON 9.0.2 source | HumanJS RK4 | HumanJS − source |
+|---|---:|---:|---:|
+| Peak amplitude (mV) | 49.743162 | 50.793612 | +1.050450 |
+| Threshold (mV) | −39.997189 | −39.871467 | +0.125721 |
+| Upstroke (mV/ms) | 414.571519 | 421.654482 | +7.082963 |
+| Downstroke (mV/ms) | −73.026082 | −75.336764 | −2.310682 |
+| AHP (mV) | −69.604161 | −69.627149 | −0.022987 |
+
+Both traces peak at 4.16 ms. After aligning the 1,450 shared sample times (NEURON t=0 is omitted from the comparison), the trace residual is 0.455221 mV RMSE, 4.615873 mV maximum absolute error, and 0.197286 mV mean absolute error. The source AP feature extraction succeeds for the corrected HumanJS trace; its 40-mV/ms threshold rule is defined.
+
+The Rust test now checks the 20-pA rheobase, exactly one −20-mV crossing, and all five features against the independent NEURON model reference. Its bounds (1.2 mV peak, 0.2 mV threshold, 8 mV/ms upstroke, 3 mV/ms downstroke, 0.1 mV AHP) cover the observed RK4-versus-cnexp differences; they are software-reproduction tolerances, not biological confidence intervals.
+
+### Reproduction tooling and limits
+
+The reproducible runner is experiments/reproduce_wilbers_current_clamp_neuron.py, with pinned Python packages in experiments/requirements-wilbers-neuron.txt. It downloads only the required CC0 sources, verifies their sizes and SHA-1 identities, compiles the mechanisms unchanged in a temporary directory, invokes the original helper, and writes results to stdout or caller-selected output paths. No downloaded NMODL source, trace CSV, or generated result is vendored in this repository.
+
+This is an independent reproduction of the authors' model-side current-clamp protocol, and a quantitative comparison against the HumanJS model. It is **not** a reproduction of the underlying biological recordings, an optimizer rerun, nor biological validation. The remaining trace residual is expected to reflect differences including NEURON cnexp versus HumanJS RK4 and HumanJS's explicit analytic-limit correction to the defective deposited trap0 implementation; this audit does not yet apportion that residual among those causes. The other ADR-014 blockers still apply: incomplete per-cell K kinetic/raw voltage-clamp data, pooled human/mouse slow recovery, cross-species AP fitting targets, non-measured fitted conductance densities, and no spatial AIS/axon/dendrite model. Keep HumanL23SingleCompartmentModel exploratory and unaccepted.
+
