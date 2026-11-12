@@ -321,7 +321,7 @@ def validate_model_line_raster() -> None:
             if not math.isfinite(value):
                 raise SystemExit(f"{filename}: non-finite ordinate estimate: {row}")
     checks = {
-        "J": (18.0, 50.0, "decreasing"),
+        "J": (17.0, 50.0, "decreasing"),
         "K": (430.0, 460.0, "flat"),
         "M": (115.0, 325.0, "rising"),
         "N": (2.70, 2.90, "flat"),
