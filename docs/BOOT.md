@@ -41,7 +41,7 @@ Do not search for or request old uploads or copied source snapshots. If evidence
 
 `main` is the only branch to use, permanently. Never create, check out, update, merge, or otherwise use another branch. Make authorized changes directly on `main`. Do not create branches, PRs, or automation that opens non-main update branches. No branch protection, rulesets, or deletion-prevention settings are required. Force pushes are permitted but exceptional and must be inspected and verified.
 
-The live repository check after the gate-state implementation verified default branch `main`, HEAD `ada7a9e8ecd478adfd3b411d2ccd0bdefbd1b137`, tree `4756de3378f291634acfea4058f27b0868ee0a44` with 74 entries (`truncated=false`), exactly one branch (`main`), and no open issues or pull requests. GitHub Actions run `43147714885` passed on that exact HEAD. Recheck all live state at the start of every session.
+The live repository check after the shared-voltage gate analysis verified default branch `main`, HEAD `eec5651c80b71e0d7706f617d944cfad772c38fb`, tree `04a368047d12332cb98068c986fd89526b0b931a` with 74 entries (`truncated=false`), exactly one branch (`main`), and no open issues or pull requests. GitHub Actions run `43149669478` passed on that exact HEAD. Recheck all live state at the start of every session.
 
 ## Session procedure
 
@@ -277,3 +277,8 @@ Commit `ada7a9e8ecd478adfd3b411d2ccd0bdefbd1b137` (`feat(neuro): compare AP1 cha
 ### 2026-11-12 — shared-voltage gate-integrator decomposition
 
 The diagnostic now applies both cnexp-equivalent and RK4 gate updates to the same source voltage samples, using the post-step voltage `V[n+1]`, common initial NMODL gate states, and the same continuous rate equations. The source exponential recurrence reproduces actual direct-rate NMODL gate states within a maximum 1.76e-6 fraction (diagnostic guard 1e-4). At 20 µs, the isolated RK4-versus-cnexp difference is 2.8221e-6 overall gate RMSE / 1.16295e-4 max, dominated by Na activation; at 1 µs it falls to 1.1710e-11 / 4.8856e-10. On the same path, Na TABLE versus direct-rate CNEXP yields 3.70195e-5 overall RMSE / 1.23720e-4 max, affecting only Na gates. These effects are much smaller than actual dynamic source-vs-HumanJS gate errors, so differing voltage paths/stage sampling/coupled feedback remain the main unresolved numerical contributors. No biological validity claim follows.
+
+
+### 2026-11-12 — shared-voltage gate integrator and Na TABLE experiment committed
+
+Commit `eec5651c80b71e0d7706f617d944cfad772c38fb` (`research(neuro): isolate gate solver effects on shared voltage`) adds the identical sampled-voltage counterfactual and 200-node Na rate-table sensitivity to the NEURON diagnostic, records its results in the research/experiment notes, and updates the next handoff. GitHub Actions run `43149669478` passed on the exact main commit. The analysis remains numerical and does not alter the model's exploratory/unaccepted status.
