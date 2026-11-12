@@ -728,8 +728,8 @@ mod tests {
     }
 
     fn source_rheobase_trial_spikes(current_pa: f64) -> bool {
-        let model = wilbers_model()
-            .with_max_internal_step(SimDuration::from_microseconds(100).unwrap());
+        let model =
+            wilbers_model().with_max_internal_step(SimDuration::from_microseconds(100).unwrap());
         let initial = HumanL23SingleCompartmentInitialConditions::new(
             Volts::from_millivolts(-70.0).unwrap(),
         );
@@ -756,23 +756,25 @@ mod tests {
     }
 
     fn source_protocol_rheobase_pa() -> f64 {
-        let mut current_pa = 100.0; // source starts at 0.1 nA
+        let mut current_pa = 100.0; // source initializes IClamp at 0.1 nA
         for increment_pa in [100.0, 10.0, 1.0] {
             let mut found = false;
-            for _ in 0..=200 {
-                if source_rheobase_trial_spikes(current_pa) {
-                    found = true;
-                    break;
-                }
+            // The deposited while-loop increments before its first trial in
+            // each phase. Preserve that order and cap each phase at 200 steps.
+            for _ in 0..200 {
                 current_pa += increment_pa;
                 assert!(
                     current_pa <= 20_000.0,
                     "source-protocol rheobase search exceeded the safe 20-nA bound"
                 );
+                if source_rheobase_trial_spikes(current_pa) {
+                    found = true;
+                    break;
+                }
             }
             assert!(found, "source-protocol rheobase search did not converge");
-            // The deposited Python helper backs off the step after coarse and
-            // medium searches, then refines at 1-pA resolution.
+            // The source backs off one increment after coarse and medium
+            // phases, then retains the first successful 1-pA result.
             if increment_pa > 1.0 {
                 current_pa -= increment_pa;
             }
@@ -858,13 +860,17 @@ mod tests {
         let down_30 = peak_local_index
             + down_v
                 .iter()
-                .rposition(|voltage| *voltage > spike_threshold + (amplitude - spike_threshold) * 0.7)
+                .rposition(|voltage| {
+                    *voltage > spike_threshold + (amplitude - spike_threshold) * 0.7
+                })
                 .unwrap()
             + 1;
         let down_70 = peak_local_index
             + down_v
                 .iter()
-                .rposition(|voltage| *voltage > spike_threshold + (amplitude - spike_threshold) * 0.3)
+                .rposition(|voltage| {
+                    *voltage > spike_threshold + (amplitude - spike_threshold) * 0.3
+                })
                 .unwrap()
             + 1;
         let downstroke =
@@ -2006,7 +2012,10 @@ mod tests {
         // fit and not species-specific validation (the optimizer target is a
         // 50:50 human/mouse median summary).
         assert!((48.0..=53.0).contains(&amplitude), "peak={amplitude} mV");
-        assert!((360.0..=480.0).contains(&upstroke), "upstroke={upstroke} mV/ms");
+        assert!(
+            (360.0..=480.0).contains(&upstroke),
+            "upstroke={upstroke} mV/ms"
+        );
         assert!(
             (60.0..=90.0).contains(&downstroke.abs()),
             "downstroke={downstroke} mV/ms"
