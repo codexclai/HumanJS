@@ -230,3 +230,8 @@ Workflow run 43134237756 failed only at rustfmt after the first source-protocol 
 ### Verification correction — exact rustfmt shape
 
 The next workflow (43134383535) again stopped at rustfmt only. The CI diff showed two initial-condition constructors that rustfmt collapses to a wrapped single expression. Those exact formatting changes are applied; the rheobase increment-order correction remains intact. No compile/test result was available from that formatting-only run.
+
+
+### Verification correction — remaining rustfmt constructor
+
+Workflow run 43134461510 reached the formatter and identified one remaining copy of the initial-condition constructor with the same rustfmt reflow. That exact formatting-only correction is now applied. No compilation or Rust test result was obtained from the previous run; use the next workflow as the verification gate.

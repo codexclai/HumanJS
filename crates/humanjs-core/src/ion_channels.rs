@@ -783,9 +783,8 @@ mod tests {
 
     fn source_current_clamp_ap_features(rheobase_pa: f64) -> (f64, f64, f64, usize) {
         let model = wilbers_model();
-        let initial = HumanL23SingleCompartmentInitialConditions::new(
-            Volts::from_millivolts(-70.0).unwrap(),
-        );
+        let initial =
+            HumanL23SingleCompartmentInitialConditions::new(Volts::from_millivolts(-70.0).unwrap());
         let mut simulation = HumanL23SingleCompartmentSimulation::new(model, initial).unwrap();
         let dt = SimDuration::from_microseconds(20).unwrap();
         let current = Amperes::from_picoamperes(rheobase_pa * 1.5).unwrap();
