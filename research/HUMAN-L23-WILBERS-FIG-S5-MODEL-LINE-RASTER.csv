@@ -4,7 +4,7 @@
 # Raster: PDF page 7 (1-based), rendered at 300 dpi, 2550 x 3300 px; pixel coordinates refer to the full page raster.
 # These are approximate raster-derived model-line center samples, NOT experimental observations, raw traces, or exact source-code curve outputs.
 # Red and blue model lines substantially overlap in these panels; samples therefore identify the combined visible trace, not species-specific curves.
-# J axis calibration is an affine map from the six pre-existing experimental marker centers to their original crop coordinates; K uses its existing panel calibration; M/N use printed axis ticks.
+# J axis calibration is an affine map from the six pre-existing experimental marker centers to their original crop coordinates; K uses its existing panel calibration. M y-axis calibration uses the 300-ms tick at page y=2241.5 px and 200-ms tick at page y=2340.5 px (1.0101 ms/px); x coordinates use the printed -90 to -70 mV tick scale.
 panel,trace_identity,voltage_mV,ordinate_estimate,ordinate_unit,page7_pixel_x_300dpi,page7_pixel_y_300dpi,pixel_uncertainty,digitization_note
 J,combined_red_blue,5.00,47.07,ms,1866.80,1901.00,3,model-line raster; calibrated to existing marker-center affine transform; sampled between marker columns
 J,combined_red_blue,15.00,38.06,ms,1930.63,1944.00,3,model-line raster; calibrated to existing marker-center affine transform; sampled between marker columns
@@ -21,10 +21,10 @@ K,combined_red_blue,25.00,444.77,ms,753.52,2298.50,3,near-horizontal red/blue mo
 K,combined_red_blue,35.00,444.77,ms,797.44,2298.50,3,near-horizontal red/blue model traces overlap; pixel center sampled between marker columns
 K,combined_red_blue,45.00,444.77,ms,841.36,2298.50,3,near-horizontal red/blue model traces overlap; pixel center sampled between marker columns
 K,combined_red_blue,55.00,444.77,ms,885.28,2298.50,3,near-horizontal red/blue model traces overlap; pixel center sampled between marker columns
-M,combined_red_blue,-87.50,121.82,ms,1184.12,2406.00,4,model lines overlap; line center extracted from rendered raster; axis ticks 100/200/300 ms
-M,combined_red_blue,-82.50,175.45,ms,1300.38,2347.00,4,model lines overlap; line center extracted from rendered raster; axis ticks 100/200/300 ms
-M,combined_red_blue,-77.50,274.55,ms,1416.62,2238.00,4,model lines overlap; line center extracted from rendered raster; axis ticks 100/200/300 ms
-M,combined_red_blue,-72.50,316.36,ms,1532.88,2192.00,4,model lines overlap; line center extracted from rendered raster; axis ticks 100/200/300 ms
+M,combined_red_blue,-87.50,133.84,ms,1184.12,2406.00,5,model lines overlap; line center extracted from rendered raster; y-axis calibrated from 300- and 200-ms ticks
+M,combined_red_blue,-82.50,192.42,ms,1300.38,2347.00,5,model lines overlap; line center extracted from rendered raster; y-axis calibrated from 300- and 200-ms ticks
+M,combined_red_blue,-77.50,303.54,ms,1416.62,2238.00,5,model lines overlap; line center extracted from rendered raster; y-axis calibrated from 300- and 200-ms ticks
+M,combined_red_blue,-72.50,350.00,ms,1532.88,2192.00,5,model lines overlap; line center extracted from rendered raster; y-axis calibrated from 300- and 200-ms ticks
 N,combined_red_blue,-87.50,2.78,s,1822.25,2295.00,3,horizontal red/blue model traces overlap; axis calibrated to printed 2 and 3 s ticks
 N,combined_red_blue,-82.50,2.78,s,1936.75,2295.00,3,horizontal red/blue model traces overlap; axis calibrated to printed 2 and 3 s ticks
 N,combined_red_blue,-77.50,2.79,s,2051.25,2294.00,3,horizontal red/blue model traces overlap; axis calibrated to printed 2 and 3 s ticks
