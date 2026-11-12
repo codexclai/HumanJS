@@ -118,3 +118,10 @@ Do not infer withholding or manufacture missing observations. The HumanJS single
 ### 2026-11-12 — current repository and contact-route check
 
 A fresh live check verified public repository codexclai/HumanJS, default branch main, HEAD 7318fb1cfbb467e33404d0e14e0617ab8c969f7b, a complete non-truncated 67-entry tree, exactly one branch/ref (main), and no open issues or pull requests. Latest main workflow run 43128282842 completed successfully on that exact HEAD. The publisher's corresponding-author contact route for the Wilbers K+ data/plotting clarification is now documented in the research record and handoff; no email has been sent. The spike-capable model remains exploratory and unaccepted.
+
+
+### 2026-11-12 — model-line raster audit and live repository recheck
+
+A new 23-point raster estimate of the combined visible red/blue Figure S5 model traces in panels J/K/M/N is preserved in research/HUMAN-L23-WILBERS-FIG-S5-MODEL-LINE-RASTER.csv. The official supplement PDF was retrieved and hash-verified; the Figure S5 validator now checks the added raster record. These estimates are not species-separated curves, raw data, exact source-code outputs, or biological validation. See the final 2026-11-12 section of research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md.
+
+Immediately before this BOOT update, live main was 1e721852bf3b49c72ff9c49cb249a376ccd339dc, with a complete non-truncated 68-entry tree, exactly one branch (main), no open issues or PRs, and workflow run 43129934568 pending on that exact commit. Recheck the final BOOT commit and its workflow before relying on this state.
