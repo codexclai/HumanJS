@@ -189,3 +189,8 @@ Workflow run 43134527862 passed rustfmt but Clippy/compilation rejected direct o
 ### Verification correction — voltage-crossing condition formatting
 
 Workflow run 43134596362 identified only the formatter's preferred single-line layout for the two SI-value threshold-crossing conditions. The logic remains the same; exact rustfmt output is now applied. The type-corrected regression still awaits compilation and execution.
+
+
+### Verification correction — rustfmt condition/brace layout
+
+Workflow run 43134667073 passed no code checks beyond setup because rustfmt requested the line break before the opening brace for both threshold conditions. The condition remains two typed SI-voltage comparisons; only its precise formatter-required wrapping is changed here. No test execution has yet succeeded for the new rheobase protocol.
