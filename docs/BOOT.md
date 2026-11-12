@@ -1,6 +1,6 @@
 # HumanJS — session boot
 
-**Updated:** 2026-11-11  
+**Updated:** 2026-11-12  
 **Canonical source:** public GitHub repository `codexclai/HumanJS`, branch `main`.
 
 Read this file first whenever a new session begins. GitHub `main` is authoritative. The ChatGPT Project Sources area is expected to be empty; no upload or local snapshot is a project dependency.
@@ -41,7 +41,7 @@ Do not search for or request old uploads or copied source snapshots. If evidence
 
 `main` is the only branch to use, permanently. Never create, check out, update, merge, or otherwise use another branch. Make authorized changes directly on `main`. Do not create branches, PRs, or automation that opens non-main update branches. No branch protection, rulesets, or deletion-prevention settings are required. Force pushes are permitted but exceptional and must be inspected and verified.
 
-The live repository check on 2026-11-11 verified default branch `main`, HEAD `65fb7d37e410a2eedc44b1f29e1f528956c8d535`, a complete 63-entry tree, exactly one branch (`main`), and no open issues or pull requests. GitHub Actions run `43070078342` passed on that exact HEAD: formatting, Clippy, all Rust workspace tests, Python experiment-runner syntax, the seven-CSV Figure S5 evidence validator, and repository policy. Recheck the live repository, tree, branch list, and workflow at the start of every session; do not rely on this historical check.
+The live repository check on 2026-11-12 verified default branch `main`, HEAD `d1065a74d72e2c80f6e55aa21b3bf31c041afd3f`, a complete 67-entry tree, exactly one branch (`main`), and no open issues or pull requests. GitHub Actions run `43125977124` passed on that exact HEAD: Rust formatting, Clippy, workspace tests, Python experiment-runner syntax, the Figure S5 research validator, the current-clamp conductance-grid validator, and repository policy. Recheck all live state at the start of every session.
 
 ## Session procedure
 
@@ -105,4 +105,4 @@ The 65-file inventory lists all three unrestricted current-clamp CSVs and the th
 The complete `cc_tools.py` (Dataverse file 318557) and all three unrestricted calibration CSVs are now retrieved and SHA-1 verified. `get_outcomes_full` is present in the helper; the earlier missing-helper conclusion was an incomplete-extraction error. The all-human kinetic (Na=1, K=1) corner of the deposited 20×20 grid is exactly 114.47654963753565 pS/μm² Na and 29.045736151752504 pS/μm² K, rounding to the HumanJS preset 114.48/29.05. The objective targets the 50:50 mean of human/mouse median AP peak voltage, upstroke, and downstroke, even at the all-human kinetic corner. Full details, source hashes, feature extraction, and protocol are in the final 2026-11-12 section of `research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md`. A CI validator checks the preserved CC0 source CSVs. NEURON/SciPy optimization was not rerun and no biological-validation claim is made.
 
 
-The 2026-11-12 current-clamp audit also verified the complementary human/mouse channel split in both species' NMODL files: human currents scale by the selected ratio and mouse currents by its complement. At the all-human endpoint the mouse mechanisms contribute zero. Sodium Q10 scales both rates and conductance in the source; potassium Q10 scales rates only. The CI validator checks Dataverse SHA-1, local SHA-256, matrix axes/endpoints, and the Rust preset literals. Latest workflow `43124314513` passed on `c73a90270cc92979add481b00856ea2848eea98c`.
+The 2026-11-12 current-clamp audit also verified the complementary human/mouse channel split in both species' NMODL files: human currents scale by the selected ratio and mouse currents by its complement. At the all-human endpoint the mouse mechanisms contribute zero. Sodium Q10 scales both rates and conductance in the source; potassium Q10 scales rates only. The CI validator checks Dataverse SHA-1, local SHA-256, matrix axes/endpoints, and the Rust preset literals. Latest workflow `43125977124` passed on exact HEAD `d1065a74d72e2c80f6e55aa21b3bf31c041afd3f`.
