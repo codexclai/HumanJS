@@ -255,3 +255,8 @@ Workflow run 43134667073 passed no code checks beyond setup because rustfmt requ
 ### Verification failure — current-clamp source threshold extractor
 
 Workflow run 43134731123 passed formatting and Clippy and executed 30 of 31 tests successfully. The new protocol test panicked while reproducing the source threshold heuristic: within its peak-centred −1/+3 ms window, it found no pre-maximum-slope derivative below 40 mV/ms. This is not an accepted spike-feature result and must not be fixed by widening thresholds. The next run adds the derivative/window diagnostics needed to locate whether the issue is the trace window, stimulus replay, or source-equivalence assumptions.
+
+
+### 2026-11-12 — author current-clamp protocol replay diagnostic
+
+A Rust-side replay of the published rheobase search and 1.5×-rheobase pulse now reaches one −20-mV crossing and a 48–53-mV peak. The published 40-mV/ms threshold heuristic is undefined on this HumanJS trace: its peak-centred window begins with 47.44865 mV/ms and no pre-maximum derivative below 40. This mismatch is preserved as a regression, not hidden by relaxing the criterion or inventing a threshold. See the detailed finding in research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md. This is HumanJS model output, not a biological result or source-exact NEURON reproduction.

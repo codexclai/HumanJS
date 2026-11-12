@@ -752,3 +752,12 @@ Keep HumanL23SingleCompartmentModel exploratory and unaccepted because:
 6. The existing 25-pA behavioral test is not the paper's rheobase-derived current-clamp runner, and the RK4-vs-cnexp trajectory discrepancy has not been quantified against an independent source execution or the released traces.
 
 **Next concrete evidence step:** implement a separate source-protocol reproduction check for the rheobase search and 1.5×-rheobase pulse, preserve its outputs as model-side results, and compare the same published waveform features without fitting to raster estimates or changing acceptance tolerances. In parallel, obtain the exact K per-cell data/plot state from the authors if available. Until those checks and data gaps are resolved, do not promote this spike-capable mechanism or infer AIS biology from it.
+
+
+### Author current-clamp protocol replay — threshold extraction mismatch (2026-11-12)
+
+The Rust test now runs the author helper's rheobase search sequence (initial 0.1 nA, 0.1/0.01/0.001 nA increments, APCount threshold −20 mV, 3-ms pulse after 2-ms delay, 0.1-ms steps), then applies 1.5× the resulting HumanJS rheobase as a 3-ms pulse after 1-ms delay at 0.02-ms steps for 29 ms. It finds exactly one −20-mV upward crossing and a peak in the existing 48–53-mV regression band.
+
+However, the deposited `get_outcomes_full` threshold heuristic is not defined for this HumanJS trace: its peak-centred window begins at sample 57 (1.14 ms), the first derivative is 47.448651583561485 mV/ms, and the maximum derivative is 526.5973771676144 mV/ms at local derivative index 34. Thus there is no pre-maximum derivative below the source's strict 40-mV/ms criterion in that window. The published source code would index an empty selection at this point; HumanJS must not silently substitute another threshold or claim the source's upstroke/downstroke features were reproduced.
+
+The test now explicitly asserts this unresolved source-feature-extraction mismatch, alongside one spike and peak scale. This is a computational observation on the HumanJS integration, not a reported biological result, not proof the authors' code failed on their own NEURON traces, and not a biological validation. The current HumanJS single-spike waveform test remains separate.
