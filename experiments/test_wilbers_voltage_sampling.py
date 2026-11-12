@@ -133,6 +133,26 @@ class VoltageSamplingTests(unittest.TestCase):
                 use_na_table=0,
             )
 
+    def test_humanjs_voltage_replay_rejects_nonfinite_initial_time(self) -> None:
+        times = np.arange(5, dtype=float) * 0.02
+        voltage = np.full(len(times), -70.0, dtype=float)
+        initial = np.asarray([0.05, 0.95, 0.02, 0.99, 0.99], dtype=float)
+        gates = {
+            name: np.full(4, initial[index], dtype=float)
+            for index, name in enumerate(diagnostic.HUMANJS_GATE_NAMES)
+        }
+        with self.assertRaises(reproduction.ReproductionError):
+            diagnostic.compare_gate_sampling_on_humanjs_voltage(
+                float("nan"),
+                float(voltage[0]),
+                initial,
+                times[1:],
+                voltage[1:],
+                times[1:],
+                gates,
+                use_na_table=0,
+            )
+
     def test_rejects_malformed_gate_metric_shapes(self) -> None:
         with self.assertRaises(reproduction.ReproductionError):
             diagnostic._gate_path_metrics(

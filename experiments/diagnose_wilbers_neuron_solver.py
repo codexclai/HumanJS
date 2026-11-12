@@ -651,7 +651,9 @@ def compare_gate_sampling_on_humanjs_voltage(
             "HumanJS voltage and gate replay requires matching one-dimensional samples and five initial gates"
         )
     if (
-        not np.isfinite(voltage_times).all()
+        not np.isfinite(initial_time_ms)
+        or not np.isfinite(initial_voltage_mv)
+        or not np.isfinite(voltage_times).all()
         or not np.isfinite(voltage).all()
         or not np.isfinite(gate_times).all()
         or not np.isfinite(initial).all()
