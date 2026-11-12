@@ -209,3 +209,8 @@ Two intermediate CI runs (43131449785 and 43131513456) caught the new 5-pixel un
 - Added a Rust regression for shift polarity and initialization. It does not turn the exploratory model into an accepted biological mechanism.
 - Remaining gates: corrected trap0 is not exact NMODL runtime reproduction; K slow recovery is pooled human/mouse and K fit quality is limited; conductance fit targets cross-species AP medians; no spatial AIS; RK4-vs-cnexp trajectory equivalence is untested; current spike smoke test is not the source rheobase/1.5× protocol.
 - Full audit and next reproduction step are in research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md. Preserve the exploratory/unaccepted status.
+
+
+### Verification correction — source-mapping regression formatting
+
+Workflow run 43133844647 failed at the Rust formatting check only. The failure was the exact rustfmt layout of the newly added current-clamp voltage-shift/initial-state regression; all subsequent workflow checks were skipped, so no compile/test result was obtained in that run. The code was reformatted to the CI rustfmt output without changing its assertions or model behavior. A new workflow run on the correction commit is required before calling this change verified.

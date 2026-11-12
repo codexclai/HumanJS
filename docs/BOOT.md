@@ -154,3 +154,8 @@ The exact pre-optimizer `K_IV` -> `K_recovery` path is now recorded. Panel M is 
 ### 2026-11-12 — Human L2/L3 single-compartment acceptance audit
 
 The author-deposited hybrid current-clamp Na/K mechanisms and cc_tools.py were fetched and inspected directly. The source confirms trates(v+vshift) with helper vshift = −10 mV, so HumanJS's effective V−10 mV shift is correct. Source initialization, Na/K temperature-factor placement, three-fraction K gate behavior, SI current-density conversions, geometry, capacitance, leak and reversal potentials were reconciled. A dedicated Rust regression now locks the shift polarity and source-equivalent initialized gate states. This does not establish a source-exact run: HumanJS repairs the deposited trap0 defect and uses RK4 rather than NEURON cnexp. The existing 25-pA spike test is not the paper's rheobase/1.5×-rheobase protocol. The complete acceptance audit is appended to research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md; the model remains exploratory and unaccepted.
+
+
+### Verification correction — source-mapping regression formatting
+
+Workflow run 43133844647 failed at the Rust formatting check only. The failure was the exact rustfmt layout of the newly added current-clamp voltage-shift/initial-state regression; all subsequent workflow checks were skipped, so no compile/test result was obtained in that run. The code was reformatted to the CI rustfmt output without changing its assertions or model behavior. A new workflow run on the correction commit is required before calling this change verified.

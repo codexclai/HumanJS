@@ -210,3 +210,8 @@ Run 43130214819 exposed an overly restrictive validator lower bound (18 ms) for 
 - Geometry, passive leak/capacitance, reversal offsets, K gate fractions and current-density units have been traced. A Rust regression covers source shift and initial gate semantics.
 - Do not promote: HumanJS deliberately corrects the broken NMODL trap0, uses RK4 rather than source NEURON cnexp, and has not yet replayed the exact rheobase/1.5×-rheobase current-clamp runner. K recovery includes a pooled human/mouse constant; the conductance fit has cross-species targets; this is not an AIS model.
 - Next: implement the exact current-clamp stimulus/rheobase reproduction check, then independently compare source-model features and numerical integrator behavior. Keep evidence limitations explicit.
+
+
+### Verification correction — source-mapping regression formatting
+
+Workflow run 43133844647 failed at the Rust formatting check only. The failure was the exact rustfmt layout of the newly added current-clamp voltage-shift/initial-state regression; all subsequent workflow checks were skipped, so no compile/test result was obtained in that run. The code was reformatted to the CI rustfmt output without changing its assertions or model behavior. A new workflow run on the correction commit is required before calling this change verified.

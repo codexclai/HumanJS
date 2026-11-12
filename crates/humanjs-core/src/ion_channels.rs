@@ -1777,9 +1777,7 @@ mod tests {
         let voltage_mv = -70.0;
 
         let sodium_shifted = model.sodium_rates(voltage_mv).unwrap();
-        let sodium_source_equivalent = unshifted_model
-            .sodium_rates(voltage_mv - 10.0)
-            .unwrap();
+        let sodium_source_equivalent = unshifted_model.sodium_rates(voltage_mv - 10.0).unwrap();
         assert_eq!(sodium_shifted, sodium_source_equivalent);
 
         let potassium_shifted = model.potassium_rates(voltage_mv, 0.5).unwrap();
@@ -1789,18 +1787,25 @@ mod tests {
         assert_eq!(potassium_shifted, potassium_source_equivalent);
 
         // The hybrid INITIAL blocks set m=minf, h=hinf, h1=hinf and h2=hinf.
-        let initial_conditions =
-            HumanL23SingleCompartmentInitialConditions::new(Volts::from_millivolts(
-                voltage_mv,
-            )
-            .unwrap());
+        let initial_conditions = HumanL23SingleCompartmentInitialConditions::new(
+            Volts::from_millivolts(voltage_mv).unwrap(),
+        );
         let simulation =
             HumanL23SingleCompartmentSimulation::new(model, initial_conditions).unwrap();
         let state = simulation.state();
 
-        assert_eq!(state.sodium_activation(), sodium_shifted.activation.steady_state);
-        assert_eq!(state.sodium_inactivation(), sodium_shifted.inactivation.steady_state);
-        assert_eq!(state.potassium_activation(), potassium_shifted.activation.steady_state);
+        assert_eq!(
+            state.sodium_activation(),
+            sodium_shifted.activation.steady_state
+        );
+        assert_eq!(
+            state.sodium_inactivation(),
+            sodium_shifted.inactivation.steady_state
+        );
+        assert_eq!(
+            state.potassium_activation(),
+            potassium_shifted.activation.steady_state
+        );
         assert_eq!(
             state.potassium_fast_inactivation(),
             potassium_shifted.fast_inactivation.steady_state
