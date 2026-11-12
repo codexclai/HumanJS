@@ -1369,14 +1369,7 @@ mod tests {
         let voltages_mv = [0.0, 10.0, 20.0, 30.0, 40.0, 50.0];
         // Independent SciPy references from k_mouse.mod, with the K_IV
         // activation current and fixed 450-ms slow component used in Figure S5J.
-        let expected_fast_tau_ms = [
-            53.429_1,
-            41.997_2,
-            33.677_6,
-            27.398_6,
-            22.571_7,
-            18.819_3,
-        ];
+        let expected_fast_tau_ms = [53.429_1, 41.997_2, 33.677_6, 27.398_6, 22.571_7, 18.819_3];
         for (index, voltage_mv) in voltages_mv.into_iter().enumerate() {
             let current = replay_k_activation_current(model, voltage_mv);
             let (tau1_ms, r_squared) =
@@ -1436,10 +1429,8 @@ mod tests {
             if recovery_voltage_mv == -80.0 {
                 // The plotted source target is the human/mouse arithmetic mean;
                 // the mechanism's slow recovery constant is also shared.
-                let pooled_fast_mean_ms =
-                    (228.527_493_810_715_55 + 245.121_197_002_686_07) / 2.0;
-                let pooled_slow_mean_ms =
-                    (1_999.729_496_786_659_6 + 3_579.856_388_834_977_7) / 2.0;
+                let pooled_fast_mean_ms = (228.527_493_810_715_55 + 245.121_197_002_686_07) / 2.0;
+                let pooled_slow_mean_ms = (1_999.729_496_786_659_6 + 3_579.856_388_834_977_7) / 2.0;
                 assert!((fast_tau_ms - pooled_fast_mean_ms).abs() < 3.0);
                 assert!((slow_tau_ms - pooled_slow_mean_ms).abs() < 20.0);
             }
