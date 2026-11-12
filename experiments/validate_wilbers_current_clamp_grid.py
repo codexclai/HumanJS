@@ -117,11 +117,26 @@ def validate_grid(filename: str) -> None:
     )
 
 
+def validate_rust_preset_mapping() -> None:
+    source = (ROOT / "crates" / "humanjs-core" / "src" / "ion_channels.rs").read_text(
+        encoding="utf-8"
+    )
+    expected_literals = (
+        f"from_picosiemens_per_square_micrometer({ALL_HUMAN['WILBERS-CURRENT-CLAMP-GBAR-NA.csv']:.2f})?",
+        f"from_picosiemens_per_square_micrometer({ALL_HUMAN['WILBERS-CURRENT-CLAMP-GBAR-K.csv']:.2f})?",
+    )
+    for literal in expected_literals:
+        if literal not in source:
+            fail(f"Rust HumanL23 preset no longer maps to verified grid endpoint: {literal}")
+    print("Rust HumanL23 preset literals match the rounded all-human source-grid endpoint")
+
+
 def main() -> int:
     ap1 = verify_source_file("WILBERS-CURRENT-CLAMP-AP1COMPARISON.csv")
     validate_ap1_targets(ap1)
     validate_grid("WILBERS-CURRENT-CLAMP-GBAR-NA.csv")
     validate_grid("WILBERS-CURRENT-CLAMP-GBAR-K.csv")
+    validate_rust_preset_mapping()
     print(
         "Wilbers current-clamp source tables verified. The all-human grid "
         "corner rounds to the HumanJS preset 114.48/29.05 pS/um^2; this is "
