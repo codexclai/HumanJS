@@ -171,3 +171,8 @@ The human/mouse mixture semantics were additionally verified against the unrestr
 ### 2026-11-12 — Wilbers corresponding-author route verified
 
 The final Science Advances publisher page was queried directly and confirms the corresponding-author contacts Huibert D. Mansvelder (h.d.mansvelder@vu.nl) and Natalia A. Goriounova (n.a.goriounova@vu.nl). Its data-availability statement points to Dataverse DOI 10.34894/L5J0SD. The v3.0/65-file inventory audit above still applies: the specific K kinetic CSVs, data_fig5.xlsx, raw K voltage-clamp traces, and a separate final Figure S5 plotting generator are not listed. This gives us a legitimate, non-accusatory route to request the missing provenance and an explicit availability statement. No message has been sent and no new experimental data have been received. The HumanJS spike-capable mechanism remains exploratory and unaccepted.
+
+
+### 2026-11-12 — Figure S5 model-line raster estimates
+
+The official 13-page supplement was fetched from the public PMC open-access object store, hash-verified, and page 7 rendered at 300 dpi. Added 23 raster-derived centerline samples for panels J/K/M/N in research/HUMAN-L23-WILBERS-FIG-S5-MODEL-LINE-RASTER.csv. The samples estimate the combined visible red/blue traces because the curves overlap/interleave at the available raster resolution; they are not species-separated fits, experimental observations, or substitutes for the absent source plotting state/raw recordings. The Figure S5 validator now checks this CSV's provenance, grids, units, coordinate bounds, uncertainties, ranges, and trends. Scientific status remains exploratory/unaccepted; no biological validation claim.
