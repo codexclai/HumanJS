@@ -162,3 +162,12 @@ The 2026-11-11 missing-helper conclusion was based on an incomplete extraction. 
 - A targeted request is now ready: ask for the exact J/K/M/N plotting/export code and parameter state; the missing per-cell human K activation/inactivation/recovery tables; raw K voltage-clamp recordings plus acquisition/protocol metadata if shareable; and an explicit availability statement for anything not retained or not distributable. Acknowledge the published Dataverse deposit and keep the tone neutral.
 - **No email has been sent.** Contact discovery is not new experimental evidence and does not change the exploratory/unaccepted status of the Rust spike mechanism.
 - Next: send the focused request only with the owner's authorization, then record any response and provenance. Independently digitize J/K/M/N model-line pixels as raster estimates only; do not substitute them for source code or raw recordings.
+
+
+### 2026-11-12 — Figure S5 model-line raster digitization completed
+
+- Retrieved the official supplementary PDF from the public PMC open-access object store; SHA-256 matches dfa1daaf4dd0e3979bac84b9cb8b1874c4514d40588969a21d7766a7f12f2a1d.
+- Rendered page 7 at 300 dpi and digitized 23 model-line center samples across panels J/K/M/N into research/HUMAN-L23-WILBERS-FIG-S5-MODEL-LINE-RASTER.csv.
+- The traces are combined red/blue estimates because the species curves overlap/interleave at this raster resolution; do not assign species, treat them as measurements, or claim exact curve reproduction.
+- Wired structural/range/trend checks into experiments/validate_wilbers_fig_s5_digitization.py.
+- Next: compare these raster estimates with the prior equation-level reconstructions without refitting, quantify residuals only where axes/overlap support it, and preserve the missing source plotting code/raw recordings as an unresolved evidence gap. Do not promote the spike mechanism.
