@@ -287,6 +287,61 @@ def validate_k_inactivation_model_vs_group_means() -> None:
     )
 
 
+
+def validate_model_line_raster() -> None:
+    """Validate the separate pixel-level model-line estimates from official PDF page 7."""
+    filename = "HUMAN-L23-WILBERS-FIG-S5-MODEL-LINE-RASTER.csv"
+    _, rows = read_rows(filename)
+    expected_voltages = {
+        "J": [5.0, 15.0, 25.0, 35.0, 45.0, 55.0],
+        "K": [-25.0, -15.0, -5.0, 5.0, 15.0, 25.0, 35.0, 45.0, 55.0],
+        "M": [-87.5, -82.5, -77.5, -72.5],
+        "N": [-87.5, -82.5, -77.5, -72.5],
+    }
+    expected_units = {"J": "ms", "K": "ms", "M": "ms", "N": "s"}
+    if len(rows) != 23:
+        raise SystemExit(f"{filename}: expected 23 raster model-line samples, found {len(rows)}")
+    for panel, voltages in expected_voltages.items():
+        selected = [row for row in rows if row["panel"] == panel]
+        if [float(row["voltage_mV"]) for row in selected] != voltages:
+            raise SystemExit(f"{filename}: {panel} voltage grid changed")
+        if any(row["trace_identity"] != "combined_red_blue" for row in selected):
+            raise SystemExit(f"{filename}: {panel} incorrectly claims species-separated model lines")
+        if any(row["ordinate_unit"] != expected_units[panel] for row in selected):
+            raise SystemExit(f"{filename}: {panel} ordinate unit mismatch")
+        for row in selected:
+            x = float(row["page7_pixel_x_300dpi"])
+            y = float(row["page7_pixel_y_300dpi"])
+            uncertainty = float(row["pixel_uncertainty"])
+            value = float(row["ordinate_estimate"])
+            if not (0.0 <= x <= 2550.0 and 0.0 <= y <= 3300.0):
+                raise SystemExit(f"{filename}: page-raster coordinate out of bounds: {row}")
+            if uncertainty not in (3.0, 4.0):
+                raise SystemExit(f"{filename}: pixel-reading uncertainty missing: {row}")
+            if not math.isfinite(value):
+                raise SystemExit(f"{filename}: non-finite ordinate estimate: {row}")
+    checks = {
+        "J": (48.0, 19.5, "decreasing"),
+        "K": (430.0, 460.0, "flat"),
+        "M": (115.0, 325.0, "rising"),
+        "N": (2.70, 2.90, "flat"),
+    }
+    for panel, (low, high, trend) in checks.items():
+        values = [float(row["ordinate_estimate"]) for row in rows if row["panel"] == panel]
+        if any(not low <= value <= high for value in values):
+            raise SystemExit(f"{filename}: {panel} ordinate outside expected plotted range: {values}")
+        if trend == "decreasing" and not all(a > b for a, b in zip(values, values[1:])):
+            raise SystemExit(f"{filename}: J model trace should decrease across the sampled voltage range")
+        if trend == "rising" and not all(a < b for a, b in zip(values, values[1:])):
+            raise SystemExit(f"{filename}: M model trace should rise across the sampled voltage range")
+        if trend == "flat" and max(values) - min(values) > 2.0:
+            raise SystemExit(f"{filename}: {panel} overlaid model trace should be nearly flat")
+    print(
+        f"{filename}: 23 model-line raster samples verified (J 6, K 9, M 4, N 4); "
+        "these are approximate combined red/blue traces, not experimental markers or exact fit outputs"
+    )
+
+
 def main() -> int:
     panels = {
         "I activation": {
@@ -375,6 +430,7 @@ def main() -> int:
     validate_mouse_model_prefit_check()
     validate_recovery_model_replay()
     validate_k_inactivation_model_vs_group_means()
+    validate_model_line_raster()
     print(
         f"Figure S5 evidence record passed: {total} experimental group-mean markers "
         "(46 manually digitized, 4 transcribed from source-script constants); "
