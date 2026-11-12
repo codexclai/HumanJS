@@ -3,15 +3,15 @@
 **Updated:** 2026-11-12  
 **Canonical repository:** `codexclai/HumanJS`, branch `main` only.  
 **Latest implementation/test change:** `adfacd7f8d3f8b6e7088a00507af4e51832a80d8` (paired mouse K+ current-fit tests added in `42c32ca69b7167076171f9b0adcda5ed11148dc8`, formatted in `78246ee3c810092605e145604740b3ca40953d28`, then accurately renamed in `adfacd7f8d3f8b6e7088a00507af4e51832a80d8`).  
-**Latest research record:** `2f9e8d9642f2148f5d9227fdc20843f3c1b5871d`.  
-Verify the live HEAD and newest workflow before relying on this handoff.  
-**Documentation reconciliation:** subsequent commits on `main`; verify the live HEAD and workflow before using this handoff in a later session.
+**Latest research record:** `2c47917b407052c4cbe768ddda22ea08406c5462`.  
+**Latest documentation baseline before this handoff update:** `8a31e626f5f7c70892dae93acee94b634e0f979e` (BOOT/status refreshed; research provenance reconciled).  
+Verify the live HEAD and newest workflow before relying on this handoff.
 
 ## Verified repository state at handoff
 
-- Public repository; default branch `main`; verified live HEAD before this handoff documentation update: `a81ea83bae87400e52b89181b8d77367bf1ddfab`.
-- Full tree: 67 entries, not truncated. Live branch listing: exactly `main`. No open issues or pull requests.
-- GitHub Actions run `43125977124` passed on exact pre-handoff HEAD `d1065a74d72e2c80f6e55aa21b3bf31c041afd3f`: https://github.com/codexclai/HumanJS/actions/runs/43125977124. The job passed formatting, Clippy, workspace tests, Python syntax, both Wilbers evidence validators, and repository policy. This predates the documentation-only BOOT commit `a81ea83...`; verify this handoff commit's own workflow before the next session.
+- Public repository; default branch `main`; verified live HEAD immediately before this handoff update: `8a31e626f5f7c70892dae93acee94b634e0f979e`.
+- Full recursive tree: 67 entries, not truncated. Live branch listing: exactly `main`. No open issues or pull requests.
+- GitHub Actions run `43128214721` passed on exact HEAD `8a31e626f5f7c70892dae93acee94b634e0f979e`: https://github.com/codexclai/HumanJS/actions/runs/43128214721. The job passed Rust formatting, Clippy, workspace tests, Python experiment-runner syntax, the Figure S5 validator, the current-clamp grid validator, and repository policy. This run predates the handoff-file commit; verify that final commit's own workflow after updating this file.
 - Fresh independent NEURON 9.0.2 `modlunit` invocation on unmodified `k_human.mod` and `k_mouse.mod` again failed at the untyped `trates(v+vshift)` call, line 82. Both species' repeated diagnostics are now recorded in `research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md`. The original files still compile with `nrnivmodl`; see ADR-014 for the temporary typed-probe findings. No source file was changed. The same research record clarifies that the article's public Dataverse data statement is satisfied by deposited summary/model files; it does not mean the missing per-cell K kinetic CSVs or raw voltage-clamp traces occur in the inspected 65-file v3.0 inventory.
 - No fresh local Rust test run is claimed; the Rust checks above were run in GitHub Actions.
 
@@ -98,12 +98,20 @@ Runner: `experiments/reproduce_eyal_figure7a.py`.
 - Existing architecture/decision/roadmap records continue to classify the single-compartment spike mechanism as exploratory and unaccepted; no biological validity claim is made.
 - This handoff is the final documentation file to update after this commit.
 
+### 2026-11-12 — Dataverse manifest and ModelDB provenance rechecked
+
+- The version-specific live Dataverse API reports one released v3.0 dataset version (2022-12-13; CC0-1.0) with `totalCount=65`. The complete 65-filename metadata export is independently mirrored in `Dans-labs/odissei-portal-exp` at commit `ac75eb2a48cc0bf876ec451ed82d68c101326540` (metadata only).
+- Neither source inventory contains the named `Experimental means/k_tau_*.csv` input files, `data_fig5.xlsx`, `.nwb` raw recordings, or a separate final Figure S5 plotting/export script. The exact source helper arity defect and the transparent-versus-exact J/K curve distinction remain as documented in the research record.
+- The bioRxiv v2 ModelDB/GitHub URLs are unfinished placeholders. Final-paper ModelDB 8210 resolves to the Mainen et al. (1995) neocortical spike-initiation model, not the Wilbers authors' own data/plotting source. The final paper's availability statement points to Dataverse.
+- This resolves the public inventory and citation identity; it does not restore the missing per-cell K measurements, raw voltage-clamp traces, or exact plotting script. No runtime or parameter code was changed; the Rust spike mechanism remains exploratory and unaccepted.
+- Research updates were committed as `2e0b0cc3b83aa43ec4a331355d5bae2bf1b5a108` and `2c47917b407052c4cbe768ddda22ea08406c5462`; status as `a54a71f440004d251325a54cb4687b909835322a`; BOOT as `8a31e626f5f7c70892dae93acee94b634e0f979e`. The research/status/BOOT commits each passed the repository workflow on their exact commit (runs `43127747149`, `43128024657`, `43128130076`, and `43128214721`, respectively).
+
 ## Next concrete work
 
-1. Obtain a verifiable copy of the unpublished Figure S5 plotting/export script or source state that generated the supplement, then digitize model-line pixels for panels J/K/M/N independently of the experimental-marker digitizations. The exact J/K model-line path is unresolved because the deposited helper's fit-vector arity is wrong; the six-point mouse activation raster check is only a pre-fit parameter snapshot comparison.
-2. Obtain the missing per-cell human K tau CSVs and raw voltage-clamp traces. Assess human-only recovery parameters separately; the deposited 236.824345-ms fast and 2789.7929-ms slow values are pooled human/mouse source parameters, not human-only targets.
-3. Preserve the absence of the exact Dataverse K tau CSVs and raw voltage-clamp NWB traces; no independent refitting or biological-validation claim is justified without them.
-4. Reassess the exploratory single-compartment spike model against its kinetic-source, fit-objective, and preparation-equivalence acceptance gates only after the source limitations are closed. Keep AIS-resolved modeling separate; human NaV1.2/NaV1.6 immunostaining does not provide functional conductance densities or gating parameters.
+1. Make a targeted request to the Wilbers corresponding authors for the exact Figure S5 J/K/M/N plotting/export source state, the per-cell human K kinetic CSVs, and the raw K voltage-clamp recordings; ask for an explicit availability statement if these cannot be shared. The final published availability statement points to Dataverse, whose verified v3.0 manifest does not list these inputs.
+2. Independently digitize model-line pixels in panels J/K/M/N from the official supplement when its page raster can be retrieved. Preserve these as raster-derived estimates distinct from measured group-mean markers, and do not present them as exact source fit outputs or substitutes for raw traces.
+3. Keep human-only recovery parameters unresolved: the source's 236.824345-ms fast and 2789.7929-ms slow model constants are pooled human/mouse means, not human-only targets. Do not refit on raster points or infer that missing data were withheld.
+4. Reassess the exploratory single-compartment spike model only after kinetic source, fit-objective, preparation-equivalence, and relevant human validation gates are independently satisfied. Keep AIS-resolved modeling separate; human NaV1.2/NaV1.6 immunostaining does not provide functional conductance densities or gating parameters.
 
 No biological validation, clinical validity, whole-brain functionality, or consciousness claim is made. Save/restore, Rust-native concurrency, the configurable 10,000-unit default, JSON model loading, Python, C/C++, and WGSL remain unimplemented.
 
