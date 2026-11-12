@@ -287,3 +287,8 @@ The documentation commit `5767d020cc096002a3afd83bf014018b6e30e880` is also CI-c
 ### 2026-11-12 — corrected Wilbers current-clamp source reproduction
 
 The previous 101-pA/59.594-mV/undefined-threshold conclusion is retracted. The first Rust test transcription omitted the authors' initial 0.1-nA trial before the increment loops. With the initial source trial restored, both NEURON 9.0.2 and HumanJS return 20.0-pA rheobase and use the same 30.0-pA AP1 pulse. The unchanged deposited helper/mechanisms were run independently; HumanJS matches all five extracted AP1 features within the measured RK4-versus-cnexp differences. Shared voltage samples have 0.455221-mV RMSE and 4.615873-mV maximum absolute error. The detailed reference, hashes, and reproduction runner are in research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md Section 6 and experiments/WILBERS-CURRENT-CLAMP-NEURON-REFERENCE.md. The model remains exploratory and unaccepted.
+
+
+### CI verification of corrected NEURON reference replay (2026-11-12)
+
+Commit 3ea7cb43fcc0e9627cfc7b6cdde3c28055356dd0 passed GitHub Actions run 43139126138. All required steps succeeded: Rust formatting, Clippy, complete Rust workspace tests, Python experiment-runner syntax, Figure S5 digitization validator, current-clamp conductance-grid validator, and repository policy. Two immediately preceding runs stopped at rustfmt because the source file lacked its terminal newline; that formatting-only issue was corrected. The source-model comparison assertions themselves passed unchanged. This CI validates the implementation and its pinned reference checks, not biological validity.

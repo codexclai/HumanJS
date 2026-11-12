@@ -820,3 +820,8 @@ The reproducible runner is experiments/reproduce_wilbers_current_clamp_neuron.py
 
 This is an independent reproduction of the authors' model-side current-clamp protocol, and a quantitative comparison against the HumanJS model. It is **not** a reproduction of the underlying biological recordings, an optimizer rerun, nor biological validation. The remaining trace residual is expected to reflect differences including NEURON cnexp versus HumanJS RK4 and HumanJS's explicit analytic-limit correction to the defective deposited trap0 implementation; this audit does not yet apportion that residual among those causes. The other ADR-014 blockers still apply: incomplete per-cell K kinetic/raw voltage-clamp data, pooled human/mouse slow recovery, cross-species AP fitting targets, non-measured fitted conductance densities, and no spatial AIS/axon/dendrite model. Keep HumanL23SingleCompartmentModel exploratory and unaccepted.
 
+
+
+### CI verification of corrected NEURON reference replay (2026-11-12)
+
+Commit 3ea7cb43fcc0e9627cfc7b6cdde3c28055356dd0 passed GitHub Actions run 43139126138. All required steps succeeded: Rust formatting, Clippy, complete Rust workspace tests, Python experiment-runner syntax, Figure S5 digitization validator, current-clamp conductance-grid validator, and repository policy. Two immediately preceding runs stopped at rustfmt because the source file lacked its terminal newline; that formatting-only issue was corrected. The source-model comparison assertions themselves passed unchanged. This CI validates the implementation and its pinned reference checks, not biological validity.

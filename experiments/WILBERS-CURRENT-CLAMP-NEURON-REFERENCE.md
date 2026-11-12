@@ -54,3 +54,8 @@ The earlier Rust-only test reported 101 pA rheobase, a 151.5-pA AP1 pulse, a 59.
 This is independent model-side execution of the authors' deposited model and helper, compared against HumanJS. It is not a comparison to raw experimental recordings, not an optimizer rerun, and not biological validation. The remaining trace residual includes possible differences from NEURON cnexp versus HumanJS RK4 and the explicit analytic-limit correction in HumanJS's trap0 implementation; this experiment does not apportion the residual among those mechanisms.
 
 The model remains exploratory and unaccepted for the reasons in ADR-014/ADR-016 and the current research record: defective source trap0 behavior is not exactly reproduced, the public deposit lacks raw per-cell K voltage-clamp data and missing kinetic targets, the slow K recovery parameter is pooled human/mouse, the conductance optimizer targets cross-species midpoint AP features, fitted channel densities are not direct human measurements, and the model has no spatial AIS/axon/dendrite structure.
+
+
+### CI verification of corrected NEURON reference replay (2026-11-12)
+
+Commit 3ea7cb43fcc0e9627cfc7b6cdde3c28055356dd0 passed GitHub Actions run 43139126138. All required steps succeeded: Rust formatting, Clippy, complete Rust workspace tests, Python experiment-runner syntax, Figure S5 digitization validator, current-clamp conductance-grid validator, and repository policy. Two immediately preceding runs stopped at rustfmt because the source file lacked its terminal newline; that formatting-only issue was corrected. The source-model comparison assertions themselves passed unchanged. This CI validates the implementation and its pinned reference checks, not biological validity.
