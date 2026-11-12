@@ -1,14 +1,14 @@
 # HumanJS — current status
 
-**As of:** 2026-11-11  
+**As of:** 2026-11-12  
 **Stage:** two foundational Rust CPU mechanisms plus one exploratory, unaccepted human L2/L3 single-compartment spike-capable mechanism. HumanJS is not a whole-brain simulator.
 
 ## Canonical repository and live state
 
 - Repository: `codexclai/HumanJS`, public, default branch `main`.
-- Live verification on 2026-11-11: default branch `main`; HEAD `65fb7d37e410a2eedc44b1f29e1f528956c8d535`; complete 63-entry tree, not truncated; exactly one branch (`main`); zero open issues and zero open pull requests.
-- Latest implementation commit remains `3c28de63c8a953c85084ff7c6731caae144b4ee6`; latest research evidence commit is `7df2bb1e25021fe454b9c18979e5a54602dd3272`. The latest documentation reconciliation commits are `22c9e5ca0b696dd4bc230f8f6a96889e16b307f5` and `65fb7d37e410a2eedc44b1f29e1f528956c8d535`.
-- GitHub Actions run `43070078342` passed on exact HEAD `65fb7d37e410a2eedc44b1f29e1f528956c8d535`: https://github.com/codexclai/HumanJS/actions/runs/43070078342. The `policy-and-rust` job passed Rust formatting, Clippy, workspace tests, Python experiment-runner syntax, the seven-CSV Figure S5 validator, and repository policy. This run is the current verification record; it does not establish biological validation.
+- Live verification on 2026-11-12: default branch `main`; HEAD `2f9e8d9642f2148f5d9227fdc20843f3c1b5871d`; complete 67-entry tree, not truncated; exactly one branch (`main`); zero open issues and zero open pull requests.
+- Latest code/test change: `adfacd7f8d3f8b6e7088a00507af4e51832a80d8` (the paired human/mouse K+ fixed-component current-fit references and five-voltage recovery replays were added in `42c32ca69b7167076171f9b0adcda5ed11148dc8` and formatting commit `78246ee3c810092605e145604740b3ca40953d28`). Latest research evidence commit: `2f9e8d9642f2148f5d9227fdc20843f3c1b5871d`.
+- GitHub Actions run `43125868261` passed on exact HEAD `2f9e8d9642f2148f5d9227fdc20843f3c1b5871d`: https://github.com/codexclai/HumanJS/actions/runs/43125868261. `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo test --workspace --locked` (29 core tests, 3 and 6 additional crate tests; all 38 passed), Python syntax, both Wilbers research validators, and repository policy passed. These are software/evidence-integrity checks, not biological validation.
 - A fresh NEURON 9.0.2 check independently reconfirmed that unchanged `k_human.mod` and `k_mouse.mod` compile with `nrnivmodl` but fail unmodified `modlunit` at the untyped `trates(v+vshift)` call (line 82). This is a source unit-annotation failure, not a HumanJS CI failure; ADR-014 records the typed temporary diagnostic findings. No deposited source was modified.
 - No fresh local Rust test run is claimed; the verified Rust checks above ran in GitHub Actions.
 
