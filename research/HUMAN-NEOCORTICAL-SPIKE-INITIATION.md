@@ -667,3 +667,18 @@ The same publisher page states that all data, model files, and scripts used in t
 A focused clarification request is now actionable through these corresponding-author contacts. It should ask for (1) the exact script/notebook and parameter state that generated Figure S5 panels J/K/M/N model curves, including intermediate exports; (2) the human per-cell K+ activation, fast/slow inactivation, and recovery measurements or source tables behind the absent Experimental means/k_tau_*.csv files; (3) raw K+ voltage-clamp recordings and acquisition/protocol metadata, if distributable; and (4) an explicit statement identifying which materials were never retained, are unavailable, or cannot be shared. It should acknowledge the existing Dataverse DOI and avoid implying misconduct or intentional withholding.
 
 **Contact verification only:** these addresses are printed by the publisher as corresponding-author contacts. No email has been sent, no response has been received, and no additional data have been obtained. The HumanJS K+ model remains exploratory; contact discovery does not change its acceptance or validation status.
+
+
+### Figure S5 model-line raster digitization (2026-11-12)
+
+The official supplementary PDF was fetched directly from the public PMC open-access object store, independently SHA-256 verified (dfa1daaf4dd0e3979bac84b9cb8b1874c4514d40588969a21d7766a7f12f2a1d), and page 7 rendered at 300 dpi (2550 × 3300 pixels). This allowed a separate pixel-level read of the plotted model traces in panels J, K, M, and N, which had previously been left as the next evidence task.
+
+The file research/HUMAN-L23-WILBERS-FIG-S5-MODEL-LINE-RASTER.csv records 23 centerline samples with full-page pixel coordinates, approximate axis-derived values, and 3–4 px reading uncertainty:
+- Panel J, fast inactivation: 48.92, 39.59, 32.12, 26.52, 22.17, and 18.85 ms at 5–55 mV (10-mV intervals).
+- Panel K, slow inactivation: approximately 444.77 ms across −25 to +55 mV (10-mV intervals), consistent with the plotted fixed slow component near 450 ms.
+- Panel M, fast recovery: approximately 121.82, 175.45, 274.55, and 316.36 ms at −87.5, −82.5, −77.5, and −72.5 mV.
+- Panel N, slow recovery: approximately 2.78, 2.78, 2.79, and 2.79 s at the same four voltages.
+
+These are raster-derived estimates of the **combined visible red/blue model traces**. The model lines overlap or interleave at the PDF raster resolution, so this file deliberately does not assign the sampled trace to human versus mouse. It is not a recovery of the missing plotting script, fitted parameter state, per-cell source tables, or raw voltage-clamp traces. Pixel reading uncertainty is not biological uncertainty, and these samples must not be used as experimental observations or as an independent refit.
+
+The existing Figure S5 validator now checks the new CSV's PDF hash, point counts and voltage grids, units, page-coordinate bounds, uncertainty fields, broad ordinate ranges, and expected trace trends. This adds reproducibility checks for the digitized output but does not make the underlying visual read an exact source reproduction. The J/K source-helper arity defect remains unresolved; the spike-capable HumanJS mechanism remains exploratory and unaccepted.
