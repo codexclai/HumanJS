@@ -41,7 +41,7 @@ Do not search for or request old uploads or copied source snapshots. If evidence
 
 `main` is the only branch to use, permanently. Never create, check out, update, merge, or otherwise use another branch. Make authorized changes directly on `main`. Do not create branches, PRs, or automation that opens non-main update branches. No branch protection, rulesets, or deletion-prevention settings are required. Force pushes are permitted but exceptional and must be inspected and verified.
 
-The live repository check on 2026-11-12 verified default branch `main`, HEAD `e0fd3d358ad6727af523bc467017bad700aaa7e2`, a complete 75-entry tree, exactly one branch (`main`), and no open issues or pull requests. GitHub Actions run `43168922644` passed on that exact HEAD, including all seven voltage-sampling and HumanJS-voltage replay unit tests. Recheck all live state at the start of every session.
+The live repository check on 2026-11-12 verified default branch `main`, HEAD `adc5469835065d02bf7f9ce4ef35aa08c38473f6`, a complete 75-entry tree, exactly one branch (`main`), and no open issues or pull requests. GitHub Actions run `43169224452` passed on that exact HEAD, including all seven voltage-sampling and HumanJS-voltage replay unit tests. Recheck all live state at the start of every session.
 
 ## Session procedure
 
