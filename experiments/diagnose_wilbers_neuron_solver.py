@@ -400,7 +400,20 @@ def _shared_voltage_rk4_step_linear_voltage(
 def _gate_path_metrics(actual: Any, reference: Any) -> dict[str, Any]:
     import numpy as np
 
-    residual = np.asarray(actual, dtype=float) - np.asarray(reference, dtype=float)
+    actual_values = np.asarray(actual, dtype=float)
+    reference_values = np.asarray(reference, dtype=float)
+    if (
+        actual_values.ndim != 2
+        or actual_values.shape[1] != len(HUMANJS_GATE_NAMES)
+        or actual_values.shape != reference_values.shape
+        or actual_values.shape[0] == 0
+        or not np.isfinite(actual_values).all()
+        or not np.isfinite(reference_values).all()
+    ):
+        raise reproduction.ReproductionError(
+            "Gate-path metrics require matching finite non-empty arrays with five gate columns"
+        )
+    residual = actual_values - reference_values
     return {
         "overall_rmse_gate_fraction": float(np.sqrt(np.mean(residual * residual))),
         "overall_maximum_absolute_error_gate_fraction": float(np.max(np.abs(residual))),
@@ -440,11 +453,22 @@ def compare_gate_integrators_on_shared_voltage(
     if not np.isfinite(times).all() or not np.isfinite(voltage).all() or np.any(steps <= 0.0):
         raise reproduction.ReproductionError("Shared-voltage samples must be finite with increasing times")
 
-    # Both counterfactual methods begin from the same actual NMODL state at t=0.
-    initial = np.asarray(
-        [source_gates[name][0] for name in SOURCE_GATE_NAMES],
-        dtype=float,
+    # Validate the complete recorded NMODL state path before constructing any
+    # counterfactual, so malformed traces cannot be silently broadcast or sliced.
+    recorded_source_gates = np.column_stack(
+        [np.asarray(source_gates[name], dtype=float) for name in SOURCE_GATE_NAMES]
     )
+    if (
+        recorded_source_gates.shape != (len(times), len(SOURCE_GATE_NAMES))
+        or not np.isfinite(recorded_source_gates).all()
+        or np.any((recorded_source_gates < 0.0) | (recorded_source_gates > 1.0))
+    ):
+        raise reproduction.ReproductionError(
+            "Shared-voltage source gates must be finite [0, 1] arrays matching the voltage samples"
+        )
+
+    # Both counterfactual methods begin from the same actual NMODL state at t=0.
+    initial = recorded_source_gates[0].copy()
     if not np.isfinite(initial).all() or np.any((initial < 0.0) | (initial > 1.0)):
         raise reproduction.ReproductionError("Shared-voltage initial source gates must be finite and in [0, 1]")
     na_rate_table = _build_source_na_rate_table()
@@ -495,9 +519,6 @@ def compare_gate_integrators_on_shared_voltage(
             "Shared-voltage gate integration left the [0, 1] state bounds"
         )
 
-    recorded_source_gates = np.column_stack(
-        [source_gates[name] for name in SOURCE_GATE_NAMES]
-    )
     residual = rk4 - cnexp
     table_residual = cnexp_table - cnexp
     gate_metrics: dict[str, Any] = {}
