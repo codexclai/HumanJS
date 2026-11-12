@@ -166,3 +166,8 @@ The human/mouse mixture semantics were additionally verified against the unrestr
 - Verified the preprint v2 ModelDB/GitHub source URLs are explicit unfinished placeholders. In the final article, ModelDB 8210 is the Mainen et al. (1995) “Spike Initiation in Neocortical Pyramidal Neurons” model; it is not the Wilbers model-code deposit. The final data statement points to the Dataverse DOI.
 - No parameter or runtime code was changed. The single-compartment Na+/K+ model remains exploratory and unaccepted. The current public data allow source/model protocol audits and selected summary checks, not the missing trace-level K refit or exact S5 J/K plotting reproduction.
 - Latest research commits: `2e0b0cc3b83aa43ec4a331355d5bae2bf1b5a108` (manifest/source availability) and `2c47917b407052c4cbe768ddda22ea08406c5462` (ModelDB accession identification). Latest CI run `43128024657` passed on the latter.
+
+
+### 2026-11-12 — Wilbers corresponding-author route verified
+
+The final Science Advances publisher page was queried directly and confirms the corresponding-author contacts Huibert D. Mansvelder (h.d.mansvelder@vu.nl) and Natalia A. Goriounova (n.a.goriounova@vu.nl). Its data-availability statement points to Dataverse DOI 10.34894/L5J0SD. The v3.0/65-file inventory audit above still applies: the specific K kinetic CSVs, data_fig5.xlsx, raw K voltage-clamp traces, and a separate final Figure S5 plotting generator are not listed. This gives us a legitimate, non-accusatory route to request the missing provenance and an explicit availability statement. No message has been sent and no new experimental data have been received. The HumanJS spike-capable mechanism remains exploratory and unaccepted.
