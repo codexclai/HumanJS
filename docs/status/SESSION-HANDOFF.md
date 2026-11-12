@@ -153,3 +153,12 @@ The 2026-11-11 missing-helper conclusion was based on an incomplete extraction. 
 - Additional NMODL audit verified complementary species mixing: human Na/K current contributions scale with the human ratio, mouse contributions with (1-ratio), using shared fitted total conductance. Thus the (1,1) grid endpoint is truly all-human kinetics. Na Q10 scales conductance and rates; K Q10 scales rates only, matching Rust.
 - The source CSV validator now checks Dataverse SHA-1 plus retrieved-byte SHA-256 and verifies that the Rust preset literals match the rounded all-human endpoint.
 - Latest verified workflow: run `43124314513` passed on exact HEAD `c73a90270cc92979add481b00856ea2848eea98c`; formatting, Clippy, Rust workspace tests, Python syntax, both research validators, and repository policy all succeeded.
+
+
+### 2026-11-12 — corresponding-author contact verified; next action ready
+
+- Queried the final publisher page for DOI 10.1126/sciadv.ade3300. It names Huibert D. Mansvelder (h.d.mansvelder@vu.nl) and Natalia A. Goriounova (n.a.goriounova@vu.nl) as corresponding authors.
+- The publisher's data-availability statement points to Dataverse DOI 10.34894/L5J0SD. The previously audited released v3.0 manifest contains 65 files and does not list the K kinetic mean CSVs, data_fig5.xlsx, raw K voltage-clamp recordings, or a separate Figure S5 plotting/export script.
+- A targeted request is now ready: ask for the exact J/K/M/N plotting/export code and parameter state; the missing per-cell human K activation/inactivation/recovery tables; raw K voltage-clamp recordings plus acquisition/protocol metadata if shareable; and an explicit availability statement for anything not retained or not distributable. Acknowledge the published Dataverse deposit and keep the tone neutral.
+- **No email has been sent.** Contact discovery is not new experimental evidence and does not change the exploratory/unaccepted status of the Rust spike mechanism.
+- Next: send the focused request only with the owner's authorization, then record any response and provenance. Independently digitize J/K/M/N model-line pixels as raster estimates only; do not substitute them for source code or raw recordings.
