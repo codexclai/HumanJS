@@ -698,3 +698,57 @@ In `channel_tools.py` (file 326242), `K_IV` calls `K_recovery(cell,[ax[2],ax[7],
 Panel M's y-axis calibration was corrected using the printed 300-ms and 200-ms ticks (approximately 1.0101 ms/pixel). The four combined red/blue raster estimates are now 134.36, 193.41, 304.46, and 350.03 ms at −87.5, −82.5, −77.5, and −72.5 mV. Comparing these with the linear polylines between the five exact K_IV recovery-voltage outputs gives a pooled human/mouse midpoint RMSE of **2.01 ms** and maximum absolute residual **3.32 ms**. This is a raster-to-source-output consistency check, not a new fit: the raster points are halfway between source voltage samples, the two plotted species lines overlap, and the published plotting routine connects sampled outputs. The original NEURON mechanism was not executed for this check; the replay is the documented equation-level reconstruction of the source mechanism and current-recovery fit.
 
 The validator now checks the panel-M raster against the interpolated human/mouse K_IV `tau1` polylines (RMSE ≤3 ms and maximum residual ≤5.1 ms), in addition to existing panel J/K/N checks. The K_IV model source and pure NMODL file identity are provenance findings; they do not recover missing per-cell K tau tables or raw voltage-clamp traces, nor do they close the scientific acceptance gate. Keep the spike mechanism exploratory and unaccepted.
+
+
+## 5. Rust single-compartment implementation acceptance audit (2026-11-12)
+
+**Disposition: exploratory; not scientifically accepted.** This audit checks the Rust implementation against the author-deposited current-clamp mechanism variants and helper. It verifies source mapping and engineering equations, but does not validate the model biologically or reproduce the paper's current-clamp fitting outcome.
+
+### Exact current-clamp source files and voltage-shift convention
+
+The current-clamp helper is cc_tools.py (Dataverse v3.0 file 318557; 10,448 bytes; SHA-1 f64162577fa5dd86892b46570d597e58e083a02b). Its init_cell path sets h.celsius=34, one NEURON section with L=diam=10, Ra=200 Ω·cm, cm=1 μF/cm², Rm=10,000 Ω·cm², and g_pas=1/Rm. It sets ek=-101+15=-86 mV, ena=53+15=68 mV, and e_pas=-85+15=-70 mV. The source comment explicitly says the channels are shifted by −10 mV between the current-clamp and voltage-clamp internal solutions, and assigns vshift=-10 to human and mouse Na/K mechanisms.
+
+The separate author-deposited hybrid current-clamp files were fetched from the public Dataverse v3.0 access endpoint and inspected:
+- na_human.mod, file 318563, 3,711 bytes, SHA-1 ef158980e4bb427c97cfb8f379cd63006130b3b2.
+- k_human.mod, file 318566, 4,326 bytes, SHA-1 622f7c9867e727a3dc7dea1f9ba2efbfb94cfd3a.
+
+Both hybrid mechanisms explicitly evaluate trates(v+vshift) in initialization and during derivatives. Their parameter comments say positive vshift means a left shift. With the current-clamp helper's vshift=-10 mV, the effective gating voltage is therefore V-10 mV. HumanJS uses vm = voltage_mv + self.voltage_shift_mv, with the preset value −10 mV, so its shift sign and effective voltage agree. This point had been a possible ambiguity; direct source inspection resolves it.
+
+The hybrid INITIAL blocks set Na m=minf, h=hinf, and K m=minf, h1=hinf, h2=hinf. HumanJS initializes the same gate states at the same shifted voltage. The K implementation uses the same branch condition hinf > h2, a 450-ms slow-inactivation constant, a 2,789.7929428108187-ms slow-recovery constant, and the source fractions 0.85 inactivating and 0.4 of that slow. The recovery constant is a pooled human/mouse fit quantity, not human-only evidence (see Section 3).
+
+### Equation and unit mapping
+
+| Model component | Source-to-Rust finding | Acceptance implication |
+|---|---|---|
+| Na activation/inactivation | Same fitted Boltzmann steady states, trap0 rate forms, gate powers m³h, and source-specific inactivation-shift convention. | Parameter/equation mapping is source-traceable, subject to the stated trap0 repair. |
+| K activation/fast and slow inactivation | Same m² activation, three conductance fractions, gate relaxation, hinf > h2 branch, and distinct slow inactivation/recovery constants. | Structural mapping is source-traceable; the paper itself reports poor K-inactivation fit quality. |
+| Temperature | Na reference 25°C and K reference 34°C, each with Q10=2.3. At 34°C, Na factor is 2.3^0.9; K factor is 1. Na Q10 also multiplies gbar; K Q10 does not multiply K conductance. Rust follows this placement. | Temperature behavior agrees with the hybrid source; do not apply one shared channel temperature factor. |
+| Voltage shift | Source evaluates trates(v+vshift); helper sets −10 mV; Rust evaluates V−10 mV. | Sign is verified and now covered by a dedicated regression test. |
+| Initialization | Source starts every dynamic gate at its corresponding steady state, including both K inactivation gates at hinf; Rust does likewise. | Initial-state semantics agree for this fitted single-compartment setup. |
+| Ionic current | Source uses 1e-4*gbar*(V-E) in mA/cm²; Rust uses SI conductance density in S/m² times volts to obtain A/m². The conversions are dimensionally equivalent. | No scale mismatch was identified in the Na/K/leak current-density or injected-current/area equations inspected. |
+| Geometry and passive membrane | Source uses a single 10-μm-long, 10-μm-diameter section, 1 μF/cm², and 10,000 Ω·cm². Rust uses lateral area π·10·10 μm², the equivalent 0.01 F/m² capacitance, and 1 pS/μm² leak. | The lumped membrane geometry/capacitance/leak conversion agrees; axial resistance has no active voltage drop in this one-segment isopotential model. |
+| Reversal potentials | Current-clamp helper's liquid-junction offsets produce ENa=+68 mV, EK=−86 mV, Eleak=−70 mV. | The HumanJS preset values match the source helper. |
+| Time integration | Source uses NEURON cnexp with dt=0.02 ms; HumanJS uses coupled RK4 with a 20-μs maximum step. | Same nominal step duration does not make the numerical trajectories identical. A quantitative cross-integrator comparison remains open. |
+
+The RatePrefactor representation deliberately treats the coefficients as mV⁻¹·ms⁻¹. This follows dimensional analysis of the displayed source equation, but differs from the NMODL parameter declaration /ms. The HumanJS trap0 is also a stable analytic-limit correction: the deposited active fallback has the wrong dimensions, omits the prefactor, and tests v+th instead of the denominator's true singularity v=th. This is not exact source-runtime reproduction; Sections 2 and 3 preserve the full diagnosis. The numerical correction is defensible as an equation-consistent engineering interpretation, not proof of the authors' intended undocumented correction.
+
+### What the current spike test does — and does not — establish
+
+The source cc_tools.py rheobase procedure uses a 3-ms pulse at 2 ms, dt=0.1 ms, an APCount threshold of −20 mV, and coarse-to-fine current increments of 0.1, 0.01, and 0.001 nA. It then initializes at −70 mV and runs a 3-ms pulse at 1 ms with amplitude 1.5× rheobase using dt=0.02 ms.
+
+The current HumanJS behavioral test instead applies a fixed 25-pA pulse from 1 to 4 ms, checks one upward 0-mV crossing, and applies broad ranges to peak and rise/fall speeds. That is a useful spike-generation and numerical regression check, but it is not the deposited rheobase/1.5×-rheobase protocol, does not replay the exact fitting runner, and does not compare the complete trace to released recordings or a fresh NEURON execution. The existing step-halving test establishes numerical convergence between two RK4 step sizes for this one stimulus; it does not establish convergence to NEURON cnexp or to measured cell traces.
+
+### Acceptance decision and blockers
+
+The audit found no sign error in the voltage shift, no initialization mismatch, and no obvious SI scale error in the one-compartment membrane-current equations examined. The source-level parameterization and temperature-factor placement are traceable. Those are useful implementation checks, but they do not close the scientific acceptance gate.
+
+Keep HumanL23SingleCompartmentModel exploratory and unaccepted because:
+
+1. The source trap0 implementation has documented numerical and dimensional defects; HumanJS intentionally uses a corrected equation-level interpretation and must not be labelled an exact NMODL port.
+2. The public deposit does not provide the missing raw per-cell K voltage-clamp data or the named K kinetic CSVs needed to independently refit the K mechanism. The authors explicitly describe imperfect K-inactivation fits.
+3. The 2,789.79-ms K slow-recovery parameter is the pooled human/mouse group mean, not a human-specific parameter. The all-human kinetic conductance-grid corner still targets the paper's 50:50 human/mouse AP summary features; it is not a human-only AP fit.
+4. The fitted Na conductance density (114.48 pS/μm²) is not the direct human nucleated-patch mean (5.9 ± 0.8 pS/μm²). The paper reports this fitting distinction; do not present the model value as a measured channel density.
+5. The model is a lumped nucleated-somatic-patch equivalent, with no spatial AIS, axon, or dendrites. It cannot support a claim about anatomical spike-initiation location or a complete human pyramidal neuron.
+6. The existing 25-pA behavioral test is not the paper's rheobase-derived current-clamp runner, and the RK4-vs-cnexp trajectory discrepancy has not been quantified against an independent source execution or the released traces.
+
+**Next concrete evidence step:** implement a separate source-protocol reproduction check for the rheobase search and 1.5×-rheobase pulse, preserve its outputs as model-side results, and compare the same published waveform features without fitting to raster estimates or changing acceptance tolerances. In parallel, obtain the exact K per-cell data/plot state from the authors if available. Until those checks and data gaps are resolved, do not promote this spike-capable mechanism or infer AIS biology from it.

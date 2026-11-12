@@ -200,3 +200,12 @@ The released Dataverse source path is now traced: the human and mouse fitting sc
 Panel M's four raster samples were recalibrated against the printed 300/200-ms ticks: 134.36, 193.41, 304.46, and 350.03 ms at −87.5 to −72.5 mV. Compared against the linearly interpolated pooled human/mouse K_IV `tau1` source-output curves, RMSE is 2.01 ms and maximum absolute residual 3.32 ms. This is a raster/polyline consistency check, not an exact reproduction of the original NEURON run, raw data, or biological validation. The panel-M validator now checks RMSE ≤3 ms and maximum residual ≤5.1 ms.
 
 Two intermediate CI runs (43131449785 and 43131513456) caught the new 5-pixel uncertainty values because the validator only permitted 3 or 4 pixels. The data were retained; the validator was corrected to admit 5-pixel reading uncertainty and panel-M's calibrated range. Final run 43131570918 passed all workflow steps on its exact commit. No scientific values or model parameters were adjusted to obtain the pass.
+
+
+### 2026-11-12 — single-compartment acceptance audit
+
+- Directly fetched and inspected the deposited current-clamp hybrid sources: Na file 318563 (na_human.mod) and K file 318566 (k_human.mod), plus cc_tools.py (file 318557).
+- Confirmed source trates(v+vshift) and helper vshift = −10 mV; the Rust V−10 mV effective gating voltage is correct. Initial gate values, Q10 placement, K three-fraction gating, current-density units, geometry, capacitance, leak and reversal potentials map to the author helper.
+- Added a Rust regression for shift polarity and initialization. It does not turn the exploratory model into an accepted biological mechanism.
+- Remaining gates: corrected trap0 is not exact NMODL runtime reproduction; K slow recovery is pooled human/mouse and K fit quality is limited; conductance fit targets cross-species AP medians; no spatial AIS; RK4-vs-cnexp trajectory equivalence is untested; current spike smoke test is not the source rheobase/1.5× protocol.
+- Full audit and next reproduction step are in research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md. Preserve the exploratory/unaccepted status.

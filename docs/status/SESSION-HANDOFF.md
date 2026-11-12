@@ -201,3 +201,12 @@ Run 43130214819 exposed an overly restrictive validator lower bound (18 ms) for 
 - This is a raster-to-equation-replay consistency check. NEURON was not executed; overlapping species traces are not separable; no raw K recordings or missing per-cell K tau tables were recovered.
 - CI runs 43131449785 and 43131513456 failed only because the validator rejected the newly explicit 5-pixel reading uncertainty. The validator was corrected to admit 5 pixels; the digitized samples were retained. Run 43131570918 passed all workflow steps on exact commit 49978d3920eb3d6d53e6dbc2e8aa20c25ef41fae.
 - Historical pre-migration archive review is recorded in ADR-017; no archive copy or legacy code is needed in future sessions.
+
+
+### 2026-11-12 — Human L2/L3 single-compartment acceptance audit
+
+- Source files directly inspected: Dataverse v3.0 na_human.mod file 318563, k_human.mod file 318566, and current-clamp helper cc_tools.py file 318557.
+- Voltage-shift polarity resolved: source trates(v+vshift) with helper vshift = −10 mV, matching HumanJS's V−10 mV. Source gate initialization and Na/K Q10 placement also match.
+- Geometry, passive leak/capacitance, reversal offsets, K gate fractions and current-density units have been traced. A Rust regression covers source shift and initial gate semantics.
+- Do not promote: HumanJS deliberately corrects the broken NMODL trap0, uses RK4 rather than source NEURON cnexp, and has not yet replayed the exact rheobase/1.5×-rheobase current-clamp runner. K recovery includes a pooled human/mouse constant; the conductance fit has cross-species targets; this is not an AIS model.
+- Next: implement the exact current-clamp stimulus/rheobase reproduction check, then independently compare source-model features and numerical integrator behavior. Keep evidence limitations explicit.

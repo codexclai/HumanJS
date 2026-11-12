@@ -1765,6 +1765,53 @@ mod tests {
     }
 
     #[test]
+    fn current_clamp_voltage_shift_and_initial_gates_match_hybrid_source() {
+        let model = wilbers_model();
+        assert_eq!(model.voltage_shift_mv, -10.0);
+
+        // The deposited hybrid NMODL calls trates(v + vshift). With the
+        // current-clamp helper's vshift=-10 mV, both channels evaluate gates
+        // at V-10 mV (not V+10 mV).
+        let mut unshifted_model = model;
+        unshifted_model.voltage_shift_mv = 0.0;
+        let voltage_mv = -70.0;
+
+        let sodium_shifted = model.sodium_rates(voltage_mv).unwrap();
+        let sodium_source_equivalent = unshifted_model
+            .sodium_rates(voltage_mv - 10.0)
+            .unwrap();
+        assert_eq!(sodium_shifted, sodium_source_equivalent);
+
+        let potassium_shifted = model.potassium_rates(voltage_mv, 0.5).unwrap();
+        let potassium_source_equivalent = unshifted_model
+            .potassium_rates(voltage_mv - 10.0, 0.5)
+            .unwrap();
+        assert_eq!(potassium_shifted, potassium_source_equivalent);
+
+        // The hybrid INITIAL blocks set m=minf, h=hinf, h1=hinf and h2=hinf.
+        let initial_conditions =
+            HumanL23SingleCompartmentInitialConditions::new(Volts::from_millivolts(
+                voltage_mv,
+            )
+            .unwrap());
+        let simulation =
+            HumanL23SingleCompartmentSimulation::new(model, initial_conditions).unwrap();
+        let state = simulation.state();
+
+        assert_eq!(state.sodium_activation(), sodium_shifted.activation.steady_state);
+        assert_eq!(state.sodium_inactivation(), sodium_shifted.inactivation.steady_state);
+        assert_eq!(state.potassium_activation(), potassium_shifted.activation.steady_state);
+        assert_eq!(
+            state.potassium_fast_inactivation(),
+            potassium_shifted.fast_inactivation.steady_state
+        );
+        assert_eq!(
+            state.potassium_slow_inactivation(),
+            potassium_shifted.fast_inactivation.steady_state
+        );
+    }
+
+    #[test]
     fn channel_time_constants_are_finite_and_positive_across_source_voltage_range() {
         let model = wilbers_model();
         for voltage_mv in -120..=100 {
