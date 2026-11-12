@@ -606,6 +606,15 @@ The all-mouse (0,0) bottom-left corner is 148.61916853685673 pS/μm² Na and 64.
 
 **Important interpretation:** “all-human” describes the channel kinetic ratios used in the model, not the experimental target population. The optimizer still fits the all-human kinetic model against the 50:50 human/mouse median AP feature targets shown above. The preset is not a human-only AP fit and its conductances are not direct measurements of human channel density. It remains a fitted single-compartment model parameterization, not biological validation.
 
+### Verification of human/mouse kinetic mixing semantics
+
+The pure human and mouse NMODL mechanisms confirm that the ratio axes genuinely partition a shared fitted conductance density between complementary kinetic mechanisms; they are not merely labels on independently active channels:
+
+- Human Na (na_human.mod, file 318563) uses tadj * gbar * na_human_ratio * m^3 * h; mouse Na (na_mouse.mod, file 318561) uses tadj * gbar_na_human * (1 - na_human_ratio_na_human) * m^3 * h.
+- Human K (k_human.mod, file 318566) multiplies its three-component gating expression by gbar * k_human_ratio; mouse K (k_mouse.mod, file 318560) multiplies its corresponding mouse gating expression by gbar_k_human * (1 - k_human_ratio_k_human).
+
+The unrestricted mouse mechanism files have Dataverse SHA-1 values: na_mouse.mod (3,726 bytes, file 318561) 84cc161f3c38fc71d399cc998d91f0c60cbd2df1; k_mouse.mod (4,303 bytes, file 318560) 8b1761352a44cc57c29f3345242a4060186d84eb. Therefore ratio 1 means the shared conductance is assigned entirely to the human kinetic mechanism, ratio 0 entirely to the mouse mechanism, and 0.5 splits it equally. This independently confirms the interpretation of the 20×20 grid's all-human and all-mouse endpoints. The Na mechanism's tadj also multiplies maximal conductance as well as gating rates; the K mechanism uses tadj for gate time constants but not for its conductance expression. The Rust implementation follows this species-specific source placement: sodium conductance includes the sodium temperature factor, while potassium conductance does not.
+
 ### Reproduction boundary
 
 This session verified all six downloaded files against the Dataverse SHA-1 metadata and parsed the complete source helper and calibration tables. The original NEURON/SciPy optimization was **not rerun**: the available execution environment does not have NEURON, SciPy, or NumPy installed. The source grid is a deposited result, not a fresh independent optimization. The HumanJS 114.48/29.05 mapping is nevertheless directly verified by the exact grid corner and its matching source checksums. Do not claim an independently rerun optimizer, raw-trace reproduction, or biological validation.
