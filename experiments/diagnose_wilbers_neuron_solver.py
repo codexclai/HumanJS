@@ -397,7 +397,7 @@ def _shared_voltage_rk4_step_linear_voltage(
     return gates + (dt_ms / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4)
 
 
-def _gate_path_metrics(times: Any, actual: Any, reference: Any) -> dict[str, Any]:
+def _gate_path_metrics(actual: Any, reference: Any) -> dict[str, Any]:
     import numpy as np
 
     residual = np.asarray(actual, dtype=float) - np.asarray(reference, dtype=float)
@@ -485,6 +485,19 @@ def compare_gate_integrators_on_shared_voltage(
             cnexp_table[index], voltage_right, step, na_rate_table
         )
 
+    paths = (cnexp, rk4, rk4_left, rk4_midpoint, rk4_linear, cnexp_table)
+    if any(not np.isfinite(path).all() for path in paths):
+        raise reproduction.ReproductionError(
+            "Shared-voltage gate integrations produced non-finite states"
+        )
+    if any(np.any((path < 0.0) | (path > 1.0)) for path in paths):
+        raise reproduction.ReproductionError(
+            "Shared-voltage gate integration left the [0, 1] state bounds"
+        )
+
+    recorded_source_gates = np.column_stack(
+        [source_gates[name] for name in SOURCE_GATE_NAMES]
+    )
     residual = rk4 - cnexp
     table_residual = cnexp_table - cnexp
     gate_metrics: dict[str, Any] = {}
@@ -498,11 +511,6 @@ def compare_gate_integrators_on_shared_voltage(
             "final_cnexp_gate_fraction": float(cnexp[-1, index]),
             "final_rk4_gate_fraction": float(rk4[-1, index]),
         }
-
-    if not np.isfinite(cnexp).all() or not np.isfinite(rk4).all():
-        raise reproduction.ReproductionError("Shared-voltage gate integrations produced non-finite states")
-    if np.any((cnexp < 0.0) | (cnexp > 1.0)) or np.any((rk4 < 0.0) | (rk4 > 1.0)):
-        raise reproduction.ReproductionError("Shared-voltage gate integration left the [0, 1] state bounds")
 
     table_gate_metrics: dict[str, Any] = {}
     for index, name in enumerate(HUMANJS_GATE_NAMES):
@@ -561,19 +569,19 @@ def compare_gate_integrators_on_shared_voltage(
             "voltage_shift_mV": -10.0,
             "methods_against_recorded_nmodl_gates": {
                 "left_endpoint_hold_rk4": _gate_path_metrics(
-                    times, rk4_left, np.column_stack([source_gates[name] for name in SOURCE_GATE_NAMES])
+                    rk4_left, recorded_source_gates
                 ),
                 "midpoint_hold_rk4": _gate_path_metrics(
-                    times, rk4_midpoint, np.column_stack([source_gates[name] for name in SOURCE_GATE_NAMES])
+                    rk4_midpoint, recorded_source_gates
                 ),
                 "right_endpoint_hold_rk4": _gate_path_metrics(
-                    times, rk4, np.column_stack([source_gates[name] for name in SOURCE_GATE_NAMES])
+                    rk4, recorded_source_gates
                 ),
                 "linear_voltage_ramp_rk4": _gate_path_metrics(
-                    times, rk4_linear, np.column_stack([source_gates[name] for name in SOURCE_GATE_NAMES])
+                    rk4_linear, recorded_source_gates
                 ),
             },
-            "linear_ramp_vs_right_hold": _gate_path_metrics(times, rk4_linear, rk4),
+            "linear_ramp_vs_right_hold": _gate_path_metrics(rk4_linear, rk4),
             "interpretation_limit": "The linear ramp is an externally prescribed interpolation of the NEURON voltage samples, not the actual intermediate voltage stages of the coupled HumanJS RK4 solver. It isolates a voltage-sampling counterfactual and does not partition full coupled feedback.",
         },
     }
