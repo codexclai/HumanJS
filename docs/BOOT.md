@@ -132,3 +132,10 @@ Immediately before this BOOT update, live main was 1e721852bf3b49c72ff9c49cb249a
 The 23-point model-line raster CSV is now marker-anchored for panel J. The inter-marker J curve agrees with both existing human and mouse equation-level current-fit reconstructions at about 0.36 ms RMSE, but the red/blue model curves overlap and cannot be species-discriminated. K is approximately 444.8 ms versus the fixed 450-ms component; N is approximately 2.78–2.79 s versus the pooled slow-recovery constant. Panel M remains a raster-only estimate pending direct comparison with the deposited K_IV model path. Full detail is in the research record and current status/handoff.
 
 Immediately before this BOOT update, live main was 0727cb0d0b4bf309b98799d37bc609ab05536518, with a complete non-truncated 68-entry tree, exactly one branch (main), and the workflow queued on that exact commit. Recheck the final BOOT commit and its workflow; no claim of success is made from a queued run.
+
+
+### 2026-11-12 — raster validator correction and final live check
+
+The refined Figure S5 panel-J raster samples and J/K/N comparison checks are now in the research CSV and validator. CI run 43130214819 failed because the validator's lower range bound (18 ms) excluded the valid 17.51-ms last sample; the bound was corrected to 17 ms without changing the data. Follow-up run 43130293760 passed every step on exact commit b9060fdc407cf1606b42c29d4f88663f169ca703. The failure and correction are recorded in status and handoff.
+
+Immediately before this BOOT update, live main was 0e390abef81c30674ef356c50c93e9702d1699e7, with a complete non-truncated 68-entry tree, exactly one branch (main), no open issues or PRs, and workflow run 43130351490 pending on that exact commit. Recheck the final BOOT commit and its workflow before relying on this state.
