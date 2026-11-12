@@ -41,7 +41,7 @@ Do not search for or request old uploads or copied source snapshots. If evidence
 
 `main` is the only branch to use, permanently. Never create, check out, update, merge, or otherwise use another branch. Make authorized changes directly on `main`. Do not create branches, PRs, or automation that opens non-main update branches. No branch protection, rulesets, or deletion-prevention settings are required. Force pushes are permitted but exceptional and must be inspected and verified.
 
-The live repository check after the shared-voltage gate analysis verified default branch `main`, HEAD `eec5651c80b71e0d7706f617d944cfad772c38fb`, tree `04a368047d12332cb98068c986fd89526b0b931a` with 74 entries (`truncated=false`), exactly one branch (`main`), and no open issues or pull requests. GitHub Actions run `43149669478` passed on that exact HEAD. Recheck all live state at the start of every session.
+The live repository check on 2026-11-12 verified default branch `main`, HEAD `c3dcffcef5b07c40f100a3ed167944afc00b104d`, a complete 74-entry tree, exactly one branch (`main`), and no open issues or pull requests. GitHub Actions run `43167476483` passed on that exact HEAD, including the new voltage-sampling unit tests. Recheck all live state at the start of every session.
 
 ## Session procedure
 
@@ -289,3 +289,10 @@ Commit `eec5651c80b71e0d7706f617d944cfad772c38fb` (`research(neuro): isolate gat
 The shared-voltage gate diagnostic now replays the recorded NEURON voltage path with four RK4 gate-voltage conventions: hold the left endpoint, hold the interval midpoint, hold the right endpoint (the previous comparison), or linearly interpolate voltage at the RK4 stage times. All four start from the same recorded NMODL gate state, use the same analytic Wilbers gate rates and fixed timestep sequence, and are compared against both the recorded NMODL gates and one another. The −10-mV channel shift is applied consistently. All replay trajectories are checked for finite gate fractions in [0, 1].
 
 This isolates sensitivity to voltage sampling on a prescribed source voltage trajectory; the linear ramp is not the actual intermediate voltage of the coupled HumanJS membrane solver. The diagnostic does not yet partition the feedback difference between voltage and gates in a fully coupled run. Numerical outputs require the pinned Python 3.10 / NEURON 9.0.2 environment; the available session runtime is Python 3.13.5 without NEURON, so no new source replay numbers are claimed here. Run the documented solver diagnostic with the pinned environment to obtain the four per-gate error profiles. The spike-capable HumanJS mechanism remains exploratory and scientifically unaccepted.
+
+
+### 2026-11-12 — executable tests for voltage-stage sampling counterfactuals
+
+The shared-voltage gate replay now validates all five source gate traces against the voltage sample count, finite values, and [0, 1] bounds before integration. Its gate-metric helper rejects malformed, non-finite, or shape-mismatched arrays. A standard-library unittest suite exercises (1) constant voltage, where all sampling conventions must coincide, (2) a varying voltage path, where linear-ramp and right-hold RK4 must differ, and (3) malformed gate lengths and metric shapes. CI installs the already-pinned NumPy 1.26.4 test dependency and executes `python3 -m unittest discover -s experiments -p 'test_*.py' -v`. Workflow `43167476483` passed on exact commit `c3dcffcef5b07c40f100a3ed167944afc00b104d`; the new four tests passed, along with rustfmt, Clippy, all Rust workspace tests, experiment syntax, both Wilbers validators, and repository policy.
+
+These are deterministic software tests of the counterfactual implementation, not a NEURON source replay and not biological validation. The pinned Python 3.10 / NEURON 9.0.2 end-to-end diagnostic still needs to be run to produce source-trace-specific sensitivity values. The exploratory single-compartment model remains unaccepted.
