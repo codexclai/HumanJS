@@ -2815,8 +2815,7 @@ mod tests {
             // deposited equations, so the initial gate vector is identical.
             assert_eq!(simulation.state(), reference_state);
             let balance = simulation.current_balance(zero_current).unwrap();
-            let expected_sodium_factor =
-                2.3_f64.powf((temperature_celsius - 25.0) / 10.0);
+            let expected_sodium_factor = 2.3_f64.powf((temperature_celsius - 25.0) / 10.0);
             let observed_sodium_factor = balance.sodium_current_density_a_per_m2()
                 / reference_balance.sodium_current_density_a_per_m2();
 
@@ -2834,7 +2833,7 @@ mod tests {
             assert!(
                 (balance.leak_current_density_a_per_m2()
                     - reference_balance.leak_current_density_a_per_m2())
-                    .abs()
+                .abs()
                     < 1.0e-12,
                 "Leak current changed with channel temperature at {temperature_celsius}°C"
             );
