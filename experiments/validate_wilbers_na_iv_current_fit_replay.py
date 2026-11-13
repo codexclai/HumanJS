@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the tracked normalized-current replay against its fitting runner."""
+"""Validate the tracked density-current replay against its fitting runner."""
 from __future__ import annotations
 
 import csv
@@ -33,11 +33,12 @@ def main() -> None:
     if len(records) != 19 or len(expected) != 19:
         raise SystemExit("Expected 19 Na_IV command-voltage rows")
 
-    strict_fields = ("gate_tau_m_ms", "gate_tau_h_ms")
+    strict_fields = ("source_ina_min_ma_cm2", "gate_tau_m_ms", "gate_tau_h_ms")
     fit_fields = (
         "preliminary_tau_m_ms", "preliminary_tau_h_ms",
         "joint_tau_m_ms", "joint_tau_h_ms",
-        "r2_conditional_tau_m_ms", "r2_conditional_tau_h_ms",
+        "preliminary_tau_m_r_squared", "preliminary_tau_h_r_squared",
+        "source_mapped_tau_m_ms", "source_mapped_tau_h_ms",
     )
     r_squared_field = "joint_r_squared"
     for actual, reference in zip(records, expected, strict=True):
@@ -46,6 +47,8 @@ def main() -> None:
             raise SystemExit(f"Voltage-grid mismatch: {actual['voltage_mv']}")
         if int(actual["samples_fitted"]) != 997:
             raise SystemExit(f"Unexpected fitted sample count at {voltage:g} mV")
+        if actual["absolute_current_gate_passed"] != str(bool(reference["absolute_current_gate_passed"])):
+            raise SystemExit(f"Absolute-current gate mismatch at {voltage:g} mV")
         for field in strict_fields:
             value = actual[field]
             ref_value = reference.get(field)
@@ -79,13 +82,15 @@ def main() -> None:
             raise SystemExit(f"joint tau_h bound flag mismatch at {voltage:g} mV")
 
     passed = sum(bool(row["passed_joint_fit_r2"]) for row in expected)
+    amplitude_passed = sum(bool(row["absolute_current_gate_passed"]) for row in expected)
     print(
-        f"Validated 19 normalized Na_IV current-fit replay rows "
-        f"({passed} passed joint-fit R-squared > 0.95), source hashes and caveats."
+        f"Validated 19 Na_IV density-current replay rows "
+        f"({amplitude_passed} passed the source absolute-current gate; "
+        f"{passed} also passed joint-fit R² > 0.95), source hashes and caveats."
     )
     print(
-        "The absolute-current gate remains untested; this is not an exact NEURON "
-        "or experimental-current reproduction."
+        "The source gbar and ena are restored; this remains a model-equation "
+        "reconstruction, not a NEURON run or raw-current validation."
     )
 
 

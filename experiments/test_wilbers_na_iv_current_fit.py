@@ -24,6 +24,9 @@ class WilbersNaIvCurrentFitTests(unittest.TestCase):
         self.assertAlmostEqual(float(times[mask][-1]), 11.99, places=12)
         self.assertTrue(np.isfinite(current).all())
         self.assertTrue(np.all(current[mask] > 0.0))
+        self.assertGreater(float(np.max(current[mask])), replay.SOURCE_MIN_INWARD_CURRENT_MA_CM2)
+        self.assertEqual(replay.SODIUM_GBAR_PS_PER_UM2, 40.0)
+        self.assertEqual(replay.SODIUM_REVERSAL_MV, 141.0)
 
     def test_composite_current_has_the_deposited_50_microsecond_delay(self) -> None:
         times = np.asarray([0.0, 0.049, 0.05, 0.06, 0.1], dtype=float)
@@ -51,12 +54,14 @@ class WilbersNaIvCurrentFitTests(unittest.TestCase):
         self.assertEqual(len(rows), 19)
         self.assertEqual([row["voltage_mv"] for row in rows], list(replay.TEST_VOLTAGES_MV))
         self.assertTrue(all(row["samples_fitted"] == 997 for row in rows))
+        self.assertTrue(all(row["absolute_current_gate_passed"] for row in rows))
         accepted = [
             row["voltage_mv"] for row in rows if row["passed_joint_fit_r2"]
         ]
-        self.assertEqual(accepted, list(map(float, range(-75, 11, 5))))
+        self.assertEqual(accepted, list(map(float, range(-70, 11, 5))))
         self.assertLess(rows[0]["joint_r_squared"], replay.FIT_R2_THRESHOLD)
-        self.assertTrue(all(math.isfinite(row["r2_conditional_tau_m_ms"]) for row in rows[1:]))
+        self.assertLess(rows[1]["joint_r_squared"], replay.FIT_R2_THRESHOLD)
+        self.assertTrue(all(math.isfinite(row["source_mapped_tau_m_ms"]) for row in rows[2:]))
 
     def test_source_returns_joint_tau_m_but_preliminary_tau_h(self) -> None:
         row = next(
@@ -64,18 +69,21 @@ class WilbersNaIvCurrentFitTests(unittest.TestCase):
             if item["voltage_mv"] == -70.0
         )
         self.assertTrue(row["passed_joint_fit_r2"])
-        self.assertAlmostEqual(row["r2_conditional_tau_m_ms"], row["joint_tau_m_ms"], delta=1.0e-12)
-        self.assertAlmostEqual(row["r2_conditional_tau_h_ms"], row["preliminary_tau_h_ms"], delta=1.0e-12)
-        self.assertGreater(row["joint_tau_h_ms"], 1.5 * row["r2_conditional_tau_h_ms"])
-        self.assertGreater(abs(row["r2_conditional_tau_h_ms"] - row["gate_tau_h_ms"]), 0.1)
+        self.assertAlmostEqual(row["source_mapped_tau_m_ms"], row["joint_tau_m_ms"], delta=1.0e-12)
+        self.assertAlmostEqual(row["source_mapped_tau_h_ms"], row["preliminary_tau_h_ms"], delta=1.0e-12)
+        self.assertGreater(row["joint_tau_h_ms"], 1.5 * row["source_mapped_tau_h_ms"])
+        self.assertGreater(row["preliminary_tau_m_r_squared"], 0.95)
+        self.assertGreater(row["preliminary_tau_h_r_squared"], 0.95)
+        self.assertGreater(abs(row["source_mapped_tau_h_ms"] - row["gate_tau_h_ms"]), 0.1)
         self.assertTrue(row["joint_tau_h_at_upper_bound"])
 
     def test_low_r_squared_step_returns_nan_taus_as_source_does(self) -> None:
         row = replay.replay_na_iv_current_fits()[0]
         self.assertEqual(row["voltage_mv"], -80.0)
+        self.assertTrue(row["absolute_current_gate_passed"])
         self.assertFalse(row["passed_joint_fit_r2"])
-        self.assertTrue(math.isnan(row["r2_conditional_tau_m_ms"]))
-        self.assertTrue(math.isnan(row["r2_conditional_tau_h_ms"]))
+        self.assertTrue(math.isnan(row["source_mapped_tau_m_ms"]))
+        self.assertTrue(math.isnan(row["source_mapped_tau_h_ms"]))
 
 
 if __name__ == "__main__":

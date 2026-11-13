@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Reconstruct the Wilbers Na_IV model-current fit from its deposited protocol.
+"""Reconstruct the Wilbers Na_IV voltage-clamp density-current fitting path.
 
-This is an independent, normalized-current reconstruction using the deposited
-human Na gate equations and the released channel_tools.py fitting procedure.
-It is not a NEURON execution, raw-recording replay, or biological validation.
+Uses deposited human Na gate equations, the NMODL 200-node lookup convention,
+the mechanism default gbar and the fitting cell reversal potential, then
+replays channel_tools.py's source current-selection and fitting procedure.
+This is a model-equation reconstruction, not a NEURON execution or raw recording.
 """
 from __future__ import annotations
 import csv
@@ -31,14 +32,21 @@ HOLD_VOLTAGE_MV = -120.0
 TEST_VOLTAGES_MV = tuple(float(v) for v in range(-80, 11, 5))
 SAMPLE_MASK_START_MS = 2.02
 SAMPLE_MASK_END_MS = 12.0
-SODIUM_REVERSAL_MV = 60.0
+SODIUM_REVERSAL_MV = 141.0
+SODIUM_GBAR_PS_PER_UM2 = 40.0
+SODIUM_CURRENT_CONVERSION_MA_CM2 = 1.0e-4
+SOURCE_MIN_INWARD_CURRENT_MA_CM2 = 1.0e-6
+SOURCE_NA_RATE_TABLE = diagnostic._build_source_na_rate_table()
 COMPOSITE_DELAY_MS = 0.05
 FIT_R2_THRESHOLD = 0.95
 
 _FIELDNAMES = (
-    "voltage_mv", "samples_fitted", "gate_tau_m_ms", "gate_tau_h_ms",
-    "preliminary_tau_m_ms", "preliminary_tau_h_ms", "joint_tau_m_ms",
-    "joint_tau_h_ms", "r2_conditional_tau_m_ms", "r2_conditional_tau_h_ms",
+    "voltage_mv", "samples_fitted", "source_ina_min_ma_cm2",
+    "absolute_current_gate_passed", "gate_tau_m_ms", "gate_tau_h_ms",
+    "preliminary_tau_m_ms", "preliminary_tau_h_ms",
+    "preliminary_tau_m_r_squared", "preliminary_tau_h_r_squared",
+    "joint_tau_m_ms", "joint_tau_h_ms",
+    "source_mapped_tau_m_ms", "source_mapped_tau_h_ms",
     "joint_r_squared", "passed_joint_fit_r2",
     "joint_tau_h_at_upper_bound",
 )
@@ -52,7 +60,7 @@ def _sodium_rates_25c(voltage_mv: float) -> tuple[float, float, float, float]:
     reference values; steady-state gates do not change with temperature.
     """
     m_inf, tau_m_34c, h_inf, tau_h_34c, *_ = diagnostic._wilbers_gate_rate_bundle(
-        float(voltage_mv)
+        float(voltage_mv), na_rate_table=SOURCE_NA_RATE_TABLE
     )
     q10_at_34c = Q10 ** ((34.0 - REFERENCE_TEMPERATURE_CELSIUS) / 10.0)
     temperature_factor_25c = Q10 ** (
@@ -68,12 +76,12 @@ def _advance_gate(gate: float, steady_state: float, tau_ms: float, dt_ms: float)
 
 
 def simulate_normalized_sodium_current(test_voltage_mv: float) -> tuple[np.ndarray, np.ndarray]:
-    """Return command times and inward Na current in arbitrary linear units.
+    """Return command times and inward Na current density in mA/cm².
 
-    The current shape is gbar*T_adj*m^3*h*(V-E_Na), with gbar normalized to
-    one. The unknown source cell conductance/area affects amplitude only,
-    not fitted time constants. The source's absolute-current threshold is
-    intentionally not applied in this normalized reconstruction.
+    The deposited fit script creates a 10-µm-diameter section, inserts
+    na_human without overriding its default gbar=40 pS/µm², and sets ena=141 mV.
+    Its NMODL current is ina=1e-4*(tadj*gbar*m³*h)*(V-ena), in mA/cm².
+    Voltage-clamp fitting uses local current density, not whole-cell area.
     """
     if not math.isfinite(test_voltage_mv) or test_voltage_mv not in TEST_VOLTAGES_MV:
         raise ValueError("test voltage must be one of the deposited -80..+10 mV commands")
@@ -99,9 +107,16 @@ def simulate_normalized_sodium_current(test_voltage_mv: float) -> tuple[np.ndarr
         m_trace[index] = m
         h_trace[index] = h
 
-    inward_current = m_trace**3 * h_trace * (SODIUM_REVERSAL_MV - command_voltage)
-    return times, inward_current
-
+    # The pure mechanism's current conversion and default gbar are restored;
+    # tadj is exactly one at the Na_IV protocol's 25°C reference temperature.
+    inward_current_density = (
+        SODIUM_CURRENT_CONVERSION_MA_CM2
+        * SODIUM_GBAR_PS_PER_UM2
+        * m_trace**3
+        * h_trace
+        * (SODIUM_REVERSAL_MV - command_voltage)
+    )
+    return times, inward_current_density
 
 def _single_exponential(
     t: np.ndarray, amplitude: float, tau_ms: float, steady: float
@@ -124,25 +139,37 @@ def _source_composite_sodium_current(
     return result
 
 
-def _source_preliminary_activation_tau(t_ms: np.ndarray, y: np.ndarray) -> float:
-    # Mirrors channel_tools.get_tau_act: offset time and subtract final y.
+def _source_preliminary_activation_tau(
+    t_ms: np.ndarray, y: np.ndarray
+) -> tuple[float, float]:
+    """Mirror get_tau_act, including its independent R² > 0.95 rejection."""
     x = t_ms - t_ms[0]
     values = y - y[-1]
     parameters, _ = curve_fit(
         _single_exponential, x, values,
         p0=(values[0], 0.1, values[0] * 0.1),
     )
-    return float(parameters[1])
+    residual = values - _single_exponential(x, *parameters)
+    ss_residual = float(np.sum(residual**2))
+    ss_total = float(np.sum((values - np.mean(values)) ** 2))
+    r_squared = 1.0 - ss_residual / ss_total if ss_total > 0.0 else math.nan
+    return (float(parameters[1]) if r_squared > FIT_R2_THRESHOLD else math.nan, r_squared)
 
 
-def _source_preliminary_inactivation_tau(t_ms: np.ndarray, y: np.ndarray) -> float:
-    # Mirrors channel_tools.get_tau_inact: offset time, but do not offset y.
+def _source_preliminary_inactivation_tau(
+    t_ms: np.ndarray, y: np.ndarray
+) -> tuple[float, float]:
+    """Mirror get_tau_inact, including its independent R² > 0.95 rejection."""
     x = t_ms - t_ms[0]
     parameters, _ = curve_fit(
         _single_exponential, x, y,
         p0=(y[0] - y[-1], 2.0, y[0] * 0.1),
     )
-    return float(parameters[1])
+    residual = y - _single_exponential(x, *parameters)
+    ss_residual = float(np.sum(residual**2))
+    ss_total = float(np.sum((y - np.mean(y)) ** 2))
+    r_squared = 1.0 - ss_residual / ss_total if ss_total > 0.0 else math.nan
+    return (float(parameters[1]) if r_squared > FIT_R2_THRESHOLD else math.nan, r_squared)
 
 
 def fit_source_composite_current(
@@ -161,10 +188,14 @@ def fit_source_composite_current(
     if peak_index < 4 or len(y) - peak_index < 5:
         raise ValueError("current peak leaves too few samples for source preliminary fits")
 
-    estimate_activation = _source_preliminary_activation_tau(x[:peak_index], y[:peak_index])
-    estimate_inactivation = _source_preliminary_inactivation_tau(
+    estimate_activation, activation_r_squared = _source_preliminary_activation_tau(
+        x[:peak_index], y[:peak_index]
+    )
+    estimate_inactivation, inactivation_r_squared = _source_preliminary_inactivation_tau(
         x[peak_index:-1], y[peak_index:-1]
     )
+    if not math.isfinite(estimate_activation) or not math.isfinite(estimate_inactivation):
+        raise ValueError("source preliminary exponential fit did not pass R² > 0.95")
 
     # Mirrors channel_tools.fit_na_curr: x is reset to the first retained
     # sample, the 50-µs delay stays in the model, and these bounds are exact.
@@ -189,6 +220,8 @@ def fit_source_composite_current(
     return {
         "preliminary_tau_m_ms": estimate_activation,
         "preliminary_tau_h_ms": estimate_inactivation,
+        "preliminary_tau_m_r_squared": activation_r_squared,
+        "preliminary_tau_h_r_squared": inactivation_r_squared,
         "joint_tau_m_ms": float(parameters[0]),
         "joint_tau_h_ms": float(parameters[1]),
         "joint_r_squared": r_squared,
@@ -196,28 +229,54 @@ def fit_source_composite_current(
 
 
 def replay_na_iv_current_fits() -> list[dict[str, Any]]:
-    """Run the deposited 19-step Na_IV command and source fitting sequence."""
+    """Run all 19 Na_IV steps including the source absolute-current condition."""
     rows: list[dict[str, Any]] = []
     for voltage in TEST_VOLTAGES_MV:
         times, current = simulate_normalized_sodium_current(voltage)
         mask = (times > SAMPLE_MASK_START_MS) & (times < SAMPLE_MASK_END_MS)
         fit_times = times[mask]
         fit_current = current[mask]
+        source_ina_min = -float(np.max(fit_current))
+        amplitude_gate_passed = source_ina_min < -SOURCE_MIN_INWARD_CURRENT_MA_CM2
         _, gate_tau_m, _, gate_tau_h = _sodium_rates_25c(voltage)
+        base = {
+            "voltage_mv": voltage,
+            "samples_fitted": int(np.count_nonzero(mask)),
+            "source_ina_min_ma_cm2": source_ina_min,
+            "absolute_current_gate_passed": amplitude_gate_passed,
+            "gate_tau_m_ms": gate_tau_m,
+            "gate_tau_h_ms": gate_tau_h,
+        }
+        if not amplitude_gate_passed:
+            rows.append(
+                {
+                    **base,
+                    "preliminary_tau_m_ms": math.nan,
+                    "preliminary_tau_h_ms": math.nan,
+                    "preliminary_tau_m_r_squared": math.nan,
+                    "preliminary_tau_h_r_squared": math.nan,
+                    "joint_tau_m_ms": math.nan,
+                    "joint_tau_h_ms": math.nan,
+                    "source_mapped_tau_m_ms": math.nan,
+                    "source_mapped_tau_h_ms": math.nan,
+                    "joint_r_squared": math.nan,
+                    "passed_joint_fit_r2": False,
+                    "joint_tau_h_at_upper_bound": False,
+                    "fit_error": "source absolute inward-current threshold not met",
+                }
+            )
+            continue
         try:
             fits = fit_source_composite_current(fit_times, fit_current)
             accepted = fits["joint_r_squared"] > FIT_R2_THRESHOLD
             rows.append(
                 {
-                    "voltage_mv": voltage,
-                    "samples_fitted": int(np.count_nonzero(mask)),
-                    "gate_tau_m_ms": gate_tau_m,
-                    "gate_tau_h_ms": gate_tau_h,
+                    **base,
                     **fits,
-                    # The source returns tau_m=popt[0], but tau_h remains the
-                    # preliminary decay estimate (the popt[1] write is commented out).
-                    "r2_conditional_tau_m_ms": fits["joint_tau_m_ms"] if accepted else math.nan,
-                    "r2_conditional_tau_h_ms": fits["preliminary_tau_h_ms"] if accepted else math.nan,
+                    # Na_IV returns popt[0] as tau_m, but retains the
+                    # preliminary single-exponential tau_h (popt[1] is unused).
+                    "source_mapped_tau_m_ms": fits["joint_tau_m_ms"] if accepted else math.nan,
+                    "source_mapped_tau_h_ms": fits["preliminary_tau_h_ms"] if accepted else math.nan,
                     "passed_joint_fit_r2": accepted,
                     "joint_tau_h_at_upper_bound": (
                         abs(fits["joint_tau_h_ms"] - 2.0 * fits["preliminary_tau_h_ms"])
@@ -228,16 +287,15 @@ def replay_na_iv_current_fits() -> list[dict[str, Any]]:
         except (RuntimeError, ValueError, FloatingPointError) as error:
             rows.append(
                 {
-                    "voltage_mv": voltage,
-                    "samples_fitted": int(np.count_nonzero(mask)),
-                    "gate_tau_m_ms": gate_tau_m,
-                    "gate_tau_h_ms": gate_tau_h,
+                    **base,
                     "preliminary_tau_m_ms": math.nan,
                     "preliminary_tau_h_ms": math.nan,
+                    "preliminary_tau_m_r_squared": math.nan,
+                    "preliminary_tau_h_r_squared": math.nan,
                     "joint_tau_m_ms": math.nan,
                     "joint_tau_h_ms": math.nan,
-                    "r2_conditional_tau_m_ms": math.nan,
-                    "r2_conditional_tau_h_ms": math.nan,
+                    "source_mapped_tau_m_ms": math.nan,
+                    "source_mapped_tau_h_ms": math.nan,
                     "joint_r_squared": math.nan,
                     "passed_joint_fit_r2": False,
                     "joint_tau_h_at_upper_bound": False,
@@ -257,10 +315,11 @@ def main() -> int:
             for key, value in row.items()
         }
         writer.writerow(serializable)
+    amplitude_passed = sum(bool(row["absolute_current_gate_passed"]) for row in rows)
     accepted = sum(bool(row["passed_joint_fit_r2"]) for row in rows)
     print(
-        f"# {accepted}/{len(rows)} voltages passed the deposited joint-fit R² > {FIT_R2_THRESHOLD:.2f} rule; "
-        "absolute source-current threshold not applied to normalized current.",
+        f"# Source absolute-current gate passed at {amplitude_passed}/{len(rows)} voltages; "
+        f"{accepted} also passed joint-fit R² > {FIT_R2_THRESHOLD:.2f}.",
         file=sys.stderr,
     )
     return 0
