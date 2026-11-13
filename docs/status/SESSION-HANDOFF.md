@@ -667,3 +667,55 @@ Interpretation: the model-generated short-time residual correction generalizes a
 Canonical result: research/HUMAN-L23-WILBERS-K-IV-MULTIVOLTAGE-RESIDUAL-SUMMARY.csv. Implementation and test paths: experiments/wilbers_k_iv_multivoltage.py, experiments/analyze_wilbers_k_iv_multivoltage.py, experiments/test_wilbers_k_iv_multivoltage.py, and experiments/validate_wilbers_k_iv_multivoltage.py, integrated with the post-peak export in experiments/replay_wilbers_k_iv_neuron.py. CI [43469283136](https://github.com/codexclai/HumanJS/actions/runs/43469283136) passed on exact code/data commit 5d5e180bc5068f647edc040de39481801be52a0e: 41 Rust unit tests, 3 synapse integration tests, 6 passive membrane integration tests, 43 Python tests, 28 experiment scripts parsed, all original Na/K source replays, all related validators and repository policy.
 
 Next concrete step: extend the same signed-residual profile to a broader, predeclared subset of the K_IV voltage commands where the original source fit is attempted and finite. Record all failures and source-gate exclusions rather than selecting only voltages where the correction looks good. This will test whether the negative correction and tau3 trend persist beyond the three adjacent commands, while remaining strictly a model-output residual analysis. Raw human K voltage-clamp data are still absent; do not transfer any fitted exponential into Rust channel parameters or promote the exploratory spike model.
+
+
+## Latest handoff — full finite-positive K_IV residual profile (2026-11-14)
+
+### Verified repository state
+
+- Canonical repository: `codexclai/HumanJS`; default branch and only branch: `main`.
+- Code snapshot before this handoff documentation commit: `dff6fc6af7959a74263646f96ceb69e62fb725eb`; recursive tree: 111 entries, not truncated; zero open issues and zero open pull requests.
+- GitHub Actions [43488672121](https://github.com/codexclai/HumanJS/actions/runs/43488672121) passed on exact code SHA `dff6fc6af7959a74263646f96ceb69e62fb725eb`. Verified steps include Rust formatting, Clippy, Rust tests (41 core unit, 3 synapse integration, 6 passive-membrane integration), 44 Python tests, source/experiment validators, all original Wilbers NEURON Na/K protocols, exact 27-row K_IV result comparison and repository policy.
+
+### Work completed
+
+Extended the source-model K_IV post-peak residual study from three adjacent voltages to the complete predeclared finite-positive source-fit command set. Source selection is exhaustive and predeclared from the original K_IV helper: 34 commands were run; the source current threshold passed at 32 (-100 through +55 mV); five attempted fast fits were non-finite (-100, -95, -90, -85 and -80 mV); and the remaining 27 commands (-75 through +55 mV) had finite positive source fast-fit estimates. The two threshold exclusions (-110 and -105 mV) and the five non-finite fit attempts are recorded separately and are not treated as missing-at-random samples.
+
+The source runner now validates all three disjoint source outcome groups and exports exact NEURON/VClamp model-current samples only at the 27 finite-positive commands. The separate analysis profiles long tau1 and non-source signed short tau3, refitting coefficients across each complete waveform. The expected data file `research/HUMAN-L23-WILBERS-K-IV-MULTIVOLTAGE-RESIDUAL-SUMMARY.csv` records 27 rows × 39 columns and is compared field-by-field in CI. Research methods, decision follow-up, roadmap, status and boot records have been refreshed.
+
+### Result interpretation
+
+Across the 27 eligible model-generated waveforms, the signed non-source third-exponential coefficient was negative at all 27 commands; the nonnegative-amplitude control collapsed the extra term to zero at all 27 signed optima. Full-waveform RMSE reduction ranged from 55.467% to 80.386% (median 66.126%); first-10-ms reduction ranged from 75.608% to 94.278% (median 84.935%). After-10-ms RMSE improvement ranged from -41.467% to +27.728% (median +20.814%); the late-window error worsened at +25 through +55 mV (seven commands), despite lower full-waveform error at every command. The extra coefficient magnitude ranged from 0.0391% to 2.0965% of peak current.
+
+The non-source tau3 optimum ranged from 0.6 to 2.0 ms (median 1.384 ms), with 11/27 profiles at one of the declared grid boundaries: 2.0 ms at -50 through -15 mV, and 0.6 ms at +45, +50 and +55 mV. Tau3 is not globally monotonic and these boundary outcomes are not interior estimates. Local tau1 ranged 17.195-393.404 ms; only -75 and -70 mV exceeded the deposited source helper's 300-ms upper bound. These findings describe a chosen numerical correction family on deterministic NEURON/VClamp model output, not human experimental current, a positive ionic component, a microscopic gate, or biological channel kinetics. The inspected DataverseNL v3.0 public inventory still lacks raw human K voltage-clamp NWB traces and individual K tau target CSVs. The deposited helper, caller, pure-human NMODL, and HumanJS runtime parameters were not changed; ADR-014 remains open.
+
+The apparent direction/sign consistency should not be overread: the profile family itself is non-source, tau3 has 11 boundary outcomes, and its late-window residual worsens at seven depolarized commands. The test verifies computational repeatability of these deterministic model-current results, not biological fit. The raw human K voltage-clamp NWB data and per-cell kinetic targets remain unavailable in the inspected 65-file DataverseNL v3.0 release. No author or researcher was contacted. Do not change the deposited source helper, caller or NMODL; do not add the signed correction to Rust parameters or gate equations. ADR-014 remains open and the spike-capable one-compartment code remains exploratory and unaccepted.
+
+### Changed paths in this continuation
+
+- `.github/workflows/repository-policy.yml`
+- `experiments/replay_wilbers_k_iv_neuron.py`
+- `experiments/wilbers_k_iv_multivoltage.py`
+- `experiments/analyze_wilbers_k_iv_multivoltage.py`
+- `experiments/test_wilbers_k_iv_multivoltage.py`
+- `experiments/validate_wilbers_k_iv_multivoltage.py`
+- `research/HUMAN-L23-WILBERS-K-IV-MULTIVOLTAGE-RESIDUAL-SUMMARY.csv`
+- `research/HUMAN-L23-WILBERS-K-IV-FIT-SENSITIVITY.md`
+- `docs/decisions/DECISIONS.md`
+- `docs/roadmap/MASTER-ROADMAP.md`
+- `docs/status/STATUS.md`
+- `docs/status/SESSION-HANDOFF.md`
+- `docs/BOOT.md`
+
+### Commits and verification
+
+- `2ba25af1fa1e1f745982b45ca5eac04edf2df165` — expand source replay/analysis/tests to all finite-positive source-fit voltages.
+- `2368066b9602c846e527211d7d5d80ef0c6008c6` — correct waveform CSV test fixture newlines.
+- `275c10fa649fdc7a9cb7a341f8d439f7f3474edc` — commit 27-row generated reference and research analysis.
+- `dff6fc6af7959a74263646f96ceb69e62fb725eb` — preserve the correct multiline test fixture in the resulting Git tree.
+
+Workflow [43488672121](https://github.com/codexclai/HumanJS/actions/runs/43488672121) passed on exact `dff6fc6`. In particular, CI reports the original K_IV replay ran 34/34 commands; source fast fits are finite at 27/34; the K_recovery replay ran 50/50 paired-pulse traces; 192/192 same-waveform multi-start fits converged; the 44 Python tests passed; the expanded 27-command signed-residual analysis matched the committed table exactly; the three-exponential diagnostic and repository policy passed. No local clone or local Rust/NEURON execution was performed in this session; those checks were run and verified on GitHub Actions.
+
+### Next concrete step
+
+Investigate tau3 boundary sensitivity using a broader, predeclared grid (for example 0.1–5 ms) across all 27 waveforms, with the full-waveform objective unchanged and early/late windows retained as diagnostics. Report boundary hits and where the after-10-ms residual worsens. This remains a model-current numerical exercise; do not convert it into biological channel kinetics or a Rust runtime change.

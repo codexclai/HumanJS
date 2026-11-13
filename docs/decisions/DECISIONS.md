@@ -1,7 +1,7 @@
 # HumanJS — decision record
 
 **Decision authority:** project owner.  
-**Updated:** 2026-11-10.
+**Updated:** 2026-11-14.
 
 This is the canonical record of currently accepted decisions. Later explicit owner decisions may supersede these entries.
 
@@ -249,3 +249,14 @@ Keep the deposited helper, fitting caller, and pure-human NMODL unchanged. Do no
 A signed, non-source short-time exponential may be used to characterize the deterministic residual of the deposited Wilbers K_IV current-fit waveform. The correction has now been independently profiled at three adjacent source-model command voltages (-75, -70 and -65 mV). It is negative at all three commands, remains below 0.11% of peak current, and improves the full-waveform numerical residual. At the signed optimum, constraining its amplitude to be nonnegative collapses the extra coefficient to zero.
 
 The three-voltage result supports only a bounded descriptive model-output trend. It does not identify a positive ionic current, molecular state, biological gate, or human fast-inactivation kinetic parameter. Do not add this correction to Rust channel equations or transfer its fitted tau3 into model parameters. The deposited source fitting helper, source caller and pure-human NMODL stay unchanged. Raw human K voltage-clamp recordings and individual K kinetic targets remain unavailable in the inspected public DataverseNL v3.0 deposit; this analysis does not satisfy ADR-014 or biologically validate the provisional single-compartment spike model.
+
+
+### ADR-019 follow-up — full finite-positive K_IV source-fit set (2026-11-14)
+
+The adjacent-voltage diagnostic was extended to every K_IV command with a finite positive fast-inactivation fit from the original source routine. Source selection is exhaustive and predeclared from the original K_IV helper: 34 commands were run; the source current threshold passed at 32 (-100 through +55 mV); five attempted fast fits were non-finite (-100, -95, -90, -85 and -80 mV); and the remaining 27 commands (-75 through +55 mV) had finite positive source fast-fit estimates. The two threshold exclusions (-110 and -105 mV) and the five non-finite fit attempts are recorded separately and are not treated as missing-at-random samples.
+
+Across the 27 eligible model-generated waveforms, the signed non-source third-exponential coefficient was negative at all 27 commands; the nonnegative-amplitude control collapsed the extra term to zero at all 27 signed optima. Full-waveform RMSE reduction ranged from 55.467% to 80.386% (median 66.126%); first-10-ms reduction ranged from 75.608% to 94.278% (median 84.935%). After-10-ms RMSE improvement ranged from -41.467% to +27.728% (median +20.814%); the late-window error worsened at +25 through +55 mV (seven commands), despite lower full-waveform error at every command. The extra coefficient magnitude ranged from 0.0391% to 2.0965% of peak current.
+
+The non-source tau3 optimum ranged from 0.6 to 2.0 ms (median 1.384 ms), with 11/27 profiles at one of the declared grid boundaries: 2.0 ms at -50 through -15 mV, and 0.6 ms at +45, +50 and +55 mV. Tau3 is not globally monotonic and these boundary outcomes are not interior estimates. Local tau1 ranged 17.195-393.404 ms; only -75 and -70 mV exceeded the deposited source helper's 300-ms upper bound. These findings describe a chosen numerical correction family on deterministic NEURON/VClamp model output, not human experimental current, a positive ionic component, a microscopic gate, or biological channel kinetics. The inspected DataverseNL v3.0 public inventory still lacks raw human K voltage-clamp NWB traces and individual K tau target CSVs. The deposited helper, caller, pure-human NMODL, and HumanJS runtime parameters were not changed; ADR-014 remains open.
+
+Keep this as a descriptive numerical residual analysis only. Do not add the signed term or tau3 to Rust channel kinetics or the exploratory neuron. The repository's canonical 27-row summary is checked by the main workflow against the exact output regenerated from the pinned NEURON 9.0.2 source replay.
