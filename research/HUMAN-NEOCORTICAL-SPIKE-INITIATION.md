@@ -1174,11 +1174,11 @@ The HumanJS Rust implementation now has explicit regression coverage for the dis
 
 **Deposited temperature equations:**
 - Both channel classes use Q10 = 2.3, but their reference temperatures differ. Na uses 25°C; K uses 34°C.
-- The rate factor is (T_{adj}=2.3^{(T-T_{ref})/10}). Na activation/inactivation and K activation/fast-inactivation time constants divide by their channel's (T_{adj}); their Boltzmann steady states are temperature-independent in these source equations.
+- The rate factor is `T_adj = 2.3^((T − T_ref)/10)`. Na activation/inactivation and K activation/fast-inactivation time constants divide by their channel's (T_{adj}); their Boltzmann steady states are temperature-independent in these source equations.
 - The K slow-inactivation gate uses fixed 450-ms and 2789.79294281-ms inactivation/recovery branch constants. Those constants are not multiplied by the Q10 factor in the deposited model.
-- The Na conductance equation multiplies `gbar_Na` by (T_{adj}). The K conductance equation does not multiply `gbar_K` by (T_{adj}). The passive leak likewise has no channel Q10 multiplier.
+- The Na conductance equation multiplies `gbar_Na` by `T_adj`. The K conductance equation does not multiply `gbar_K` by `T_adj`. The passive leak likewise has no channel Q10 multiplier.
 
-At the current-clamp temperature of 34°C this gives (T_{adj,Na}=2.3^{0.9}=2.1161919228) and (T_{adj,K}=1). The tested grid of 20, 25, 30, 34 and 37°C yields Na factors 0.65938047, 1.0, 1.51657509, 2.11619192 and 2.71689843; K factors 0.31158822, 0.47254693, 0.71665290, 1.0 and 1.28386202 respectively.
+At the current-clamp temperature of 34°C this gives `T_adj,Na = 2.3^0.9 = 2.1161919228` and `T_adj,K = 1`. The tested grid of 20, 25, 30, 34 and 37°C yields Na factors 0.65938047, 1.0, 1.51657509, 2.11619192 and 2.71689843; K factors 0.31158822, 0.47254693, 0.71665290, 1.0 and 1.28386202 respectively.
 
 **Rust regressions added in commit `a3bab162bfa19bf9b871a43a555874736a8e280c`:**
 - `channel_temperature_scaling_matches_deposited_rate_contract` compares Na and K Q10 factors with their individual reference temperatures, verifies inverse time-constant scaling for the represented fast gates, checks unchanged steady-state gates, and keeps K slow-gate branch constants fixed at every grid temperature.
