@@ -6,11 +6,13 @@
 ## Canonical repository and live state
 
 - Repository: `codexclai/HumanJS`, public, default branch `main`.
-- Live verification immediately before this status refresh: main HEAD `ed07cec9982622f9c3dcb8c0825c7951c3515442`; recursive tree contains 75 entries and is not truncated; branch listing contains exactly `main`; zero open issues and zero open pull requests.
-- Code commit `ed07cec9982622f9c3dcb8c0825c7951c3515442` adds two sodium-specific regressions. They compare all three Na m/h wrong-sign guard windows and all three true denominator singularities (including both sides of each guard) with the independent analytic rate expression, and sweep both sodium gate time constants and steady states across 441 voltages from −120 to +100 mV. The model's −10-mV current-clamp shift is explicitly included in the test mapping. Production equations, parameters, and runtime behavior are unchanged.
-- GitHub Actions run [43425235022](https://github.com/codexclai/HumanJS/actions/runs/43425235022) completed successfully on exact code commit `ed07cec9982622f9c3dcb8c0825c7951c3515442`: `cargo fmt --all -- --check`; `cargo clippy --workspace --all-targets -- -D warnings`; `cargo test --workspace --locked` (38 unit, 3 synapse integration, 6 passive-membrane integration tests); Python experiment syntax and 22 experiment tests; Wilbers voltage-sampling tests; Figure S5 and current-clamp data validators; and repository policy. These results verify code and evidence integrity, not biological validity.
-- The original Wilbers Na/K NMODL source files remain unchanged. Their narrow false-guard branch defects and exact-singularity non-finite rates remain source findings; the HumanJS Rust `trap0` helper already evaluates the continuous analytic form.
-- A local clean clone could not be obtained in this session because the container could not resolve `github.com`; verification was performed by the exact-main GitHub Actions run above, not by claiming an unrun local command.
+- Live verification immediately before this status refresh: main HEAD `19b5fd9838cc8bb7e367b9c9e67b322cd490c6d7`; recursive tree has 75 entries and is not truncated; branch listing contains exactly `main`; zero open issues and zero open pull requests.
+- Temperature-contract test commit `a3bab162bfa19bf9b871a43a555874736a8e280c` replaces the earlier one-point Q10 assertion with two independent regressions in `crates/humanjs-core/src/ion_channels.rs`. A five-temperature grid (20, 25, 30, 34 and 37°C) checks both channel-specific reference temperatures and inverse Q10 scaling of Na activation/inactivation and K activation/fast-inactivation time constants, unchanged steady-state gates, and the fixed 450-ms / 2789.79294281-ms K slow-gate constants.
+- The second test compares identical-voltage, identical-steady-state current balances across that grid: sodium conductance/current includes `T_adj`; potassium conductance and passive leak do not. At 34°C the source contract gives Na `2.3^0.9 ≈ 2.11619` and K `1.0`. This is a code/source-equation contract test, not biological validation of Q10 across 20–37°C.
+- The exact rustfmt correction is commit `19b5fd9838cc8bb7e367b9c9e67b322cd490c6d7`. The preceding commit `a3bab162bfa19bf9b871a43a555874736a8e280c` had one formatting-only CI failure; no tests or lints ran in that attempt. The formatting-only correction is verified by the complete following workflow.
+- GitHub Actions [43426280596](https://github.com/codexclai/HumanJS/actions/runs/43426280596) passed on exact code HEAD `19b5fd9838cc8bb7e367b9c9e67b322cd490c6d7`: `cargo fmt --all -- --check`; `cargo clippy --workspace --all-targets -- -D warnings`; `cargo test --workspace --locked` (39 unit, 3 synapse integration, 6 passive-membrane integration tests); Python experiment syntax and 22 experiment tests; Wilbers voltage-sampling checks; Figure S5 and current-clamp source-data validators; and repository policy. These checks establish software/source-protocol consistency only, not biological validity.
+- The original Dataverse Na/K NMODL files and all HumanJS production equations and fitted parameters remain unchanged. The spike-capable single-compartment mechanism remains exploratory and unaccepted.
+- A local clean clone was not available because this container could not resolve `github.com`; checks were run by GitHub Actions against the exact main commit, not by an unrun local cargo command.
 
 ## Implemented Rust CPU mechanisms
 
@@ -46,6 +48,17 @@ Parameter/evidence boundaries:
 - The Rust `trap0` function uses a stable analytic limit at the mathematical singularity. It does not reproduce the problematic source branch logic exactly. The pure NMODL files declare the prefactor as `/ms`, but the voltage-valued numerator in the source equation requires `mV⁻¹·ms⁻¹`; HumanJS retains numeric values and uses the equation-consistent internal unit pending source unit-contract verification.
 
 Current software tests cover the analytic rate limit/continuity, human gate half-voltage steady states, potassium fast/slow inactivation branch constants and conductance fractions, positive finite time constants over a bounded voltage scan, Q10 scaling, deposited K+ gate-clamp replay, all 50 recovery voltage/delay gate-clamp conditions, source `K_IV` current-activation fitting at seven voltages, post-peak biexponential inactivation fitting at six voltages, and the 50-condition `K_recovery` current/bi-exponential-fit protocol with five-voltage SciPy references preserved in a CSV, plus one-spike waveform scale, approximate step-size convergence, reset, and transactional failure. These remain software/source-protocol regressions, not biological validation. They do not reproduce the full published voltage-clamp protocols or independently validate the fitted current-clamp model. See ADR-014, ADR-016, `docs/architecture/SYSTEM-ARCHITECTURE.md`, and `research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md`.
+
+
+
+### Temperature-contract regression coverage (2026-11-13)
+
+Two new Rust tests cover the source temperature contract across 20, 25, 30, 34 and 37°C:
+
+- `channel_temperature_scaling_matches_deposited_rate_contract` checks Na and K Q10 factors using distinct reference temperatures (25°C and 34°C respectively), inverse scaling of all represented fast gate time constants, temperature-invariant steady states, and the two fixed K slow-gate branch constants.
+- `temperature_adjustment_scales_sodium_conductance_but_not_potassium_or_leak` checks current balance at a fixed initial voltage and the same steady-state gates. Na current follows the 25°C-referenced Q10 multiplier; K current and leak remain unchanged because their conductances are not multiplied by `T_adj` in the deposited equations.
+
+At the model's 34°C current-clamp setting, these source conventions yield Na `2.3^0.9 ≈ 2.11619` and K `1.0`. The test grid validates equation placement and software behavior only; it does not validate the temperature range biologically or imply that either channel mechanism is accepted. Source provenance and limitations are documented in `research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md`.
 
 ## Human spike-initiation evidence and external model reproduction
 

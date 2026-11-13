@@ -2,16 +2,17 @@
 
 **Updated:** 2026-11-13
 **Canonical repository:** `codexclai/HumanJS`, branch `main` only.
-**Latest verified main before this handoff documentation refresh:** `ed07cec9982622f9c3dcb8c0825c7951c3515442`; GitHub Actions run `43425235022` passed on that exact code commit.
-**Next session:** refresh the live repository metadata, `docs/BOOT.md`, HEAD, tree, workflow results, issues/PRs and branch refs before proceeding. Do not rely on this handoff as a substitute for live verification.
+**Latest verified code HEAD before this documentation refresh:** `19b5fd9838cc8bb7e367b9c9e67b322cd490c6d7`; GitHub Actions run `43426280596` passed on that exact commit.
+**Next session:** refresh repository metadata, read live `docs/BOOT.md`, and recheck HEAD/tree/workflows/issues/PRs/branch refs before relying on this handoff.
 
 ## Verified repository state at handoff
 
-- Public repository; default branch `main`; HEAD before this documentation refresh: `ed07cec9982622f9c3dcb8c0825c7951c3515442`; recursive tree has 75 entries and is not truncated; branch listing contains only `main`; zero open issues and pull requests.
-- Run [43425235022](https://github.com/codexclai/HumanJS/actions/runs/43425235022) completed successfully on `ed07cec9982622f9c3dcb8c0825c7951c3515442`. It passed rustfmt, Clippy, `cargo test --workspace --locked` (38 unit, 3 synapse integration, 6 passive-membrane integration), Python experiment syntax and 22 experiment tests, Wilbers voltage-sampling checks, both research-data validators and repository policy.
-- Code commit `ed07cec9982622f9c3dcb8c0825c7951c3515442` adds two sodium rate tests: all six m/h alpha/beta wrong-sign guard and true-singularity landmarks plus a 441-point analytic-equation sweep of sodium activation/inactivation time constants and steady states. The configured −10-mV current-clamp voltage shift is accounted for.
-- This is numerical source-equation and software verification. No external NMODL source, fit parameter, or production runtime code was changed. The exploratory spike mechanism remains unaccepted and not biologically validated.
-- A local clone attempt failed because the current container could not resolve `github.com`; no local cargo command is claimed. GitHub Actions completed the checks on the exact commit.
+- Public repository; default branch `main`; code HEAD before documentation refresh: `19b5fd9838cc8bb7e367b9c9e67b322cd490c6d7`; recursive tree has 75 entries and is not truncated; exactly one branch (`main`); zero open issues and zero open pull requests.
+- Workflow [43426280596](https://github.com/codexclai/HumanJS/actions/runs/43426280596) completed successfully on exact code commit `19b5fd9838cc8bb7e367b9c9e67b322cd490c6d7`. It passed rustfmt, Clippy, `cargo test --workspace --locked` (39 Rust unit tests, 3 synapse integration tests, 6 passive-membrane integration tests), Python syntax and 22 experiment tests, Wilbers voltage-sampling checks, both scientific-data validators and repository policy.
+- The temperature update is test-only. Commit `a3bab162bfa19bf9b871a43a555874736a8e280c` adds a five-temperature source-contract sweep (20, 25, 30, 34, 37°C) for Na/K reference Q10 handling, time constants, steady-state invariance and K slow-gate fixed times; commit `19b5fd9838cc8bb7e367b9c9e67b322cd490c6d7` applies the exact rustfmt correction required by the first attempt.
+- The first temperature test commit triggered workflow 43426192713, which failed at rustfmt only; CI provided two precise formatting differences. The corrected commit passed the complete workflow 43426280596. No lints/tests were reported from the formatting-only failed run.
+- No production code, biological parameters, or external Dataverse NMODL files changed. This is software/source-equation verification, not biological validation. The exploratory spike mechanism remains scientifically unaccepted.
+- A local clone could not be obtained because this container could not resolve `github.com`; GitHub Actions verified the exact pushed main commit.
 
 ## Current HumanJS implementation
 
@@ -550,3 +551,9 @@ Therefore the direct sodium branch faults characterized at exact landmarks do no
 The HumanJS Rust sodium channel now has channel-specific regression coverage for the three wrong-sign guard windows and three true denominator singularities discovered in unchanged Wilbers `na_human.mod`. The 441-voltage grid test checks m/h kinetics and steady state against the independent continuous equation. CI is green on code commit `ed07cec9982622f9c3dcb8c0825c7951c3515442` (run 43425235022).
 
 **Next concrete step:** audit temperature behavior as a complete contract rather than only checking one Q10 point. Add independent tests for sodium and potassium rate scaling and the different source conductance-temperature treatment across a small explicit temperature grid, while keeping channel parameters fixed. Continue to classify this as software/source-equation validation only. Raw human K kinetic targets and per-cell voltage-clamp traces remain unavailable in the inspected Dataverse v3.0 inventory; do not contact researchers and do not promote the provisional spike mechanism.
+
+### Latest handoff — channel temperature contract regression (2026-11-13)
+
+The current Rust implementation's temperature behavior is now tested at 20, 25, 30, 34 and 37°C. Na uses its 25°C reference; K uses its 34°C reference; each rate family uses Q10=2.3. Gate time constants scale inversely with (T_{adj}), steady-state gates do not change, and the two K slow-gate branch constants remain fixed. The actual current-balance test verifies that Na conductance/current is multiplied by (T_{adj}), while K conductance and passive leak are not. At the 34°C current-clamp condition, Na (T_{adj}=2.3^{0.9}approx2.11619) and K (T_{adj}=1.0).
+
+**Next concrete step:** keep the remaining ADR-014 gate explicit. The temperature regression proves that HumanJS applies the source's different Na/K Q10 placements; it does not validate this Q10 law biologically across the whole 20–37°C grid. Continue with a bounded source-protocol audit of the sodium voltage-clamp gates at the paper's 25°C and compare the existing Rust kinetics against the public human summary targets, clearly separating gate taus from current-fit apparent taus. Do not contact researchers, invent missing raw K data, or promote the single-compartment model.

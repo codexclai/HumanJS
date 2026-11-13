@@ -1165,3 +1165,25 @@ The source-level sodium branch probe is now represented by channel-specific Rust
 - `human_sodium_rates_match_source_equations_over_voltage_grid`: compares Na activation/inactivation time constants and steady states at 441 effective voltages from −120 to +100 mV in 0.5-mV increments. The mapping from effective voltage to membrane voltage explicitly accounts for the current-clamp −10-mV channel shift.
 
 GitHub Actions run [43425235022](https://github.com/codexclai/HumanJS/actions/runs/43425235022) passed on the exact code commit: 38 Rust unit tests, 3 synapse integration tests, 6 passive-membrane integration tests, 22 Python tests, voltage-sampling checks, both Wilbers research-data validators, formatting, Clippy and repository policy. The original `na_human.mod` / `k_human.mod` files, HumanJS production equations and all fitted parameters remain unchanged. These tests protect the Rust mathematical implementation; they do not reproduce the defective external NMODL branch, validate biology, or satisfy ADR-014's spike-mechanism acceptance gate.
+
+### Human Na/K temperature-contract regression (2026-11-13)
+
+The HumanJS Rust implementation now has explicit regression coverage for the distinct temperature rules transcribed from the Wilbers et al. (2023) NMODL mechanisms and fitting setup.
+
+**Source provenance.** The DataverseNL v3.0 public file manifest for DOI [10.34894/L5J0SD](https://doi.org/10.34894/L5J0SD) identifies the current-clamp hybrid files as `na_human.mod` (file 318563; SHA-1 `ef158980e4bb427c97cfb8f379cd63006130b3b2`) and `k_human.mod` (file 318566; SHA-1 `622f7c9867e727a3dc7dea1f9ba2efbfb94cfd3a`). The pure voltage-clamp counterparts are Na file 318629 (SHA-1 `b199d70c3d0e7a2e991fd8d26c54b1318e3c0970`) and K file 318647 (SHA-1 `d299b3430ecda7a94f6d1c37ac76b2878052c7d5`). The original NMODL files were not modified by this work.
+
+**Deposited temperature equations:**
+- Both channel classes use Q10 = 2.3, but their reference temperatures differ. Na uses 25°C; K uses 34°C.
+- The rate factor is (T_{adj}=2.3^{(T-T_{ref})/10}). Na activation/inactivation and K activation/fast-inactivation time constants divide by their channel's (T_{adj}); their Boltzmann steady states are temperature-independent in these source equations.
+- The K slow-inactivation gate uses fixed 450-ms and 2789.79294281-ms inactivation/recovery branch constants. Those constants are not multiplied by the Q10 factor in the deposited model.
+- The Na conductance equation multiplies `gbar_Na` by (T_{adj}). The K conductance equation does not multiply `gbar_K` by (T_{adj}). The passive leak likewise has no channel Q10 multiplier.
+
+At the current-clamp temperature of 34°C this gives (T_{adj,Na}=2.3^{0.9}=2.1161919228) and (T_{adj,K}=1). The tested grid of 20, 25, 30, 34 and 37°C yields Na factors 0.65938047, 1.0, 1.51657509, 2.11619192 and 2.71689843; K factors 0.31158822, 0.47254693, 0.71665290, 1.0 and 1.28386202 respectively.
+
+**Rust regressions added in commit `a3bab162bfa19bf9b871a43a555874736a8e280c`:**
+- `channel_temperature_scaling_matches_deposited_rate_contract` compares Na and K Q10 factors with their individual reference temperatures, verifies inverse time-constant scaling for the represented fast gates, checks unchanged steady-state gates, and keeps K slow-gate branch constants fixed at every grid temperature.
+- `temperature_adjustment_scales_sodium_conductance_but_not_potassium_or_leak` evaluates current balance at a fixed −60-mV initial voltage and zero injected current across the same grid. Identical initial gate states isolate the explicit conductance multiplier: Na current follows the Na Q10 factor; K and leak current remain unchanged.
+
+GitHub Actions [43426280596](https://github.com/codexclai/HumanJS/actions/runs/43426280596) passed after the rustfmt correction in commit `19b5fd9838cc8bb7e367b9c9e67b322cd490c6d7`: 39 Rust unit tests, 3 synapse integration tests, 6 passive-membrane integration tests, 22 Python experiment tests, Wilbers voltage-sampling checks, both source-data validators, formatting, Clippy and repository policy. The preceding run 43426192713 failed only because rustfmt requested two exact whitespace reflows; the corrected run executed the complete suite successfully.
+
+**Interpretation limit:** this verifies that the Rust code follows the deposited model's mathematical temperature placement at the selected grid values. It does not show that Q10=2.3 is biologically valid throughout 20–37°C, that the parameters extrapolate to arbitrary preparations, or that the exploratory single-compartment model passes ADR-014. Raw human per-cell K kinetic targets and voltage-clamp current traces remain unavailable in the inspected dataset. No production equation, fitted parameter, or external source file changed.
