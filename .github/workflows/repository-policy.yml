@@ -62,5 +62,7 @@ jobs:
         run: python3 -m pip install --disable-pip-version-check -r experiments/requirements-wilbers-neuron.txt
       - name: Replay original Wilbers Na_IV using NEURON VClamp
         run: python3 experiments/replay_wilbers_na_iv_neuron.py --output /tmp/wilbers-na-iv-neuron.csv
+      - name: Validate original NEURON Na_IV replay
+        run: python3 experiments/validate_wilbers_na_iv_neuron_replay.py --actual /tmp/wilbers-na-iv-neuron.csv
       - name: Validate repository policy
         run: python3 .github/scripts/repository_policy.py
