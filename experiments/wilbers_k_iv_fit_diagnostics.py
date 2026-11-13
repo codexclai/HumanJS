@@ -212,12 +212,16 @@ def profile_k_iv_postpeak_tau(
     voltage_mv: float,
     times_ms: Any,
     currents_ma_cm2: Any,
+    *,
+    tau_max_ms: float = 300.0,
+    grid_points: int = 601,
 ) -> list[dict[str, Any]]:
     """Profile the nonnegative linear amplitudes over a fixed tau1 grid.
 
     For each fixed fast tau1, the remaining (a1, a2, ss) parameters are
-    estimated by bounded linear least squares. This is a deterministic profile
-    objective, not a change to the deposited source fit.
+    estimated by bounded linear least squares. The default grid reproduces the
+    deposited tau1 upper bound; larger explicit bounds are diagnostic
+    counterfactuals only and do not change the source fit.
     """
     from scipy.optimize import lsq_linear
 
@@ -234,9 +238,14 @@ def profile_k_iv_postpeak_tau(
     ):
         raise ValueError("K_IV tau profile requires matched, increasing finite samples")
 
+    if not math.isfinite(tau_max_ms) or tau_max_ms <= 0.05:
+        raise ValueError("K_IV tau profile upper bound must be finite and greater than 0.05 ms")
+    if isinstance(grid_points, bool) or grid_points < 2:
+        raise ValueError("K_IV tau profile grid must have at least two points")
+
     x = times - times[0]
     total = float(np.sum((currents - np.mean(currents)) ** 2))
-    tau_grid = np.geomspace(0.05, 300.0, 601)
+    tau_grid = np.geomspace(0.05, float(tau_max_ms), int(grid_points))
     rows: list[dict[str, Any]] = []
     for tau1 in tau_grid:
         design = np.column_stack(
