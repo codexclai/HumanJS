@@ -373,7 +373,7 @@ def inactivation_csv_text(result: dict[str, Any]) -> str:
         "# The original (t>51)&(t<55) test window has 799 samples. Source formula is g=-I/(conditioning_voltage-ena+1e10), followed by peak and max-normalization; this literal denominator is reproduced without dimensional reinterpretation.",
         f"# Original fit_boltz_inact result: Vhalf={result['inactivation']['boltzmann_vhalf_mv']:.12g} mV; slope={result['inactivation']['boltzmann_slope_mv']:.12g} mV.",
         "# These are pure-model source-code outputs, not experimental current measurements or biological validation; the inspected Dataverse release has no raw human NWB voltage-clamp traces.",
-        ",".join(INACTIVATION_FIELDNAMES),
+        # CSV column names are emitted once by DictWriter below.
     ]
     import io
     output = io.StringIO()
@@ -382,7 +382,11 @@ def inactivation_csv_text(result: dict[str, Any]) -> str:
         lineterminator="\n",
     )
     writer.writeheader()
-    writer.writerows(result["inactivation"]["rows"])
+    for row in result["inactivation"]["rows"]:
+        writer.writerow({
+            key: ("" if isinstance(value, float) and not math.isfinite(value) else value)
+            for key, value in row.items()
+        })
     lines.append(output.getvalue().rstrip("\n"))
     return "\n".join(lines) + "\n"
 
@@ -401,7 +405,7 @@ def recovery_csv_text(result: dict[str, Any]) -> str:
         "# Protocol: 25 C; dt=0.02 ms; 2 ms at -120 mV; 10 ms at 0 mV first test; recovery intervals 1^2..12^2 ms at -90..-66 mV in 2-mV increments; final 2-ms test at 0 mV.",
         "# For each test pulse the source takes -min(I) in the open interval (12+recovery_time, 14+recovery_time), yielding 99 samples. Its fit is channel_tools.get_tau_act(rectimes,pulse2,est=15); the source labels the plotted current nA although runIna returns local ina density (mA/cm2).",
         "# Returned recovery taus are source apparent-current fit values, not microscopic h-gate taus. These model outputs are not experimental data or biological validation.",
-        ",".join(RECOVERY_FIELDNAMES),
+        # CSV column names are emitted once by DictWriter below.
     ]
     import io
     output = io.StringIO()
@@ -410,7 +414,11 @@ def recovery_csv_text(result: dict[str, Any]) -> str:
         lineterminator="\n",
     )
     writer.writeheader()
-    writer.writerows(result["recovery"]["rows"])
+    for row in result["recovery"]["rows"]:
+        writer.writerow({
+            key: ("" if isinstance(value, float) and not math.isfinite(value) else value)
+            for key, value in row.items()
+        })
     lines.append(output.getvalue().rstrip("\n"))
     return "\n".join(lines) + "\n"
 
