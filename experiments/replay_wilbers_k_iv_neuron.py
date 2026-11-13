@@ -770,7 +770,7 @@ def fit_diagnostic_csv_text(result: dict[str, Any]) -> str:
         "# Diagnostic fits are numerical counterfactuals on a deposited computational model, not empirical human current fits, microscopic gate taus, or biological validation.",
         _write_csv(result["iv"]["fit_diagnostics"], K_IV_FIT_DIAGNOSTIC_FIELDNAMES),
     ]
-    return "\\n".join(lines) + "\\n"
+    return "\n".join(lines) + "\n"
 
 
 def recovery_csv_text(result: dict[str, Any]) -> str:
