@@ -15,6 +15,7 @@ from wilbers_k_iv_multivoltage import (
     read_postpeak_waveforms,
     validate_summary_rows,
 )
+from wilbers_k_iv_three_component import profile_three_exponential_correction
 
 
 class KIVMultivoltageTests(unittest.TestCase):
@@ -56,26 +57,21 @@ class KIVMultivoltageTests(unittest.TestCase):
             - 3.2e-7 * np.exp(-times / 3.2)
             + 4.144e-4
         )
-        result = analyze_k_iv_waveform(
-            -70.0, times, source_times, current,
-            coarse_profile_points=201,
-            local_profile_points=101,
-            short_profile_points=201,
+        result = profile_three_exponential_correction(
+            times,
+            current,
+            339.4,
+            tau2_ms=450.0,
             tau3_min_ms=0.1,
             tau3_max_ms=5.0,
+            grid_points=2801,
         )
-        self.assertAlmostEqual(result["tau3_profile_min_ms"], 0.1)
-        self.assertAlmostEqual(result["tau3_profile_max_ms"], 5.0)
-        self.assertAlmostEqual(result["tau3_ms"], 3.2, delta=0.12)
-        self.assertFalse(result["tau3_profile_at_boundary"])
-        rows = []
-        for voltage in K_IV_MULTIVOLTAGE_TARGETS_MV:
-            row = dict(result)
-            row["voltage_mv"] = voltage
-            rows.append(row)
-        validate_summary_rows(rows, tau3_min_ms=0.1, tau3_max_ms=5.0)
-        with self.assertRaises(ValueError):
-            validate_summary_rows(rows)
+        fitted = result["best_signed"]
+        self.assertAlmostEqual(fitted["tau3_ms"], 3.2, delta=0.002)
+        self.assertLess(fitted["a3_ma_cm2"], 0.0)
+        self.assertEqual(fitted["profile_grid_points"], 2801)
+        self.assertAlmostEqual(fitted["profile_tau3_min_ms"], 0.1)
+        self.assertAlmostEqual(fitted["profile_tau3_max_ms"], 5.0)
 
     def test_tau3_boundary_flag_is_enforced_by_summary_validation(self) -> None:
         times = np.arange(0.0, 489.0, 0.1)
