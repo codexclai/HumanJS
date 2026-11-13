@@ -35,10 +35,14 @@ def number(row: dict[str, str], key: str) -> float:
     return value
 
 
-def validate(path: Path) -> None:
+def validate(path: Path, *, upper_bound_ms: float, expected_grid_size: int) -> None:
     rows = read_profile(path)
-    if len(rows) != 601:
-        raise SystemExit(f"Expected 601 logarithmic tau1 profile points, got {len(rows)}")
+    if len(rows) != expected_grid_size:
+        raise SystemExit(
+            f"Expected {expected_grid_size} logarithmic tau1 profile points, got {len(rows)}"
+        )
+    if not math.isfinite(upper_bound_ms) or upper_bound_ms <= 0.05:
+        raise SystemExit("Profile upper bound must be finite and greater than 0.05 ms")
 
     taus: list[float] = []
     r_squared_values: list[float] = []
@@ -49,8 +53,8 @@ def validate(path: Path) -> None:
         if voltage != -70.0:
             raise SystemExit(f"Unexpected profile voltage: {voltage:g} mV")
         tau = number(row, "tau1_ms")
-        if not 0.05 <= tau <= 300.0:
-            raise SystemExit(f"tau1 outside source bounds at {tau:g} ms")
+        if not 0.05 <= tau <= upper_bound_ms:
+            raise SystemExit(f"tau1 outside requested profile bounds at {tau:g} ms")
         taus.append(tau)
 
         amplitudes = [
@@ -126,8 +130,14 @@ def validate(path: Path) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--actual", type=Path, required=True)
+    parser.add_argument("--upper-bound-ms", type=float, default=300.0)
+    parser.add_argument("--expected-grid-size", type=int, default=601)
     args = parser.parse_args()
-    validate(args.actual)
+    validate(
+        args.actual,
+        upper_bound_ms=args.upper_bound_ms,
+        expected_grid_size=args.expected_grid_size,
+    )
     return 0
 
 
