@@ -136,6 +136,11 @@ A 12,800-node sodium-table extension of the temporary corrected-K AP1 comparison
 The same investigation checked crates/humanjs-core/src/ion_channels.rs: HumanJS computes the rate from voltage minus half-voltage, uses a small-x analytic series and exp_m1/asymptotic branches, and applies the prefactor×slope limit. The existing trap0_uses_the_analytic_limit_and_is_continuous unit test passed. Thus the wrong-sign small-argument guard is specific to the deposited Wilbers NMODL reference; the current Rust helper already uses the mathematically continuous formulation. No HumanJS source change is warranted by this source-only numerical counterfactual. Detailed protocol, hashes and residual limits are recorded in the canonical experiment and research notes.
 
 
+### ADR-014 follow-up — sodium trap0 false guards and TABLE masking (2026-11-13)
+
+The unchanged pure-human `na_human.mod` has the same false-guard predicate and incorrect fallback structure as the K mechanism. In direct NEURON 9.0.2 rate calls, the m activation, h alpha and h beta paths produce discontinuous or negative time constants at the false guards, and NaN at their true denominator singularities. Their analytically continued taus remain finite. The deposited 200-node Na TABLE path avoids these microvolt-scale samples and returns finite interpolated values, with bounded but nonzero interpolation error over an ordinary voltage grid. Therefore direct-rate and default TABLE execution must be distinguished when interpreting numerical source reproductions. The original Na source remains unchanged; detailed values and method are in the 2026-11-13 sodium probe records.
+
+
 ## ADR-015 — Published-model reproduction is evidence, not HumanJS implementation
 
 **Status:** Accepted · **Date:** 2026-11-11

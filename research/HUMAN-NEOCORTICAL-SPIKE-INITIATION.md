@@ -1122,3 +1122,24 @@ The alpha_h false guard is centred at v=-thi1=-40.5659 mV, with predicate half-w
 The beta_h false guard is centred at v=-thi2=+75.9382 mV, with predicate half-width 4.01834e-7 mV. Just outside at offset -4.05852e-7 mV, source tau_h1 is 12.2636432 ms and matches the analytic reference. Inside at -3.97816e-7 mV, at the centre and at +3.97816e-7 mV, source tau_h1 is negative, approximately -0.0132529631 ms, while the analytic tau remains about 12.2636432 ms. Just outside at +4.05852e-7 mV the source again matches the analytic reference. At the true beta_h denominator singularity v=thi2=-75.9382 mV, the original source returns NaN; the analytic-limit tau_h1 is 360.921208650 ms. At +/-1e-6 mV, the source is finite and agrees with the analytic reference within 5.1e-10 ms.
 
 Two additional Rust tests now cover these exact parameters and transitions: human_potassium_fast_inactivation_rates_are_continuous_at_all_trap0_landmarks independently checks the two wrong-sign guards, both true singularities and their neighbors; human_potassium_fast_inactivation_rates_match_source_equations_over_voltage_grid checks fast-inactivation tau and steady state across the same 441-point voltage interval with the model's -10-mV shift. Together with the two activation tests, these protect all four K trap0 rate evaluations used by the HumanJS K channel. They do not alter model parameters, fix the external deposited source, or establish biological validity.
+
+
+### Direct sodium trap0 branch and TABLE-path probe (2026-11-13)
+
+The original, checksum-verified Wilbers human sodium NMODL mechanism was compiled unchanged in NEURON 9.0.2 and its public `rates(v)` procedure was evaluated directly at the six effective-voltage landmarks. The pinned environment used Python 3.10.12, NumPy 1.26.4, g++ 11.4.0, NEURON 9.0.2 and 34°C. The original `na_human.mod` SHA-1 is `ef158980e4bb427c97cfb8f379cd63006130b3b2`. Direct calls explicitly set `usetable_na_human=0`; a separate run used the deposited 200-node `trates(v)` table path with `usetable_na_human=1`. All voltages below are effective channel voltages after the source shift.
+
+The deposited `trap0` function checks `fabs((v+th)/q) > 1e-6`, although its denominator `1-exp(-(v-th)/q)` is singular at `v=th`. Its fallback is `q*(1--(v-th)/q/2)`, which neither contains the rate prefactor nor equals the analytic limit `a*q`. This creates three false-guard windows in the sodium m/h equations, plus three true denominator singularities:
+
+| Rate path | False-guard centre (mV) | Guard half-width (mV) | Direct-source tau at centre | Analytic tau | True singularity (mV) | Analytic-limit tau |
+|---|---:|---:|---:|---:|---:|---:|
+| m activation | +58.59235669 | 9.21455e-6 | 0.0256413461 ms | 0.0188446349 ms | −58.59235669 | 0.1198277735 ms |
+| h alpha | +39.29867691 | 7.21636e-6 | 0.0101590094 ms | 0.1262014148 ms | −39.29867691 | 1.3739320405 ms |
+| h beta | +77.16674532 | 4.74945e-6 | −0.00706676366 ms | 0.08516938723 ms | −77.16674532 | 7.1269515664 ms |
+
+At each false guard, the source rate's tau is discontinuous relative to values just outside the microvolt-scale window. The beta h path produces a negative time constant. At each true singularity, direct `rates(v)` returns NaN while the analytic rate-limit calculation remains finite. The independent steady-state sigmoids are not affected by these rate-function defects.
+
+A 441-point direct-rate sweep from −120 to +100 mV in 0.5-mV steps contained no exact/near-landmark samples: all 441 m/h time constants were finite and matched the independently evaluated analytic equations to maximum absolute errors of 3.89e-16 ms (m) and 6.22e-15 ms (h). This ordinary-grid result does not refute the narrow, explicitly probed branch defects.
+
+The source's default 200-node TABLE path largely masks these narrow point defects by precomputing rates on its coarser voltage grid and interpolating. Its 441-point 0.5-mV sweep was finite throughout, with maximum absolute tau interpolation errors of 3.54675e-5 ms for m (maximum relative error 0.02963%, at −57.5 mV) and 0.0198396 ms for h (0.18848%, at −67.5 mV). At the six pathological landmarks, `trates(v)` returned finite interpolated values close to the analytic limits rather than the direct `rates(v)` wrong-branch/NaN results. This distinction matters: the direct-rate defects are present in the deposited equations but are generally bypassed by the default TABLE execution unless its grid/parameter configuration encounters a pathological sample.
+
+No source NMODL, fitted parameter, HumanJS implementation, or author-default protocol was changed. The table-off/direct-rate check is a numerical diagnostic; the author's 200-node TABLE-on baseline remains authoritative. This is source-equation and software analysis, not biological validation.
