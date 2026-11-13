@@ -56,5 +56,7 @@ jobs:
         run: python3 experiments/validate_wilbers_na_iv_tau_summary.py
       - name: Replay Wilbers sodium IV composite-current fits
         run: python3 experiments/replay_wilbers_na_iv_current_fit.py
+      - name: Validate Wilbers sodium IV current-fit replay
+        run: python3 experiments/validate_wilbers_na_iv_current_fit_replay.py
       - name: Validate repository policy
         run: python3 .github/scripts/repository_policy.py

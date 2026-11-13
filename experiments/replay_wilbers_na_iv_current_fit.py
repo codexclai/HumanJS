@@ -38,8 +38,8 @@ FIT_R2_THRESHOLD = 0.95
 _FIELDNAMES = (
     "voltage_mv", "samples_fitted", "gate_tau_m_ms", "gate_tau_h_ms",
     "preliminary_tau_m_ms", "preliminary_tau_h_ms", "joint_tau_m_ms",
-    "joint_tau_h_ms", "returned_tau_m_ms", "returned_tau_h_ms",
-    "joint_r_squared", "accepted_by_source_threshold",
+    "joint_tau_h_ms", "r2_conditional_tau_m_ms", "r2_conditional_tau_h_ms",
+    "joint_r_squared", "passed_joint_fit_r2",
     "joint_tau_h_at_upper_bound",
 )
 
@@ -216,9 +216,9 @@ def replay_na_iv_current_fits() -> list[dict[str, Any]]:
                     **fits,
                     # The source returns tau_m=popt[0], but tau_h remains the
                     # preliminary decay estimate (the popt[1] write is commented out).
-                    "returned_tau_m_ms": fits["joint_tau_m_ms"] if accepted else math.nan,
-                    "returned_tau_h_ms": fits["preliminary_tau_h_ms"] if accepted else math.nan,
-                    "accepted_by_source_threshold": accepted,
+                    "r2_conditional_tau_m_ms": fits["joint_tau_m_ms"] if accepted else math.nan,
+                    "r2_conditional_tau_h_ms": fits["preliminary_tau_h_ms"] if accepted else math.nan,
+                    "passed_joint_fit_r2": accepted,
                     "joint_tau_h_at_upper_bound": (
                         abs(fits["joint_tau_h_ms"] - 2.0 * fits["preliminary_tau_h_ms"])
                         <= 1.0e-6 * max(1.0, abs(fits["joint_tau_h_ms"]))
@@ -236,10 +236,10 @@ def replay_na_iv_current_fits() -> list[dict[str, Any]]:
                     "preliminary_tau_h_ms": math.nan,
                     "joint_tau_m_ms": math.nan,
                     "joint_tau_h_ms": math.nan,
-                    "returned_tau_m_ms": math.nan,
-                    "returned_tau_h_ms": math.nan,
+                    "r2_conditional_tau_m_ms": math.nan,
+                    "r2_conditional_tau_h_ms": math.nan,
                     "joint_r_squared": math.nan,
-                    "accepted_by_source_threshold": False,
+                    "passed_joint_fit_r2": False,
                     "joint_tau_h_at_upper_bound": False,
                     "fit_error": str(error),
                 }
@@ -257,7 +257,7 @@ def main() -> int:
             for key, value in row.items()
         }
         writer.writerow(serializable)
-    accepted = sum(bool(row["accepted_by_source_threshold"]) for row in rows)
+    accepted = sum(bool(row["passed_joint_fit_r2"]) for row in rows)
     print(
         f"# {accepted}/{len(rows)} voltages passed the deposited joint-fit R² > {FIT_R2_THRESHOLD:.2f} rule; "
         "absolute source-current threshold not applied to normalized current.",
