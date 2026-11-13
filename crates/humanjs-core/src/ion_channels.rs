@@ -2087,6 +2087,211 @@ mod tests {
     }
 
     #[test]
+    fn human_sodium_rates_are_continuous_at_all_trap0_landmarks() {
+        let model = wilbers_model();
+        let parameters = model.sodium;
+        let temperature_factor = model.sodium_temperature_factor().unwrap();
+
+        // Independently evaluate a*x/(1-exp(-x)) with the analytic x=0
+        // limit. The deposited NMODL guard tests v+theta, while its
+        // denominator is singular at v-theta.
+        let source_rate =
+            |voltage_mv: f64, half_voltage_mv: f64, prefactor: RatePrefactor, slope_mv: f64| {
+                let x = (voltage_mv - half_voltage_mv) / slope_mv;
+                let scale = prefactor.per_millivolt_per_ms * slope_mv;
+                if x == 0.0 {
+                    scale
+                } else {
+                    scale * x / -(-x).exp_m1()
+                }
+            };
+        let expected_activation_tau = |voltage_mv: f64| {
+            let alpha = source_rate(
+                voltage_mv,
+                parameters.activation_rate_half_voltage_mv,
+                parameters.activation_rate,
+                parameters.activation_rate_slope_mv,
+            );
+            let beta = source_rate(
+                -voltage_mv,
+                -parameters.activation_rate_half_voltage_mv,
+                parameters.activation_rate,
+                parameters.activation_rate_slope_mv,
+            );
+            1.0 / (temperature_factor * (alpha + beta))
+        };
+        let expected_inactivation_tau = |voltage_mv: f64| {
+            let alpha = source_rate(
+                voltage_mv,
+                parameters.inactivation_rate_half_voltage_mv,
+                parameters.inactivation_rate,
+                parameters.inactivation_rate_slope_mv,
+            );
+            let beta = source_rate(
+                -voltage_mv,
+                -parameters.recovery_rate_half_voltage_mv,
+                parameters.recovery_rate,
+                parameters.recovery_rate_slope_mv,
+            );
+            1.0 / (temperature_factor * (alpha + beta))
+        };
+
+        let false_guard_offsets = |slope_mv: f64| {
+            [
+                -1.01e-6 * slope_mv,
+                -0.99e-6 * slope_mv,
+                0.0,
+                0.99e-6 * slope_mv,
+                1.01e-6 * slope_mv,
+            ]
+        };
+        let singularity_offsets = [-2.0e-6, -1.0e-6, 0.0, 1.0e-6, 2.0e-6];
+        let landmarks = [
+            (
+                "Na m activation false guard",
+                -parameters.activation_rate_half_voltage_mv,
+                true,
+                false_guard_offsets(parameters.activation_rate_slope_mv),
+            ),
+            (
+                "Na m activation denominator singularity",
+                parameters.activation_rate_half_voltage_mv,
+                true,
+                singularity_offsets,
+            ),
+            (
+                "Na h alpha false guard",
+                -parameters.inactivation_rate_half_voltage_mv,
+                false,
+                false_guard_offsets(parameters.inactivation_rate_slope_mv),
+            ),
+            (
+                "Na h alpha denominator singularity",
+                parameters.inactivation_rate_half_voltage_mv,
+                false,
+                singularity_offsets,
+            ),
+            (
+                "Na h beta false guard",
+                -parameters.recovery_rate_half_voltage_mv,
+                false,
+                false_guard_offsets(parameters.recovery_rate_slope_mv),
+            ),
+            (
+                "Na h beta denominator singularity",
+                parameters.recovery_rate_half_voltage_mv,
+                false,
+                singularity_offsets,
+            ),
+        ];
+
+        for (name, center_mv, activation_path, offsets_mv) in landmarks {
+            for offset_mv in offsets_mv {
+                let effective_voltage_mv = center_mv + offset_mv;
+                // sodium_rates accepts membrane voltage; map from the
+                // effective channel voltage through the configured -10-mV shift.
+                let membrane_voltage_mv = effective_voltage_mv - model.voltage_shift_mv;
+                let rates = model.sodium_rates(membrane_voltage_mv).unwrap();
+                let (observed, expected) = if activation_path {
+                    (
+                        rates.activation.time_constant_ms,
+                        expected_activation_tau(effective_voltage_mv),
+                    )
+                } else {
+                    (
+                        rates.inactivation.time_constant_ms,
+                        expected_inactivation_tau(effective_voltage_mv),
+                    )
+                };
+                assert!(
+                    (observed - expected).abs() < 1.0e-12,
+                    "{name} tau mismatch at offset {offset_mv} mV: {observed} vs {expected} ms"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn human_sodium_rates_match_source_equations_over_voltage_grid() {
+        let model = wilbers_model();
+        let parameters = model.sodium;
+        let temperature_factor = model.sodium_temperature_factor().unwrap();
+        let source_rate =
+            |voltage_mv: f64, half_voltage_mv: f64, prefactor: RatePrefactor, slope_mv: f64| {
+                let x = (voltage_mv - half_voltage_mv) / slope_mv;
+                let scale = prefactor.per_millivolt_per_ms * slope_mv;
+                if x == 0.0 {
+                    scale
+                } else {
+                    scale * x / -(-x).exp_m1()
+                }
+            };
+
+        // Compare both sodium gate taus and steady states against the
+        // independent analytic source equations over -120..+100 mV.
+        for index in 0..=440 {
+            let effective_voltage_mv = -120.0 + index as f64 * 0.5;
+            let membrane_voltage_mv = effective_voltage_mv - model.voltage_shift_mv;
+            let rates = model.sodium_rates(membrane_voltage_mv).unwrap();
+
+            let alpha_m = source_rate(
+                effective_voltage_mv,
+                parameters.activation_rate_half_voltage_mv,
+                parameters.activation_rate,
+                parameters.activation_rate_slope_mv,
+            );
+            let beta_m = source_rate(
+                -effective_voltage_mv,
+                -parameters.activation_rate_half_voltage_mv,
+                parameters.activation_rate,
+                parameters.activation_rate_slope_mv,
+            );
+            let expected_m_tau = 1.0 / (temperature_factor * (alpha_m + beta_m));
+            let expected_m_inf = 1.0
+                / (1.0
+                    + ((parameters.activation_half_voltage_mv - effective_voltage_mv)
+                        / parameters.activation_slope_mv)
+                        .exp());
+
+            let alpha_h = source_rate(
+                effective_voltage_mv,
+                parameters.inactivation_rate_half_voltage_mv,
+                parameters.inactivation_rate,
+                parameters.inactivation_rate_slope_mv,
+            );
+            let beta_h = source_rate(
+                -effective_voltage_mv,
+                -parameters.recovery_rate_half_voltage_mv,
+                parameters.recovery_rate,
+                parameters.recovery_rate_slope_mv,
+            );
+            let expected_h_tau = 1.0 / (temperature_factor * (alpha_h + beta_h));
+            let expected_h_inf = 1.0
+                / (1.0
+                    + ((effective_voltage_mv - parameters.inactivation_half_voltage_mv)
+                        / parameters.inactivation_slope_mv)
+                        .exp());
+
+            assert!(
+                (rates.activation.time_constant_ms - expected_m_tau).abs() < 1.0e-12,
+                "Na activation tau mismatch at effective voltage {effective_voltage_mv} mV"
+            );
+            assert!(
+                (rates.activation.steady_state - expected_m_inf).abs() < 1.0e-14,
+                "Na activation steady state mismatch at effective voltage {effective_voltage_mv} mV"
+            );
+            assert!(
+                (rates.inactivation.time_constant_ms - expected_h_tau).abs() < 1.0e-12,
+                "Na inactivation tau mismatch at effective voltage {effective_voltage_mv} mV"
+            );
+            assert!(
+                (rates.inactivation.steady_state - expected_h_inf).abs() < 1.0e-14,
+                "Na inactivation steady state mismatch at effective voltage {effective_voltage_mv} mV"
+            );
+        }
+    }
+
+    #[test]
     fn human_potassium_activation_rate_is_continuous_at_both_trap0_voltage_landmarks() {
         let model = wilbers_model();
         let parameters = model.potassium;
