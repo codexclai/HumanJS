@@ -2156,6 +2156,56 @@ mod tests {
     }
 
     #[test]
+    fn human_potassium_activation_rates_match_source_equations_over_voltage_grid() {
+        let model = wilbers_model();
+        let parameters = model.potassium;
+        let temperature_factor = model.potassium_temperature_factor().unwrap();
+
+        let source_rate = |voltage_mv: f64, half_voltage_mv: f64| {
+            let x = (voltage_mv - half_voltage_mv) / parameters.activation_rate_slope_mv;
+            let scale = parameters.activation_rate.per_millivolt_per_ms
+                * parameters.activation_rate_slope_mv;
+            if x == 0.0 {
+                scale
+            } else {
+                scale * x / -(-x).exp_m1()
+            }
+        };
+
+        // Compare the Rust channel API against the analytic form of the
+        // deposited activation equation, including the model's explicit
+        // voltage shift, over the full source table voltage interval.
+        for index in 0..=440 {
+            let effective_voltage_mv = -120.0 + index as f64 * 0.5;
+            let membrane_voltage_mv = effective_voltage_mv - model.voltage_shift_mv;
+            let rates = model.potassium_rates(membrane_voltage_mv, 0.5).unwrap();
+            let alpha = source_rate(
+                effective_voltage_mv,
+                parameters.activation_rate_half_voltage_mv,
+            );
+            let beta = source_rate(
+                -effective_voltage_mv,
+                -parameters.activation_rate_half_voltage_mv,
+            );
+            let expected_tau = 1.0 / (temperature_factor * (alpha + beta));
+            let expected_steady_state = 1.0
+                / (1.0
+                    + ((parameters.activation_half_voltage_mv - effective_voltage_mv)
+                        / parameters.activation_slope_mv)
+                        .exp());
+
+            assert!(
+                (rates.activation.time_constant_ms - expected_tau).abs() < 1.0e-12,
+                "K activation tau mismatch at effective voltage {effective_voltage_mv} mV"
+            );
+            assert!(
+                (rates.activation.steady_state - expected_steady_state).abs() < 1.0e-14,
+                "K activation steady state mismatch at effective voltage {effective_voltage_mv} mV"
+            );
+        }
+    }
+
+    #[test]
     fn potassium_slow_inactivation_uses_distinct_inactivation_and_recovery_constants() {
         let model = wilbers_model();
         let depolarized = model.potassium_rates(30.0, 0.5).unwrap();

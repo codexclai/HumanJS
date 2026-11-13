@@ -2,15 +2,15 @@
 
 **Updated:** 2026-11-13
 **Canonical repository:** `codexclai/HumanJS`, branch `main` only.
-**Latest verified base before the Human K activation trap0 regression:** `cab3ccf5a8f63c5f665aaea847c808366e76159b` (12,800-node Na TABLE extension; Actions run `43415126545` passed).
+**Latest verified base before the K activation voltage-grid regression:** `8d0badddbafb4254b3837b72021a5c763d44bd1b` (former false guard/true singularity test; Actions run `43416217045` passed).
 **Previous evidence availability cross-check:** `30dcee632b9ad5a64e4d6c1f496b9f00e03d3c64` (bounded public-archive search).
-**Re-fetch the current main HEAD and newest workflow before relying on this handoff; the K activation trap0 regression is being recorded directly on main.**
+**Re-fetch the current main HEAD and newest workflow before relying on this handoff; the 441-point K activation equation regression is being recorded directly on main.**
 Verify the live HEAD and newest workflow before relying on this handoff.
 
 ## Verified repository state at handoff
 
-- Public repository; default branch `main`; live parent HEAD before this update: `cab3ccf5a8f63c5f665aaea847c808366e76159b`; recursive tree 75 entries, not truncated; exactly one branch (`main`); no open issues and no open pull requests.
-- GitHub Actions run `43415126545` passed on that exact parent HEAD: https://github.com/codexclai/HumanJS/actions/runs/43415126545. It passed formatting, Clippy, Rust workspace tests, Python experiment syntax/unit tests, both Wilbers validators, and repository policy. Numerical source/model results are not biological validation.
+- Public repository; default branch `main`; live parent HEAD before this update: `8d0badddbafb4254b3837b72021a5c763d44bd1b`; recursive tree 75 entries, not truncated; exactly one branch (`main`); no open issues and no open pull requests.
+- GitHub Actions run `43416217045` passed on that exact parent HEAD: https://github.com/codexclai/HumanJS/actions/runs/43416217045. It passed formatting, Clippy, Rust workspace tests, Python experiment syntax/unit tests, both Wilbers validators, and repository policy. Numerical source/model results are not biological validation.
 - Fresh independent NEURON 9.0.2 `modlunit` invocation on unmodified `k_human.mod` and `k_mouse.mod` again failed at the untyped `trates(v+vshift)` call, line 82. Both species' repeated diagnostics are now recorded in `research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md`. The original files still compile with `nrnivmodl`; see ADR-014 for the temporary typed-probe findings. No source file was changed. The same research record clarifies that the article's public Dataverse data statement is satisfied by deposited summary/model files; it does not mean the missing per-cell K kinetic CSVs or raw voltage-clamp traces occur in the inspected 65-file v3.0 inventory.
 - On a clean clone of the parent commit, `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets --all-features -- -D warnings`, and `cargo test --workspace --locked` passed (31 unit tests, 3 synapse integration tests, 6 passive-membrane integration tests). All five experiment scripts parsed, both Wilbers validators passed, and repository policy passed. HumanJS 20-µs and 1-µs examples emitted the expected 1,450 and 29,000 post-step samples; the optional gate CSVs contain matching row counts.
 - The NEURON 9.0.2 source baseline was independently rerun and the diagnostic passed end-to-end with pinned Python dependencies. Temporary counters recorded zero entries into the flawed `trap0` fallback; its instrumented and unmodified source traces were identical. The new gate comparison records five NMODL states and confirms that the biggest internal-state errors are in the fast gates during the AP upstroke.
@@ -353,7 +353,7 @@ These are deterministic software tests of the counterfactual implementation, not
 
 ## Next concrete research action
 
-Run a bounded voltage-grid comparison of the original human K activation rate equation against HumanJS Rust potassium_rates, applying the -10-mV channel shift explicitly. Compare each rate component and activation time constant across the source voltage range, preserve the deposited parameter values, and distinguish direct rate agreement from membrane-trajectory differences. This remains software/source-equation verification, not biological validation.
+The 441-point K activation voltage-grid comparison and both critical trap0-landmark regressions are now implemented. Next, probe the other K kinetic components (fast inactivation and its recovery rate) at their actual half-voltage parameters and verify their exact limiting behavior against the original NMODL equations. Keep rates and channel parameters unchanged; this remains software/source-equation verification, not biological validation.
 
 
 ## 2026-11-12 paired source/HumanJS voltage-path gate attribution
@@ -520,3 +520,9 @@ The current Rust implementation's trap0 helper already uses the correct v-th off
 ### 2026-11-13 — Human K activation trap0 regression
 
 Added `human_potassium_activation_rate_is_continuous_at_both_trap0_voltage_landmarks` in `crates/humanjs-core/src/ion_channels.rs`. It compares HumanJS K activation tau with an independent `exp_m1)-based source-equation evaluation at the former wrong-sign guard (v=-theta), both guard edges, the true denominator singularity (v=theta), and nearby points. The tested discrepancy tolerance is 1e-12 ms. The targeted test and full Rust suite pass. No biological parameter or runtime implementation changed; this is a software regression only.
+
+### 2026-11-13 — K activation source sweep and Rust regressions
+
+An unchanged NEURON 9.0.2 K mechanism was evaluated at 441 voltages from -120 to +100 mV (0.5-mV spacing). Outside the tiny branch/limit regions, source activation tau matched the analytic equation within 9.77e-15 ms; steady states matched. The exact original false guard v=-theta causes an approximately -0.828-ms tau jump only inside +/-6.59041e-6 mV, while the true singularity v=theta returns NaN in NMODL instead of the 4.11000492924-ms analytic-limit tau.
+
+Added two Rust tests: human_potassium_activation_rate_is_continuous_at_both_trap0_voltage_landmarks and human_potassium_activation_rates_match_source_equations_over_voltage_grid. They cover both singularity landmarks and 441 voltages after the explicit -10-mV channel shift. All 34 Rust unit tests pass; this remains software/source-equation verification, not biological validation.

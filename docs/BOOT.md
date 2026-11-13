@@ -41,7 +41,7 @@ Do not search for or request old uploads or copied source snapshots. If evidence
 
 `main` is the only branch to use, permanently. Never create, check out, update, merge, or otherwise use another branch. Make authorized changes directly on `main`. Do not create branches, PRs, or automation that opens non-main update branches. No branch protection, rulesets, or deletion-prevention settings are required. Force pushes are permitted but exceptional and must be inspected and verified.
 
-The live repository check immediately before the 2026-11-13 Human K activation trap0 regression verified default branch `main`, HEAD `cab3ccf5a8f63c5f665aaea847c808366e76159b`, a complete non-truncated 75-entry tree, exactly one branch (`main`), no open issues and no open pull requests. GitHub Actions run `43415126545` completed successfully on that exact HEAD. Re-fetch the live main HEAD and newest workflow at every session start; do not rely on a stored SHA as current.
+The live repository check immediately before the 2026-11-13 K activation voltage-grid regression verified default branch `main`, HEAD `8d0badddbafb4254b3837b72021a5c763d44bd1b`, a complete non-truncated 75-entry tree, exactly one branch (`main`), no open issues and no open pull requests. GitHub Actions run `43416217045` completed successfully on that exact HEAD. Re-fetch the live main HEAD and newest workflow at every session start; do not rely on a stored SHA as current.
 
 ## Session procedure
 
@@ -447,3 +447,9 @@ The current Rust implementation's trap0 helper already uses the correct v-th off
 ### 2026-11-13 — Human K activation trap0 regression
 
 Added `human_potassium_activation_rate_is_continuous_at_both_trap0_voltage_landmarks` in `crates/humanjs-core/src/ion_channels.rs`. It compares HumanJS K activation tau with an independent `exp_m1)-based source-equation evaluation at the former wrong-sign guard (v=-theta), both guard edges, the true denominator singularity (v=theta), and nearby points. The tested discrepancy tolerance is 1e-12 ms. The targeted test and full Rust suite pass. No biological parameter or runtime implementation changed; this is a software regression only.
+
+### 2026-11-13 — K activation source sweep and Rust regressions
+
+An unchanged NEURON 9.0.2 K mechanism was evaluated at 441 voltages from -120 to +100 mV (0.5-mV spacing). Outside the tiny branch/limit regions, source activation tau matched the analytic equation within 9.77e-15 ms; steady states matched. The exact original false guard v=-theta causes an approximately -0.828-ms tau jump only inside +/-6.59041e-6 mV, while the true singularity v=theta returns NaN in NMODL instead of the 4.11000492924-ms analytic-limit tau.
+
+Added two Rust tests: human_potassium_activation_rate_is_continuous_at_both_trap0_voltage_landmarks and human_potassium_activation_rates_match_source_equations_over_voltage_grid. They cover both singularity landmarks and 441 voltages after the explicit -10-mV channel shift. All 34 Rust unit tests pass; this remains software/source-equation verification, not biological validation.
