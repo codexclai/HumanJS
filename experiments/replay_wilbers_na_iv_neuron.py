@@ -767,7 +767,8 @@ def main() -> int:
             )
     print(content, end="")
     if args.emit_aux_to_stdout:
-        print("\\nBEGIN_HUMANJS_NA_IV_INACT_CSV")
+        print()
+        print("BEGIN_HUMANJS_NA_IV_INACT_CSV")
         print(inactivation_content, end="")
         print("END_HUMANJS_NA_IV_INACT_CSV")
         print("BEGIN_HUMANJS_NA_RECOVERY_CSV")
