@@ -79,6 +79,14 @@ Within the extended profile, the 1%-of-minimum-RMSE band spans approximately 334
 
 This is evidence that the deposited fit is boundary-sensitive and that the source optimizer's accepted interior estimates do not identify a unique, well-conditioned kinetic target. The profile is computed from the deposited model's generated current, not from an experimental human trace. Values beyond 300 ms are explicitly counterfactual and must not be reported as source-model or biological parameters.
 
+## High-resolution local profile around the minimum
+
+A dedicated local profile uses the same −70-mV NEURON post-peak samples over tau1 = 320–360 ms, with 801 logarithmically spaced values. Grid spacing is 0.0471–0.0530 ms, and all 801 bounded linear least-squares solves succeeded.
+
+The best sampled point is tau1 = 339.41125497 ms, R² = 0.999999577179, RMSE = 1.16767714×10⁻⁸ mA/cm². Its coefficients are a1 = 6.00828885×10⁻⁵, a2 = 2.60772361×10⁻⁵, and ss = 4.14437813×10⁻⁴ mA/cm². This refines the coarse extended-grid minimum at 338.2372 ms.
+
+The band within 1% of the minimum RMSE spans 326 of 801 grid points, tau1 = 331.4605–347.7063 ms. Its R² values are 0.999999568739–0.999999577179. The much wider criterion of 10⁻⁶ below the best R² includes the entire local 320–360-ms window, so that threshold does not meaningfully narrow the local optimum. The dense grid shows that the high-fit-quality region is broad even at sub-millisecond sampling; it does not establish a statistical confidence interval.
+
 ## Amplitude and offset compensation along the profile
 
 The profile coefficients show a strong exchange between the two exponential amplitudes while the offset changes very little. Among the 27 sampled points whose R² is within 10⁻⁶ of the profile maximum (tau1 = 270.323–361.762 ms):
@@ -88,7 +96,7 @@ The profile coefficients show a strong exchange between the two exponential ampl
 - Steady offset ss spans 4.12425×10⁻⁴ to 4.15089×10⁻⁴ mA/cm², a total range of about 0.64% of its mean.
 - Pearson correlation across those sampled profile points is −0.99995 for a1 versus a2, +0.98006 for a1 versus ss, and −0.98197 for a2 versus ss.
 
-The tighter four-point band within 1% of the minimum RMSE (tau1 = 334.468–345.904 ms) still has an a1/a2 correlation of −0.9999993 across the sampled points: a1 spans 5.63725×10⁻⁵–6.55126×10⁻⁵, a2 spans 2.04546×10⁻⁵–2.99346×10⁻⁵, while ss spans only 4.14294×10⁻⁴–4.14627×10⁻⁴ mA/cm². At the best sampled point (338.2372 ms), (a1, a2, ss) = (5.91708×10⁻⁵, 2.70242×10⁻⁵, 4.14404×10⁻⁴) mA/cm².
+The initial 901-point extended grid represented its 1%-RMSE band with only four samples. The 801-point local profile resolves that band into 326 points from 331.4605 to 347.7063 ms. Within that band, a1 spans 5.42726×10⁻⁵–6.71468×10⁻⁵, a2 spans 1.87670×10⁻⁵–3.21239×10⁻⁵, and ss spans 4.14206×10⁻⁴–4.14679×10⁻⁴ mA/cm². Across the 326 profile points, Pearson r(a1,a2) = −0.99999896, r(a1,ss) = +0.99921558, and r(a2,ss) = −0.99927167. The offset span is about 0.114% of its mean. At the best local point (339.4113 ms), (a1, a2, ss) = (6.00829×10⁻⁵, 2.60772×10⁻⁵, 4.14438×10⁻⁴) mA/cm².
 
 These are descriptive Pearson correlations along the deterministic profile grid, not parameter-estimation covariance, confidence intervals, or independent measurements. They show that materially different allocations between the fast and fixed-slow exponentials can preserve a nearly unchanged current offset and almost indistinguishable fit quality.
 
@@ -99,15 +107,17 @@ The exact source-literal nonlinear fit at −70 mV returned tau1 = 213.8193 ms, 
 - Same-waveform results: `research/HUMAN-L23-WILBERS-K-IV-FIT-START-DIAGNOSTICS.csv`.
 - Source-bound profile: `research/HUMAN-L23-WILBERS-K-IV-FIT-PROFILE.csv`.
 - Extended-bound profile: `research/HUMAN-L23-WILBERS-K-IV-FIT-PROFILE-EXTENDED.csv`.
+- High-resolution local profile: `research/HUMAN-L23-WILBERS-K-IV-FIT-PROFILE-LOCAL.csv`.
 - Generator: `experiments/wilbers_k_iv_fit_diagnostics.py`, integrated into `experiments/replay_wilbers_k_iv_neuron.py`.
 - Validators: `experiments/validate_wilbers_k_iv_fit_diagnostics.py` and `experiments/validate_wilbers_k_iv_fit_profile.py`.
 - Tests: `experiments/test_wilbers_k_iv_protocols.py`.
 - CI workflow: `.github/workflows/repository-policy.yml`.
 
-GitHub Actions [43458532278](https://github.com/codexclai/HumanJS/actions/runs/43458532278) passed on exact code HEAD `f2df2e2e27b5b53a97a84f7c6b472f503c8f504d`. It ran 41 Rust unit tests, 3 synapse integration tests, 6 passive-membrane integration tests, parsed 20 Python experiment scripts, passed 37 Python tests, executed the five original NEURON 9.0.2 Na/K source protocols, validated the source replay tables and all three fit-sensitivity outputs, and passed repository policy.
+GitHub Actions [43460455408](https://github.com/codexclai/HumanJS/actions/runs/43460455408) passed on exact code HEAD `0bbfcfd175aa0d0b672bd1ac2fa429cbfe0f8968`: rustfmt, Clippy, 41 Rust unit tests, 3 synapse integration tests, 6 passive-membrane integration tests, syntax for 20 Python experiment scripts, 37 Python tests, five original Wilbers Na/K NEURON source protocols and validators, all 192 K_IV fit-start runs, the 601-point source-bound profile, the 901-point extended profile, and the 801-point high-resolution local profile; repository policy passed.
+
 
 ## Interpretation boundary and next step
 
 This experiment establishes a numerical sensitivity and profile-boundary problem in the deposited model's current-fit helper. It does not establish a biological fast-inactivation time constant, resolve a human-versus-animal inference, or validate the HumanJS single-compartment spike model. The inspected 65-file Dataverse v3.0 inventory still contains no raw human K voltage-clamp NWB traces or individual K kinetic CSVs. No empirical current refit is possible from this release.
 
-Next, refine the fixed-tau profile over 320–360 ms at sub-millisecond resolution and inspect the residual waveform around the optimum before considering any source-equation change. Keep the raw-human-trace task open, keep the exploratory HumanJS spike model unaccepted, and do not contact authors or researchers.
+Next, preserve and inspect the residual waveform for the source-literal nonlinear fit and the 339.4113-ms local-profile solution to determine whether structured residuals remain. Do not change the deposited source helper or NMODL until that comparison is complete. Keep the raw-human-trace task open, keep the exploratory HumanJS spike model unaccepted, and do not contact authors or researchers.
