@@ -2,14 +2,14 @@
 
 **Canonical repository:** `codexclai/HumanJS`  
 **Canonical branch:** `main`  
-**Last inspected:** 2026-11-11
+**Last inspected:** 2026-11-13
 
 ## Permanent main-only policy
 
 `main` is the only branch permitted for project work, permanently.
 
 - Never create, check out, update, merge, or otherwise use another repository branch, whether new or existing.
-- Commit authorized maintainer work directly to `main`; verify every resulting commit and remote HEAD.
+- Every authorized change must be committed directly to `main` **and pushed** to the canonical GitHub remote in the same task. Do not leave completed changes unpushed. Verify the live `refs/heads/main` SHA equals the new commit SHA after each push.
 - Do not create project pull requests or enable automation that creates non-main update branches.
 - Do not require or configure rulesets, branch-protection rules, deletion-prevention rules, or other branch governance settings.
 - Force pushes are permitted but exceptional. Inspect the exact target and impact, document the reason, use an expected-head/lease check, and verify the result.

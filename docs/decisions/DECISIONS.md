@@ -231,3 +231,12 @@ This closes only the numerical source-fit sensitivity audit. The raw human K tra
 
 
 The first residual-test run [43462098026](https://github.com/codexclai/HumanJS/actions/runs/43462098026) failed on an overstrict synthetic absolute-residual assertion. The test was corrected to compare the recomputed residual RMSE against the corresponding fixed-tau profile objective, and the full subsequent run [43462311680](https://github.com/codexclai/HumanJS/actions/runs/43462311680) passed. No source implementation or numerical acceptance criterion was weakened.
+
+
+## ADR-018 — Signed K_IV transient correction remains a numerical diagnostic
+
+**Status:** Accepted · **Date:** 2026-11-13
+
+The source-generated −70-mV K_IV post-peak waveform may be described with a non-source third exponential to test the early deterministic residual. The fitted extra coefficient is negative and very small (about 0.064% of peak current), and a nonnegative extra-amplitude control collapses to zero at the signed-model optimum. This is a signed correction to the chosen numerical fit family, not evidence for an additional positive current, channel state, biological inactivation process, or human kinetic time constant.
+
+Keep the deposited helper, fitting caller, and pure-human NMODL unchanged. Do not transfer tau3 into Rust channel parameters, gate state, or the exploratory neuron model. The profile may be used as a numerical diagnostic only. Raw human K voltage-clamp traces and individual K kinetic targets remain unavailable in the inspected public deposit; this result does not close ADR-014 or biologically validate the provisional single-compartment spike mechanism.

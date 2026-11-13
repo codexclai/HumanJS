@@ -132,3 +132,55 @@ GitHub Actions [43462311680](https://github.com/codexclai/HumanJS/actions/runs/4
 This experiment establishes a numerical sensitivity and profile-boundary problem in the deposited model's current-fit helper. It does not establish a biological fast-inactivation time constant, resolve a human-versus-animal inference, or validate the HumanJS single-compartment spike model. The inspected 65-file Dataverse v3.0 inventory still contains no raw human K voltage-clamp NWB traces or individual K kinetic CSVs. No empirical current refit is possible from this release.
 
 Next, preserve and inspect the residual waveform for the source-literal nonlinear fit and the 339.4113-ms local-profile solution to determine whether structured residuals remain. Do not change the deposited source helper or NMODL until that comparison is complete. Keep the raw-human-trace task open, keep the exploratory HumanJS spike model unaccepted, and do not contact authors or researchers.
+
+
+## 2026-11-13 — non-source third-exponential correction of the early residual
+
+### Question and data boundary
+
+The earlier local-profile residual export showed that most two-exponential mismatch sits in the first few milliseconds after the post-peak fit origin. This experiment asks whether one extra short-time exponential can reduce that discrepancy without distorting the rest of the waveform. It uses only the existing NEURON 9.0.2 output from the deposited pure-human k_human.mod and Dataverse channel_tools.py at the −70-mV K_IV command. It is **not** a fit to raw human potassium recordings: the inspected DataverseNL v3.0 release still lacks the raw K voltage-clamp NWB traces and individual K kinetic CSVs.
+
+Input is the 4,890-row HUMAN-L23-WILBERS-K-IV-FIT-PROFILE-RESIDUALS.csv at 0.1-ms spacing, relative time 0–488.9 ms and original NEURON time 30.9–519.8 ms. The two-exponential baseline is
+
+\[
+I_2(t)=a_1e^{-t/\tau_1}+a_2e^{-t/450\ \mathrm{ms}}+s_s,
+\]
+
+with tau1=339.41125497 ms, the best sampled point of the 320–360-ms high-resolution local profile. This tau1 is already outside the deposited source helper's 0–300-ms bound; the experiment leaves the original source bound/helper unchanged and treats the local-profile value as a separate counterfactual reference. The fixed 450-ms term preserves the source helper's slow component.
+
+### Counterfactual model and fitting method
+
+The tested model adds one descriptive short-time term:
+
+\[
+I_3(t)=a_1e^{-t/\tau_1}+a_2e^{-t/450\ \mathrm{ms}}+a_3e^{-t/\tau_3}+s_s.
+\]
+
+The tau3 grid is linear from 0.6 to 2.0 ms with 801 points. At each grid point, all four coefficients are refit by bounded linear least squares **on all 4,890 samples**. The original two amplitudes and offset are constrained nonnegative; the added a3 is allowed to be signed. The selected point minimizes full-waveform residual sum of squares. Early (t<10 ms) and late (t>=10 ms) RMSE are held out as descriptive partitions of the same fit, not used as weights or as separate optimizers.
+
+A control refit uses the same tau3 chosen by the signed full-waveform profile but imposes a3>=0. This is deliberately a narrow control at the selected optimum; it does not assert that every conceivable positive extra-component family has been exhausted.
+
+### Results
+
+| Quantity | Two-exponential baseline | Signed three-exponential correction |
+|---|---:|---:|
+| tau1 | 339.411255 ms | 339.411255 ms (fixed) |
+| tau2 | 450 ms | 450 ms (fixed) |
+| tau3 | — | approximately 1.2335 ms |
+| a1 (mA/cm²) | 6.00829×10⁻⁵ | 6.03028×10⁻⁵ |
+| a2 (mA/cm²) | 2.60772×10⁻⁵ | 2.58350×10⁻⁵ |
+| a3 (mA/cm²) | 0 | approximately −3.1823×10⁻⁷ |
+| Offset (mA/cm²) | 4.14437813×10⁻⁴ | 4.14469867×10⁻⁴ |
+| Full-waveform RMSE (mA/cm²) | 1.16768×10⁻⁸ | 2.45019×10⁻⁹ |
+| First-10-ms RMSE (mA/cm²) | 7.80270×10⁻⁸ | 4.65627×10⁻⁹ |
+| After-10-ms RMSE (mA/cm²) | 3.28972×10⁻⁹ | 2.38177×10⁻⁹ |
+
+The signed extension reduces full-waveform RMSE by about **79.0%**, first-10-ms RMSE by about **94.0%**, and after-10-ms RMSE by about **27.6%**. The original fitted a1 increases about 0.37%, a2 decreases about 0.93%, and the offset increases about 0.0077%. The added term's magnitude is only about **0.064% of the observed peak current**.
+
+At the signed optimum, the nonnegative-a3 control drives a3 to zero within numerical tolerance and recovers the two-component baseline objective. The improvement therefore depends on a small **negative** fast correction. It is not evidence for a new positive current component, microscopic inactivation gate, or biological tau3. It simply captures a small oppositely signed part of this deterministic model's residual waveform. No channel parameter, source helper, source caller, NMODL source, HumanJS runtime equation, or Rust mechanism was changed.
+
+### Reproduction and limitations
+
+The reproducible implementation is experiments/wilbers_k_iv_three_component.py; experiments/validate_wilbers_k_iv_three_component.py reloads the source residual and local-profile CSVs, recomputes the 801-point full-waveform profile, and checks source identity, time alignment, interior optimum, coefficient sign/magnitude, objective reductions, limited movement of the original terms, and the nonnegative control. Three synthetic tests cover recovery of a signed transient, the nonnegative control, and invalid-input rejection. The validator is part of .github/workflows/repository-policy.yml.
+
+Workflow [43466274672](https://github.com/codexclai/HumanJS/actions/runs/43466274672) passed on exact pushed experiment commit 46586e97695eae9b756e3d007b4daeb4069ae683. This is a reproducible software/numerical analysis of model-generated current, not raw-trace reproduction, biological validation, or evidence that the added exponent corresponds to a human potassium channel process. See also ADR-018.
