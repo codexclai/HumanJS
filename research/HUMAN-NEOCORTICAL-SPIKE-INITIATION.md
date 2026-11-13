@@ -1,6 +1,6 @@
 # Human neocortical spike-initiation evidence and implementation boundary
 
-**Reviewed:** 2026-11-10  
+**Reviewed:** 2026-11-13  
 **Scope:** somatic action-potential generation and axon-initial-segment (AIS) initiation in human neocortical pyramidal cells.  
 **Status:** canonical source audit and selected NEURON reproductions completed. Exploratory HumanJS spike-capable code was subsequently added before the evidence gate was closed; it remains unaccepted and is documented as provisional. This review does not establish biological validation.
 
@@ -1187,3 +1187,36 @@ At the current-clamp temperature of 34°C this gives `T_adj,Na = 2.3^0.9 = 2.116
 GitHub Actions [43426280596](https://github.com/codexclai/HumanJS/actions/runs/43426280596) passed after the rustfmt correction in commit `19b5fd9838cc8bb7e367b9c9e67b322cd490c6d7`: 39 Rust unit tests, 3 synapse integration tests, 6 passive-membrane integration tests, 22 Python experiment tests, Wilbers voltage-sampling checks, both source-data validators, formatting, Clippy and repository policy. The preceding run 43426192713 failed only because rustfmt requested two exact whitespace reflows; the corrected run executed the complete suite successfully.
 
 **Interpretation limit:** this verifies that the Rust code follows the deposited model's mathematical temperature placement at the selected grid values. It does not show that Q10=2.3 is biologically valid throughout 20–37°C, that the parameters extrapolate to arbitrary preparations, or that the exploratory single-compartment model passes ADR-014. Raw human per-cell K kinetic targets and voltage-clamp current traces remain unavailable in the inspected dataset. No production equation, fitted parameter, or external source file changed.
+
+### Human Na voltage-clamp source protocol and Figure 3 IV tau summary audit (2026-11-13)
+
+**Primary source and file provenance.** The original Wilbers DataverseNL v3.0 dataset is [DOI 10.34894/L5J0SD](https://doi.org/10.34894/L5J0SD), released under CC0-1.0. Relevant files and SHA-1 hashes from the official versioned file manifest are:
+
+- `channel_tools.py`, file 326242, SHA-1 `615595a270c6170987757cd35743f5d5b5b2af0e`.
+- Pure `na_human.mod`, file 318629, SHA-1 `b199d70c3d0e7a2e991fd8d26c54b1318e3c0970`.
+- `data_fig3.xlsx`, file 318666, SHA-1 `2cb734a19306dadbb3db051d3a55b18b08c86639`.
+- `plots_fig3.py`, file 318533, SHA-1 `82c5541d1bdc8f68ec0b2057386550bba3385cd3`.
+- `stats_fig3.py`, file 318534, SHA-1 `4ba8e1e347e667b7cd43bf8c6d86d8d4b884ea0a`.
+
+The original source files were inspected without modifying or copying them into HumanJS.
+
+**Deposited pure Na voltage-clamp protocols.** `Na_IV` and `Na_IV_ss` set `h.celsius=25`, use `dt=0.01` ms, hold for 2 ms at −120 mV, then apply 10-ms test steps from −80 to +10 mV in 5-mV increments (19 voltages). The voltage-clamp helper uses the NMODL default 0-mV voltage shift; the separate −10-mV current-clamp correction is not used. The helper analyzes current samples after the initial transient and obtains rising/decay estimates before fitting the composite current function.
+
+`Na_IV_inact` uses 25°C and `dt=0.005` ms, with 1 ms at −70 mV, 50-ms conditioning steps from −105 to −47 mV in 2-mV increments (30 voltages), then a 10-ms test pulse at −10 mV. Its protocol path also uses zero voltage shift. The new Rust regressions in `crates/humanjs-core/src/ion_channels.rs` are:
+- `na_voltage_clamp_command_sequence_replays_human_gates_at_25c`: compares independent analytic m/h gate updates through the hold and 19 test-voltage commands at the source reference temperature.
+- `na_voltage_clamp_inactivation_prepulse_replays_human_availability_at_25c`: compares the m/h gate progression through the initial segment, each of the 30 conditioning prepulses and the first 5 ms of the test segment.
+
+These tests check source-equation and command-protocol consistency of the Rust gate kinetics. They do not reproduce membrane current amplitudes, noise, access-resistance compensation, curve-fitting, or individual raw recordings.
+
+**The source's current-fit constants are not microscopic gate taus.** In `channel_tools.py`, the composite sodium current model applies a 50-µs delay and combines a rising activation factor with a decaying-plus-steady component:
+`I(t) = (1 − exp(−(t−d)/tau_m)) × (a exp(−(t−d)/tau_h) + I_ss)`, with `d=0.05 ms` and current set to zero before the delay. `fit_na_curr` jointly fits the full waveform using bounded tau parameters initialized from separate rising/decay estimates. In the `Na_IV` routine, the returned `tau_m` is overwritten by the first fitted parameter, but the `tau_h` result remains the preliminary decay estimate because assignment from the joint fit's second parameter is commented out. Preserve this asymmetry when interpreting any output; neither value should automatically be equated with an individual HH gate time constant.
+
+**Released Figure 3 workbook summary.** The plotting/statistics scripts apply the base record filter `RsComp > 50` and exclude flagged records. They then use:
+- `tau_m`: `iv_gof_m > 0.9` and `-40 < iv_volt < 11` mV (−35 to +10 mV in 5-mV steps).
+- `tau_h`: `iv_gof_h > 0.9` and `-45 <= iv_volt <= 0` mV (−45 to 0 mV in 5-mV steps).
+
+The workbook contains 34 cell records (19 human and 15 mouse). `research/HUMAN-L23-WILBERS-FIG3-NA-IV-TAU-SUMMARY.csv` preserves the 40 resulting voltage/species groups with sample count, mean, sample SD and median; `experiments/validate_wilbers_na_iv_tau_summary.py` checks the source hashes in the CSV header, filters, grids, summary shape and selected reference values. The validator runs in the repository workflow.
+
+**Critical grid/provenance boundary.** The workbook has 25 `iv_volt` columns from −65 to +55 mV, whereas the source model `Na_IV`/ `Na_IV_ss` helper executes 19 commands from −80 to +10 mV. The released plotting/statistics scripts consume precomputed workbook `iv_tau_m/h` fields, rather than recomputing them from the model helper in that script. Consequently, do not treat this CSV as a same-grid validation target for Rust's model-side gate taus or assume that the workbook fit fields use exactly the helper's composite model-fitting route. This was a transparent summary extraction using the published filters, not an independent fit reproduction.
+
+The inspected Dataverse v3.0 inventory contains 65 files and no raw NWB voltage-clamp current traces. No raw-trace refit, independent kinetic re-optimization, or biological validation is claimed. The current single-compartment Na/K implementation remains exploratory under ADR-014; no production code, fitted parameters, or original source mechanisms were changed by this audit.

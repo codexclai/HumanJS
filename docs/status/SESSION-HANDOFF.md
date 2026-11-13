@@ -2,17 +2,17 @@
 
 **Updated:** 2026-11-13
 **Canonical repository:** `codexclai/HumanJS`, branch `main` only.
-**Latest verified code HEAD before this documentation refresh:** `19b5fd9838cc8bb7e367b9c9e67b322cd490c6d7`; GitHub Actions run `43426280596` passed on that exact commit.
-**Next session:** refresh repository metadata, read live `docs/BOOT.md`, and recheck HEAD/tree/workflows/issues/PRs/branch refs before relying on this handoff.
+**Latest verified code HEAD before this handoff documentation refresh:** `10572f593f7b9b89c6cbca850d6934388ccc0c1e`; GitHub Actions run `43428846977` passed on that exact commit.
+**Next session:** refresh metadata, read live `docs/BOOT.md`, and recheck HEAD/tree/workflow/issues/PRs/branch refs before relying on this handoff.
 
 ## Verified repository state at handoff
 
-- Public repository; default branch `main`; code HEAD before documentation refresh: `19b5fd9838cc8bb7e367b9c9e67b322cd490c6d7`; recursive tree has 75 entries and is not truncated; exactly one branch (`main`); zero open issues and zero open pull requests.
-- Workflow [43426280596](https://github.com/codexclai/HumanJS/actions/runs/43426280596) completed successfully on exact code commit `19b5fd9838cc8bb7e367b9c9e67b322cd490c6d7`. It passed rustfmt, Clippy, `cargo test --workspace --locked` (39 Rust unit tests, 3 synapse integration tests, 6 passive-membrane integration tests), Python syntax and 22 experiment tests, Wilbers voltage-sampling checks, both scientific-data validators and repository policy.
-- The temperature update is test-only. Commit `a3bab162bfa19bf9b871a43a555874736a8e280c` adds a five-temperature source-contract sweep (20, 25, 30, 34, 37°C) for Na/K reference Q10 handling, time constants, steady-state invariance and K slow-gate fixed times; commit `19b5fd9838cc8bb7e367b9c9e67b322cd490c6d7` applies the exact rustfmt correction required by the first attempt.
-- The first temperature test commit triggered workflow 43426192713, which failed at rustfmt only; CI provided two precise formatting differences. The corrected commit passed the complete workflow 43426280596. No lints/tests were reported from the formatting-only failed run.
-- No production code, biological parameters, or external Dataverse NMODL files changed. This is software/source-equation verification, not biological validation. The exploratory spike mechanism remains scientifically unaccepted.
-- A local clone could not be obtained because this container could not resolve `github.com`; GitHub Actions verified the exact pushed main commit.
+- Public repository; default branch `main`; code HEAD before this documentation refresh: `10572f593f7b9b89c6cbca850d6934388ccc0c1e`; recursive tree has 77 entries and is not truncated; exactly one branch (`main`); zero open issues and zero open pull requests.
+- Workflow [43428846977](https://github.com/codexclai/HumanJS/actions/runs/43428846977) completed successfully on exact code commit `10572f593f7b9b89c6cbca850d6934388ccc0c1e`: rustfmt, Clippy, 41 Rust unit tests, 3 synapse integration tests, 6 passive-membrane integration tests, Python syntax for 7 scripts, 22 Python experiment tests, voltage-sampling checks, Figure S5/current-clamp/Na IV summary validators and repository policy.
+- Code commits `60bbb062e5fb84749740ad0bde96992dcd10d949`, `ed04bae89b087e0898e7e6579ff424033401d334`, and `10572f593f7b9b89c6cbca850d6934388ccc0c1e` add and format two Na voltage-clamp protocol gate regressions. No production equation, parameter, or external NMODL file was modified.
+- Research commit `fdba25437d84cf41cd5c545280dd664759837e19` adds the 40-group Figure 3 Na IV current-derived tau summary, source hashes, analysis filters, a validator and a CI step. The workbook grid differs from the source model command grid, and these values are not individual gate tau targets.
+- Three intermediate rustfmt-only workflow attempts failed before any lint/test steps; the final code state was restored to the prior verified source context plus the intended test, and the complete workflow passed. No test tolerance was loosened. Local checkout verification was unavailable because this container could not resolve `github.com`.
+- The exploratory Na/K single-compartment spike model remains scientifically unaccepted and not biologically validated. The new command-sequence tests are numerical/software regressions only.
 
 ## Current HumanJS implementation
 
@@ -557,3 +557,11 @@ The HumanJS Rust sodium channel now has channel-specific regression coverage for
 The current Rust implementation's temperature behavior is now tested at 20, 25, 30, 34 and 37°C. Na uses its 25°C reference; K uses its 34°C reference; each rate family uses Q10=2.3. Gate time constants scale inversely with `T_adj`, steady-state gates do not change, and the two K slow-gate branch constants remain fixed. The actual current-balance test verifies that Na conductance/current is multiplied by `T_adj`, while K conductance and passive leak are not. At the 34°C current-clamp condition, Na `T_adj = 2.3^0.9 ≈ 2.11619` and K `T_adj = 1.0`.
 
 **Next concrete step:** keep the remaining ADR-014 gate explicit. The temperature regression proves that HumanJS applies the source's different Na/K Q10 placements; it does not validate this Q10 law biologically across the whole 20–37°C grid. Continue with a bounded source-protocol audit of the sodium voltage-clamp gates at the paper's 25°C and compare the existing Rust kinetics against the public human summary targets, clearly separating gate taus from current-fit apparent taus. Do not contact researchers, invent missing raw K data, or promote the single-compartment model.
+
+### Latest handoff — Na voltage-clamp protocol and Figure 3 data audit
+
+The pure Wilbers Na voltage-clamp gate paths are now explicitly replayed in Rust at 25°C with zero voltage shift. The Na_IV/Na_IV_ss test covers the 2-ms −120-mV hold and 19 test voltages (−80…+10 mV); the Na_IV_inact test covers a 1-ms −70-mV initial segment, 50-ms conditioning prepulse over −105…−47 mV and the first 5 ms of the −10-mV test segment. Both use independent `exp_m1` rate evaluations and analytic first-order gate updates.
+
+The derived Figure 3 file `research/HUMAN-L23-WILBERS-FIG3-NA-IV-TAU-SUMMARY.csv` summarizes the released workbook's existing per-cell `iv_tau_m/h` fits using the official `RsComp`, exclude, GOF and voltage-range filters. It is validated by `experiments/validate_wilbers_na_iv_tau_summary.py`, wired into CI. These are composite/current-derived fitted fields rather than direct gate tau targets; the workbook 25-point grid (−65…+55 mV) is not the same as the model-side 19-point Na_IV protocol. The inspected Dataverse release still contains no raw NWB voltage-clamp traces, so no trace-level refit is possible from that release.
+
+**Next concrete step:** inspect and independently replay the source Na_IV composite-current fitting path separately from the gate-only regressions. Keep its 50-µs delayed waveform and the source's asymmetrical tau output mapping explicit: `tau_m` is taken from the joint current-waveform fit, whereas the published helper retains the preliminary decay estimate for `tau_h`. Do not use the workbook IV taus as individual channel-gate targets and do not promote the model.
