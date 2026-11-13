@@ -7,6 +7,7 @@ import unittest
 import numpy as np
 
 import replay_wilbers_k_iv_neuron as replay
+import wilbers_k_iv_fit_diagnostics as fit_diagnostics
 
 
 class WilbersKVoltageClampProtocolTests(unittest.TestCase):
@@ -51,6 +52,45 @@ class WilbersKVoltageClampProtocolTests(unittest.TestCase):
             self.assertEqual(int(np.count_nonzero(mask)), 9)
             self.assertAlmostEqual(float(times[mask][0]), start + 0.5, places=9)
             self.assertAlmostEqual(float(times[mask][-1]), stop - 0.5, places=9)
+
+
+    def test_source_fit_start_tuple_is_preserved_and_alternative_is_dimensioned(self) -> None:
+        current = np.array([0.40, 0.25, 0.10, 0.04, 0.02], dtype=float)
+        starts = dict(fit_diagnostics.build_k_iv_fit_initializations(current))
+        source = starts["source_literal"]
+        delta = float(current[0] - current[-1])
+
+        # The released helper's (a1, tau1, a2, ss) order puts delta/2
+        # in the tau1 slot and its default est1=30 in the a2 slot.
+        self.assertAlmostEqual(source[0], delta / 2.0)
+        self.assertAlmostEqual(source[1], delta / 2.0)
+        self.assertEqual(source[2], 30.0)
+        self.assertAlmostEqual(source[3], current[0] / 10.0)
+
+        corrected = starts["tau30_equal_amplitudes"]
+        self.assertAlmostEqual(corrected[1], 30.0)
+        self.assertAlmostEqual(corrected[0], corrected[2])
+        self.assertGreaterEqual(corrected[0], 0.0)
+        self.assertGreaterEqual(corrected[2], 0.0)
+
+    def test_fit_start_diagnostic_recovers_synthetic_fixed_slow_curve(self) -> None:
+        times = np.linspace(0.0, 700.0, 701)
+        currents = (
+            0.20 * np.exp(-times / 80.0)
+            + 0.05 * np.exp(-times / 450.0)
+            + 0.01
+        )
+        rows = fit_diagnostics.diagnose_k_iv_postpeak_fit(
+            -70.0, times, currents, 80.0
+        )
+        selected = next(
+            row for row in rows
+            if row["initialization"] == "tau100_equal_amplitudes"
+        )
+        self.assertTrue(selected["fit_converged"])
+        self.assertTrue(selected["fit_passes_source_r2_gate"])
+        self.assertAlmostEqual(selected["fit_tau_fast_ms"], 80.0, places=2)
+        self.assertGreater(selected["fit_r_squared"], 0.99999)
 
     def test_source_fit_contracts_and_mechanism_identity_are_pinned(self) -> None:
         self.assertEqual(replay.K_IV_FIXED_SLOW_TAU_MS, 450.0)
