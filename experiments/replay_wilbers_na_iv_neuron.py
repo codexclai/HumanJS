@@ -172,14 +172,6 @@ def run_protocol() -> dict[str, Any]:
                     f"Expected NEURON {NEURON_VERSION}, found {neuron.__version__}"
                 )
 
-            # NEURON may auto-load a mechanism library from the working
-            # directory during import. This replay compiles only na_human.mod;
-            # avoid loading it a second time when the suffix is already present.
-            if not hasattr(h, "na_human"):
-                library = workdir / "x86_64" / "libnrnmech.so"
-                if not library.is_file():
-                    raise ReproductionError(f"Compiled mechanism library not found: {library}")
-                h.nrn_load_dll(str(library))
             h.load_file("stdrun.hoc")
             channel_tools = import_channel_tools(workdir / "channel_tools.py")
 
@@ -201,7 +193,26 @@ def run_protocol() -> dict[str, Any]:
             # Reproduce fit_na_hh_cma_human.py's pure-human Na_IV cell setup.
             cell = h.Section(name="cell[0]")
             cell.diam = 10.0
-            cell.insert("na_human")
+            try:
+                cell.insert("na_human")
+            except Exception as insert_error:
+                # The NEURON wheel can auto-load a mechanism library from the
+                # working directory during import, or it can require an
+                # explicit load. Test by inserting the mechanism itself rather
+                # than guessing from unrelated hoc names; a duplicate load of
+                # an already-registered suffix is an error in NEURON.
+                library = workdir / "x86_64" / "libnrnmech.so"
+                if not library.is_file():
+                    raise ReproductionError(
+                        f"Human Na mechanism unavailable and compiled library missing: {library}"
+                    ) from insert_error
+                try:
+                    h.nrn_load_dll(str(library))
+                    cell.insert("na_human")
+                except Exception as load_error:
+                    raise ReproductionError(
+                        f"Unable to register/insert human Na mechanism: {load_error}"
+                    ) from load_error
             cell.Ra = 200.0
             cell.cm = 1.0
             cell.ena = 141.0
