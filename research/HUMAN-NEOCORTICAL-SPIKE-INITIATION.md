@@ -1174,7 +1174,7 @@ The HumanJS Rust implementation now has explicit regression coverage for the dis
 
 **Deposited temperature equations:**
 - Both channel classes use Q10 = 2.3, but their reference temperatures differ. Na uses 25°C; K uses 34°C.
-- The rate factor is `T_adj = 2.3^((T − T_ref)/10)`. Na activation/inactivation and K activation/fast-inactivation time constants divide by their channel's (T_{adj}); their Boltzmann steady states are temperature-independent in these source equations.
+- The rate factor is `T_adj = 2.3^((T − T_ref)/10)`. Na activation/inactivation and K activation/fast-inactivation time constants divide by their channel's `T_adj`; their Boltzmann steady states are temperature-independent in these source equations.
 - The K slow-inactivation gate uses fixed 450-ms and 2789.79294281-ms inactivation/recovery branch constants. Those constants are not multiplied by the Q10 factor in the deposited model.
 - The Na conductance equation multiplies `gbar_Na` by `T_adj`. The K conductance equation does not multiply `gbar_K` by `T_adj`. The passive leak likewise has no channel Q10 multiplier.
 

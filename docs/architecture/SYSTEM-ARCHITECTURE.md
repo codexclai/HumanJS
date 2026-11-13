@@ -1,7 +1,7 @@
 # HumanJS — target system architecture
 
 **Status:** accepted direction, with two foundational CPU mechanisms and one exploratory spike-capable CPU mechanism present.  
-**Updated:** 2026-11-10.
+**Updated:** 2026-11-13.
 
 This document defines architectural boundaries and responsibilities. The full biological and functional scope is enumerated separately in ../spec/BRAIN-SCOPE-AND-COMPLETENESS.md. The target architecture is not a claim that all listed mechanisms, interfaces, GPU paths, or persistence formats already exist.
 
