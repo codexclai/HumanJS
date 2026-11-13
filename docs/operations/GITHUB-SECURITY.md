@@ -16,7 +16,7 @@
 
 ## Verified branch state
 
-The live GitHub branch listing on 2026-11-11 returned exactly one branch: `main`. No non-main refs remained. Recheck the live branch list at the start of every session rather than relying on this historical observation.
+The live GitHub branch listing on 2026-11-13 returned exactly one branch: main; no non-main refs were present. The live main HEAD after this session's experiment/data commits was verified as 5d5e180bc5068f647edc040de39481801be52a0e. All experiment, summary-data and documentation writes in the session were committed directly to and verified on the remote main ref. Recheck live refs at the start of every session.
 
 ## Repository and delivery
 

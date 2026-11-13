@@ -240,3 +240,12 @@ The first residual-test run [43462098026](https://github.com/codexclai/HumanJS/a
 The source-generated −70-mV K_IV post-peak waveform may be described with a non-source third exponential to test the early deterministic residual. The fitted extra coefficient is negative and very small (about 0.064% of peak current), and a nonnegative extra-amplitude control collapses to zero at the signed-model optimum. This is a signed correction to the chosen numerical fit family, not evidence for an additional positive current, channel state, biological inactivation process, or human kinetic time constant.
 
 Keep the deposited helper, fitting caller, and pure-human NMODL unchanged. Do not transfer tau3 into Rust channel parameters, gate state, or the exploratory neuron model. The profile may be used as a numerical diagnostic only. Raw human K voltage-clamp traces and individual K kinetic targets remain unavailable in the inspected public deposit; this result does not close ADR-014 or biologically validate the provisional single-compartment spike mechanism.
+
+
+## ADR-019 — Adjacent-voltage K_IV short-time correction remains a model-residual diagnostic
+
+**Status:** Accepted · **Date:** 2026-11-13
+
+A signed, non-source short-time exponential may be used to characterize the deterministic residual of the deposited Wilbers K_IV current-fit waveform. The correction has now been independently profiled at three adjacent source-model command voltages (-75, -70 and -65 mV). It is negative at all three commands, remains below 0.11% of peak current, and improves the full-waveform numerical residual. At the signed optimum, constraining its amplitude to be nonnegative collapses the extra coefficient to zero.
+
+The three-voltage result supports only a bounded descriptive model-output trend. It does not identify a positive ionic current, molecular state, biological gate, or human fast-inactivation kinetic parameter. Do not add this correction to Rust channel equations or transfer its fitted tau3 into model parameters. The deposited source fitting helper, source caller and pure-human NMODL stay unchanged. Raw human K voltage-clamp recordings and individual K kinetic targets remain unavailable in the inspected public DataverseNL v3.0 deposit; this analysis does not satisfy ADR-014 or biologically validate the provisional single-compartment spike model.

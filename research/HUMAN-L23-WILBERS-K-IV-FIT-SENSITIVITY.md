@@ -184,3 +184,51 @@ At the signed optimum, the nonnegative-a3 control drives a3 to zero within numer
 The reproducible implementation is experiments/wilbers_k_iv_three_component.py; experiments/validate_wilbers_k_iv_three_component.py reloads the source residual and local-profile CSVs, recomputes the 801-point full-waveform profile, and checks source identity, time alignment, interior optimum, coefficient sign/magnitude, objective reductions, limited movement of the original terms, and the nonnegative control. Three synthetic tests cover recovery of a signed transient, the nonnegative control, and invalid-input rejection. The validator is part of .github/workflows/repository-policy.yml.
 
 Workflow [43466274672](https://github.com/codexclai/HumanJS/actions/runs/43466274672) passed on exact pushed experiment commit 46586e97695eae9b756e3d007b4daeb4069ae683. This is a reproducible software/numerical analysis of model-generated current, not raw-trace reproduction, biological validation, or evidence that the added exponent corresponds to a human potassium channel process. See also ADR-018.
+
+
+## 2026-11-13 — signed short-time residual correction across adjacent K_IV voltages
+
+### Question and source data
+
+The earlier -70-mV K_IV residual study found that an additional short-time exponential with a small negative coefficient substantially reduced the deterministic first few milliseconds of fit residual. This extension asks whether the same signed correction appears at adjacent source command voltages, rather than relying on the single -70-mV waveform.
+
+The three waveforms are taken from the original deposited pure-human k_human.mod and DataverseNL v3.0 channel_tools.py, executed by the unchanged source replay using NEURON 9.0.2 and built-in VClamp at 34°C and 0.1-ms sampling. Commands are -75, -70 and -65 mV. The runner captures exactly the post-peak slice passed to the source fast-inactivation helper (activation_times[peak_index:-1]), not a reconstructed or interpolated waveform. Both the source NEURON simulation clock and the shifted fit clock are retained. The checked-in summary contains these fit outcomes and provenance; the complete sampled current waveforms are ephemeral CI inputs and are not duplicated as another large research CSV.
+
+### Fitting protocol
+
+For each command voltage separately:
+1. Use the exact post-peak source-model current samples and time-shift them to the first sample, as the source helper does.
+2. Profile the two-exponential long-tau objective over 0.05-1200 ms using 901 logarithmic points; refine over a 6% multiplicative neighbourhood using 801 points. Keep tau2=450 ms fixed as in the deposited helper.
+3. At the selected local tau1, profile the non-source short tau3 over 0.6-2.0 ms using 801 equally spaced points.
+4. At every tau3, refit all four coefficients on the **full waveform**. Constrain the two original amplitudes and offset to be nonnegative; allow the short extra coefficient a3 to be signed. Select the point minimizing the full-waveform residual sum of squares.
+5. At that selected tau3, repeat the fit with a3>=0 as a sign control. Report full, first-10-ms and after-10-ms RMSE partitions, plus movement of the original coefficients. The time partitions are diagnostics, not separate weighted fits.
+
+This is explicitly a non-source fit diagnostic. The local long-tau1 profile is outside the deposited 0-300-ms source bound at -75 and -70 mV; those estimates are not source parameters. The 450-ms slow component is fixed across all three voltages.
+
+### Results
+
+| Quantity | -75 mV | -70 mV | -65 mV |
+|---|---:|---:|---:|
+| Samples | 4,896 | 4,890 | 4,883 |
+| Source-clock start (ms) | 30.3 | 30.9 | 31.6 |
+| Local tau1 (ms) | 393.4039 | 339.4072 | 291.4180 |
+| Short tau3 (ms) | 1.111 | 1.2335 | 1.384 |
+| Signed a3 (mA/cm²) | -1.00654e-7 | -3.18235e-7 | -9.95616e-7 |
+| Absolute a3 as % of peak current | 0.0391% | 0.0636% | 0.1060% |
+| Full-waveform RMSE reduction | 80.386% | 79.023% | 77.371% |
+| First-10-ms RMSE reduction | 94.278% | 94.034% | 93.789% |
+| After-10-ms RMSE reduction | 27.728% | 27.614% | 27.433% |
+
+The short tau3 increases smoothly over these three commands, and the negative extra amplitude grows in absolute value with depolarization while remaining below 0.11% of peak current. The correction improves the full 488-ms waveform, not just the initial 10 ms. The original fast and fixed-slow amplitudes move by less than 5% across these independent refits (per-voltage shifts are preserved in the summary CSV); the steady offset moves by less than 0.014%.
+
+At each voltage, the nonnegative-a3 control collapses the additional coefficient to zero at the signed optimum. The improvement therefore depends on a small **negative** correction term. This is not an extra positive potassium current or a newly identified molecular gate. It describes the direction and timescale of residual compensation required by this particular two-exponential current-fit family when applied to these deterministic source-model waveforms.
+
+### Reproducibility and limitations
+
+The compact, provenance-bearing result table is research/HUMAN-L23-WILBERS-K-IV-MULTIVOLTAGE-RESIDUAL-SUMMARY.csv. The exporter is integrated into experiments/replay_wilbers_k_iv_neuron.py; profiling is implemented in experiments/wilbers_k_iv_multivoltage.py; analysis CLI, synthetic/input-contract tests and expected-output validator are in experiments/analyze_wilbers_k_iv_multivoltage.py, experiments/test_wilbers_k_iv_multivoltage.py, and experiments/validate_wilbers_k_iv_multivoltage.py. The main workflow exports the exact source post-peak records to a temporary file, replays the analysis, and compares every output field to the committed result table with a narrow numerical tolerance. The expected summary includes no raw experimental current data.
+
+Workflow [43469283136](https://github.com/codexclai/HumanJS/actions/runs/43469283136) passed on exact pushed main commit 5d5e180bc5068f647edc040de39481801be52a0e: rustfmt, Clippy, 41 Rust unit tests, 3 synapse integration tests, 6 passive membrane integration tests, 28 Python experiment scripts parsed, 43 Python tests, all Wilbers source-model replays and validators, the three-voltage residual profile, committed-summary comparison and repository policy.
+
+Two intermediate workflow failures exposed test-fixture/roundoff details and were corrected transparently. The clock test originally applied a uniform clock offset, which is valid because the source clock is separately retained; it now perturbs one interior timestamp and tests real sample misalignment. The positive-amplitude control mathematically reproduces the baseline but its independently solved floating-point residual produced a sub-1e-8% apparent improvement; code and checked-in summary now normalize that negligible numerical residue to zero. No source fit bound, source R2 gate, channel parameter, biological criterion, or mechanism was weakened.
+
+**Interpretation boundary:** this establishes repeatability of a small negative residual correction across three adjacent model-generated command waveforms only. Three voltages do not establish a general voltage law, microscopic gating process or biological time constant. The inspected DataverseNL v3.0 release still lacks raw human K voltage-clamp NWB recordings and individual K kinetic targets; no empirical current refit is possible. The deposited original helper/caller and NMODL remain untouched. ADR-014 remains open and the HumanJS single-compartment spike-capable model remains exploratory and biologically unvalidated.
