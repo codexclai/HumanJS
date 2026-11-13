@@ -102,18 +102,29 @@ These are descriptive Pearson correlations along the deterministic profile grid,
 
 The exact source-literal nonlinear fit at −70 mV returned tau1 = 213.8193 ms, R² = 0.999994545, RMSE = 4.19431×10⁻⁸ mA/cm². On the same waveform, the fixed-tau profile at the source-domain upper end has RMSE 1.49170×10⁻⁸ mA/cm²; the extended profile minimum has RMSE 1.16791×10⁻⁸ mA/cm². These profile minima are approximately 2.81 and 3.59 times lower in RMSE, respectively. This indicates that the source nonlinear fit's accepted interior result is not the best sampled least-squares point on this waveform. The extended minimum remains outside the deposited 300-ms bound and is only a diagnostic counterfactual.
 
+## Time-resolved residual waveform at the local-profile optimum
+
+The residual export refits the three nonnegative linear coefficients at the best sampled local-profile value, tau1 = 339.41125497 ms, on the same 4,890 NEURON post-peak current samples. The retained source clock spans 30.9–519.8 ms; the source helper's shifted fit clock spans 0–488.9 ms in 0.1-ms increments. The refitted coefficients match the local profile: a1 = 6.00828885×10⁻⁵, a2 = 2.60772361×10⁻⁵, and ss = 4.14437813×10⁻⁴ mA/cm².
+
+The reconstructed residual record reproduces the local-profile objective (R² = 0.999999577179; RMSE = 1.16767714×10⁻⁸ mA/cm²). The mean residual is approximately 1.65×10⁻¹⁹ mA/cm². Its largest absolute value occurs at the first post-peak sample: observed current 5.00295140×10⁻⁴ mA/cm² versus fitted 5.00597938×10⁻⁴ mA/cm², residual −3.02797528×10⁻⁷ mA/cm². The residual remains negative through 3.9 ms and first becomes positive at 4.0 ms.
+
+This early transient dominates the integrated residual scale. Over the first 10 ms, residual RMSE is 7.80270×10⁻⁸ mA/cm². From 10 ms onward, it falls to 3.28972×10⁻⁹ mA/cm², about 23.7 times lower; after 50 ms it is 1.76161×10⁻⁹ mA/cm². The largest absolute residual after 10 ms is 1.45430×10⁻⁸ mA/cm² at 10.1 ms. Thus the most visible discrepancy is concentrated in the first few milliseconds after the activation-current peak, while the remaining 479 ms are fitted much more closely.
+
+The residual series is strongly temporally correlated (lag-1 correlation 0.9284 across the full 0.1-ms series and 0.9979 after the first 10 ms). This is expected of a smooth deterministic model residual and is not evidence for measurement noise or an independently sampled error process. No stochastic error model, empirical confidence interval, or biological significance test is implied. The residual record is a model-equation diagnostic only.
+
 ## Reproducible records and verification
 
 - Same-waveform results: `research/HUMAN-L23-WILBERS-K-IV-FIT-START-DIAGNOSTICS.csv`.
 - Source-bound profile: `research/HUMAN-L23-WILBERS-K-IV-FIT-PROFILE.csv`.
 - Extended-bound profile: `research/HUMAN-L23-WILBERS-K-IV-FIT-PROFILE-EXTENDED.csv`.
 - High-resolution local profile: `research/HUMAN-L23-WILBERS-K-IV-FIT-PROFILE-LOCAL.csv`.
+- Time-resolved local-profile residual waveform: `research/HUMAN-L23-WILBERS-K-IV-FIT-PROFILE-RESIDUALS.csv`.
 - Generator: `experiments/wilbers_k_iv_fit_diagnostics.py`, integrated into `experiments/replay_wilbers_k_iv_neuron.py`.
-- Validators: `experiments/validate_wilbers_k_iv_fit_diagnostics.py` and `experiments/validate_wilbers_k_iv_fit_profile.py`.
+- Validators: `experiments/validate_wilbers_k_iv_fit_diagnostics.py`, `experiments/validate_wilbers_k_iv_fit_profile.py`, and `experiments/validate_wilbers_k_iv_fit_residuals.py`.
 - Tests: `experiments/test_wilbers_k_iv_protocols.py`.
 - CI workflow: `.github/workflows/repository-policy.yml`.
 
-GitHub Actions [43460455408](https://github.com/codexclai/HumanJS/actions/runs/43460455408) passed on exact code HEAD `0bbfcfd175aa0d0b672bd1ac2fa429cbfe0f8968`: rustfmt, Clippy, 41 Rust unit tests, 3 synapse integration tests, 6 passive-membrane integration tests, syntax for 20 Python experiment scripts, 37 Python tests, five original Wilbers Na/K NEURON source protocols and validators, all 192 K_IV fit-start runs, the 601-point source-bound profile, the 901-point extended profile, and the 801-point high-resolution local profile; repository policy passed.
+GitHub Actions [43462311680](https://github.com/codexclai/HumanJS/actions/runs/43462311680) passed on exact code HEAD `55d469485edb00a9d65c105645f58b9bb1a92a39`: rustfmt, Clippy, 41 Rust unit tests, 3 synapse integration tests, 6 passive-membrane integration tests, syntax for 21 Python experiment scripts, 37 Python tests, five original Wilbers Na/K NEURON source protocols and validators, all 192 K_IV fit-start runs, the 601-point source-bound profile, the 901-point extended profile, the 801-point high-resolution local profile, the 4,890-row residual export and validator, and repository policy. The first residual-test run exposed an overstrict synthetic assertion; the test was corrected to compare independently reconstructed residual RMSE with the profiled objective, and this complete rerun passed.
 
 
 ## Interpretation boundary and next step
