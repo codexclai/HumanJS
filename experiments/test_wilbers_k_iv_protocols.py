@@ -109,6 +109,19 @@ class WilbersKVoltageClampProtocolTests(unittest.TestCase):
         self.assertLess(abs(best["tau1_ms"] - 80.0), 1.0)
         self.assertGreater(best["fit_r_squared"], 0.99999)
 
+        local = fit_diagnostics.profile_k_iv_postpeak_tau(
+            -70.0,
+            times,
+            currents,
+            tau_min_ms=60.0,
+            tau_max_ms=100.0,
+            grid_points=401,
+        )
+        self.assertEqual(len(local), 401)
+        local_best = min(local, key=lambda row: row["fit_rmse_ma_cm2"])
+        self.assertLess(abs(local_best["tau1_ms"] - 80.0), 0.2)
+        self.assertTrue(all(row["solver_success"] for row in local))
+
     def test_source_fit_contracts_and_mechanism_identity_are_pinned(self) -> None:
         self.assertEqual(replay.K_IV_FIXED_SLOW_TAU_MS, 450.0)
         self.assertEqual(replay.SOURCE_FILES["mod/k_human.mod"][0], 318647)

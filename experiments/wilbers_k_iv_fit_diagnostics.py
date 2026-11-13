@@ -213,6 +213,7 @@ def profile_k_iv_postpeak_tau(
     times_ms: Any,
     currents_ma_cm2: Any,
     *,
+    tau_min_ms: float = 0.05,
     tau_max_ms: float = 300.0,
     grid_points: int = 601,
 ) -> list[dict[str, Any]]:
@@ -220,7 +221,7 @@ def profile_k_iv_postpeak_tau(
 
     For each fixed fast tau1, the remaining (a1, a2, ss) parameters are
     estimated by bounded linear least squares. The default grid reproduces the
-    deposited tau1 upper bound; larger explicit bounds are diagnostic
+    deposited tau1 upper bound with a positive numerical lower cutoff. Explicit local or extended windows are diagnostic bounds are diagnostic
     counterfactuals only and do not change the source fit.
     """
     from scipy.optimize import lsq_linear
@@ -238,14 +239,16 @@ def profile_k_iv_postpeak_tau(
     ):
         raise ValueError("K_IV tau profile requires matched, increasing finite samples")
 
-    if not math.isfinite(tau_max_ms) or tau_max_ms <= 0.05:
-        raise ValueError("K_IV tau profile upper bound must be finite and greater than 0.05 ms")
-    if isinstance(grid_points, bool) or grid_points < 2:
-        raise ValueError("K_IV tau profile grid must have at least two points")
+    if not math.isfinite(tau_min_ms) or tau_min_ms <= 0.0:
+        raise ValueError("K_IV tau profile lower bound must be finite and positive")
+    if not math.isfinite(tau_max_ms) or tau_max_ms <= tau_min_ms:
+        raise ValueError("K_IV tau profile upper bound must exceed its lower bound")
+    if isinstance(grid_points, bool) or int(grid_points) != grid_points or grid_points < 2:
+        raise ValueError("K_IV tau profile grid must have at least two integer points")
 
     x = times - times[0]
     total = float(np.sum((currents - np.mean(currents)) ** 2))
-    tau_grid = np.geomspace(0.05, float(tau_max_ms), int(grid_points))
+    tau_grid = np.geomspace(float(tau_min_ms), float(tau_max_ms), int(grid_points))
     rows: list[dict[str, Any]] = []
     for tau1 in tau_grid:
         design = np.column_stack(
