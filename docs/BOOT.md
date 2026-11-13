@@ -41,7 +41,7 @@ Do not search for or request old uploads or copied source snapshots. If evidence
 
 `main` is the only branch to use, permanently. Never create, check out, update, merge, or otherwise use another branch. Make authorized changes directly on `main`. Do not create branches, PRs, or automation that opens non-main update branches. No branch protection, rulesets, or deletion-prevention settings are required. Force pushes are permitted but exceptional and must be inspected and verified.
 
-The live repository check at the start of the 2026-11-13 session verified default branch `main`, current HEAD `dde92f10f229a7a3249cc32be4dcd9ac37726fe9`, a complete non-truncated 75-entry tree, exactly one branch (`main`), and no open issues or pull requests. GitHub Actions run `43286606816` completed successfully on that exact HEAD. Re-fetch the live main HEAD and newest workflow at every session start; do not rely on a stored SHA as current.
+The live repository check immediately before the 2026-11-13 three-resolution AP1 update verified default branch `main`, HEAD `8ef0b7c95aa7f5fb549cfd5b49983581464e954d`, a complete non-truncated 75-entry tree, exactly one branch (`main`), no open issues and no open pull requests. GitHub Actions run `43359647702` completed successfully on that exact HEAD. Re-fetch the live main HEAD and newest workflow at every session start; do not rely on a stored SHA as current.
 
 ## Session procedure
 
@@ -384,3 +384,20 @@ A fresh 5-µs HumanJS trace (voltage, five gates, exact voltage stages and RK4 c
 The actual source/HumanJS difference is dominated by Na current during the upstroke, with K becoming comparable/larger during late repolarization and leak largest in the post-spike tail. Both capacitor-current identities close below 8.7×10⁻¹³ A/m²; the voltage-residual/current-difference identity closes below 2.51×10⁻¹² A/m². The prescribed-path value is a held-left-gate current counterfactual, not a coupled CN simulation; it is intentionally not interchangeable with the fully evolved source/HumanJS path.
 
 At TABLE-off, the 5-µs actual total-current RMSE (4.08145×10⁻⁴ A/m²) is about 23.4× the earlier 250-ns value (1.74232×10⁻⁵); the prescribed-path counterfactual falls by about 19.5× between those same resolutions. This is consistent with timestep sensitivity, not proof of an asymptotic order. A fresh matched 1-µs HumanJS trace exists, but its NEURON rerun failed because nrnivmodl exceeded a 600-s build allowance in the 1-GiB VM; no new 1-µs current results are claimed. The 125-ns full NEURON run remains separately memory-limited as previously documented. No generated traces were committed. The mechanism remains exploratory/unaccepted; numerical comparisons do not constitute biological validation.
+
+
+### 2026-11-13 — three-resolution AP1 current refinement
+
+Matched 5-µs, 1-µs and 250-ns HumanJS/NEURON 9.0.2 secondorder=1 traces now have source CN current balances for both Na TABLE settings. The original author helper remains at 20 µs / secondorder=0 / Na TABLE on; all-human channel densities, 20-pA rheobase and 30-pA AP1 pulse were unchanged.
+
+| Step | Na TABLE | Voltage RMSE (mV) | Evolved source/HumanJS current RMSE (A/m²) |
+|---:|:---:|---:|---:|
+| 5 µs | On / Off | 0.024871 / 0.004636 | 0.002083 / 0.0004081 |
+| 1 µs | On / Off | 0.028692 / 0.001515 | 0.002474 / 0.00001277 |
+| 250 ns | On / Off | 0.028847 / 0.001477 | 0.002490 / 0.00001742 |
+
+Direct-rate voltage RMSE reaches a floor near 0.001476 mV between 1 µs and 250 ns. Switching the Na TABLE changes the source voltage trajectory by a nearly resolution-invariant 0.02907-mV RMSE (maximum about 0.408 mV around 3.912 ms); this perturbation correlates 0.9987 with the TABLE-on HumanJS residual at the two finer steps. On an identical prescribed voltage path, the 200-node table versus analytic rates leaves a stable 3.76e-5 aggregate Na-gate RMSE, while the direct-rate CNEXP/RK4 same-voltage gate difference falls to 4.9e-13 at 250 ns. The table interpolation, not direct-rate gate integration, is therefore the dominant identified source of the table-on floor.
+
+The prescribed HumanJS midpoint/left-gate current counterfactual falls 0.0078533 → 0.0015841 → 0.0004023 A/m², with empirical refinement slopes about 0.99; it is not the fully coupled source trajectory. Actual TABLE-off source/HumanJS current RMSE is non-monotonic at the two finest steps (1.2767e-5 at 1 µs; 1.7423e-5 at 250 ns), so no convergence order is claimed. Capacitor-current balance identities remain closed to approximately 1e-13 A/m², and the voltage/current residual identity closes below 4.12e-11 A/m².
+
+A 125-ns HumanJS trace was generated, but the new memory-reduced NEURON attempt produced no JSON and its failure mode was not captured. A previous 125-ns NEURON attempt was killed at the VM memory limit. No new 125-ns source current figures are claimed. No model parameters changed; the spike mechanism remains exploratory and unaccepted.
