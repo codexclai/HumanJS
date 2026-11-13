@@ -2206,6 +2206,136 @@ mod tests {
     }
 
     #[test]
+    fn human_potassium_fast_inactivation_rates_are_continuous_at_all_trap0_landmarks() {
+        let model = wilbers_model();
+        let parameters = model.potassium;
+        let temperature_factor = model.potassium_temperature_factor().unwrap();
+
+        let source_rate =
+            |voltage_mv: f64, half_voltage_mv: f64, prefactor: RatePrefactor, slope_mv: f64| {
+                let x = (voltage_mv - half_voltage_mv) / slope_mv;
+                let scale = prefactor.per_millivolt_per_ms * slope_mv;
+                if x == 0.0 {
+                    scale
+                } else {
+                    scale * x / -(-x).exp_m1()
+                }
+            };
+        let expected_tau = |effective_voltage_mv: f64| {
+            let alpha = source_rate(
+                effective_voltage_mv,
+                parameters.inactivation_rate_half_voltage_mv,
+                parameters.inactivation_rate,
+                parameters.inactivation_rate_slope_mv,
+            );
+            let beta = source_rate(
+                -effective_voltage_mv,
+                -parameters.recovery_rate_half_voltage_mv,
+                parameters.recovery_rate,
+                parameters.recovery_rate_slope_mv,
+            );
+            1.0 / (temperature_factor * (alpha + beta))
+        };
+
+        // Each component has a distinct wrong-sign guard and a distinct true
+        // denominator singularity in the deposited K source.
+        let landmarks = [
+            (
+                -parameters.inactivation_rate_half_voltage_mv,
+                1.0e-6 * parameters.inactivation_rate_slope_mv,
+            ),
+            (parameters.inactivation_rate_half_voltage_mv, 1.0e-6),
+            (
+                -parameters.recovery_rate_half_voltage_mv,
+                1.0e-6 * parameters.recovery_rate_slope_mv,
+            ),
+            (parameters.recovery_rate_half_voltage_mv, 1.0e-6),
+        ];
+
+        for (center_mv, width_mv) in landmarks {
+            let offsets = if center_mv == -parameters.inactivation_rate_half_voltage_mv
+                || center_mv == -parameters.recovery_rate_half_voltage_mv
+            {
+                [
+                    -1.01 * width_mv,
+                    -0.99 * width_mv,
+                    0.0,
+                    0.99 * width_mv,
+                    1.01 * width_mv,
+                ]
+            } else {
+                [-width_mv, 0.0, width_mv, 2.0 * width_mv, -2.0 * width_mv]
+            };
+
+            for offset_mv in offsets {
+                let effective_voltage_mv = center_mv + offset_mv;
+                let membrane_voltage_mv = effective_voltage_mv - model.voltage_shift_mv;
+                let observed = model
+                    .potassium_rates(membrane_voltage_mv, 0.5)
+                    .unwrap()
+                    .fast_inactivation
+                    .time_constant_ms;
+                let expected = expected_tau(effective_voltage_mv);
+                assert!(
+                    (observed - expected).abs() < 1.0e-10,
+                    "K fast-inactivation tau mismatch at landmark {center_mv} mV, offset {offset_mv} mV: {observed} vs {expected} ms"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn human_potassium_fast_inactivation_rates_match_source_equations_over_voltage_grid() {
+        let model = wilbers_model();
+        let parameters = model.potassium;
+        let temperature_factor = model.potassium_temperature_factor().unwrap();
+
+        let source_rate =
+            |voltage_mv: f64, half_voltage_mv: f64, prefactor: RatePrefactor, slope_mv: f64| {
+                let x = (voltage_mv - half_voltage_mv) / slope_mv;
+                let scale = prefactor.per_millivolt_per_ms * slope_mv;
+                if x == 0.0 {
+                    scale
+                } else {
+                    scale * x / -(-x).exp_m1()
+                }
+            };
+
+        for index in 0..=440 {
+            let effective_voltage_mv = -120.0 + index as f64 * 0.5;
+            let membrane_voltage_mv = effective_voltage_mv - model.voltage_shift_mv;
+            let rates = model.potassium_rates(membrane_voltage_mv, 0.5).unwrap();
+            let alpha = source_rate(
+                effective_voltage_mv,
+                parameters.inactivation_rate_half_voltage_mv,
+                parameters.inactivation_rate,
+                parameters.inactivation_rate_slope_mv,
+            );
+            let beta = source_rate(
+                -effective_voltage_mv,
+                -parameters.recovery_rate_half_voltage_mv,
+                parameters.recovery_rate,
+                parameters.recovery_rate_slope_mv,
+            );
+            let expected_tau = 1.0 / (temperature_factor * (alpha + beta));
+            let expected_steady_state = 1.0
+                / (1.0
+                    + ((effective_voltage_mv - parameters.inactivation_half_voltage_mv)
+                        / parameters.inactivation_slope_mv)
+                        .exp());
+
+            assert!(
+                (rates.fast_inactivation.time_constant_ms - expected_tau).abs() < 1.0e-9,
+                "K fast-inactivation tau mismatch at effective voltage {effective_voltage_mv} mV"
+            );
+            assert!(
+                (rates.fast_inactivation.steady_state - expected_steady_state).abs() < 1.0e-14,
+                "K fast-inactivation steady state mismatch at effective voltage {effective_voltage_mv} mV"
+            );
+        }
+    }
+
+    #[test]
     fn potassium_slow_inactivation_uses_distinct_inactivation_and_recovery_constants() {
         let model = wilbers_model();
         let depolarized = model.potassium_rates(30.0, 0.5).unwrap();
