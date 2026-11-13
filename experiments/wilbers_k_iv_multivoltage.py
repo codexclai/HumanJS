@@ -221,9 +221,9 @@ def validate_tau3_profile_shape_rows(rows: list[dict[str, Any]]) -> None:
             raise ValueError("K_IV tau3 selected minimum has negative local RSS curvature")
         if row["left_neighbor_delta_rss_pct"] < -1.0e-8 or row["right_neighbor_delta_rss_pct"] < -1.0e-8:
             raise ValueError("K_IV tau3 neighboring objective is below the selected minimum")
-        previous_lower = row["profile_grid_min_ms"]
-        previous_upper = row["profile_grid_max_ms"]
-        previous_count = row["profile_grid_points"]
+        previous_lower = math.inf
+        previous_upper = -math.inf
+        previous_count = 0
         for threshold_pct in (1, 5, 10):
             lower = row[f"near_minimum_{threshold_pct}pct_objective_lower_ms"]
             upper = row[f"near_minimum_{threshold_pct}pct_objective_upper_ms"]
@@ -234,10 +234,10 @@ def validate_tau3_profile_shape_rows(rows: list[dict[str, Any]]) -> None:
                 raise ValueError("K_IV tau3 near-minimum basin does not contain its selected minimum")
             if not math.isclose(span, upper - lower, rel_tol=0.0, abs_tol=1.0e-12):
                 raise ValueError("K_IV tau3 near-minimum basin span is inconsistent")
-            if count < 1 or count > previous_count:
+            if count < 1 or count < previous_count or count > row["profile_grid_points"]:
                 raise ValueError("K_IV tau3 near-minimum basin grid-point count is invalid")
-            if lower < previous_lower - 1.0e-12 or upper > previous_upper + 1.0e-12:
-                raise ValueError("K_IV tau3 near-minimum basins are not nested")
+            if lower > previous_lower + 1.0e-12 or upper < previous_upper - 1.0e-12:
+                raise ValueError("K_IV tau3 near-minimum basins do not expand with objective threshold")
             if not isinstance(touches_edge, bool):
                 raise ValueError("K_IV tau3 near-minimum grid-edge flag is not boolean")
             previous_lower, previous_upper, previous_count = lower, upper, count
