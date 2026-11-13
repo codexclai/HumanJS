@@ -183,16 +183,16 @@ def tau3_profile_shape_csv_text(rows: list[dict[str, Any]]) -> str:
 
     output = io.StringIO()
     output.write(
-        "# Descriptive contiguous tau3 profile basins at 1%, 5%, and 10% increases in full-waveform RSS.\\n"
+        "# Descriptive contiguous tau3 profile basins at 1%, 5%, and 10% increases in full-waveform RSS.\n"
     )
     output.write(
-        "# These objective-shape spans are deterministic grid diagnostics, not confidence intervals.\\n"
+        "# These objective-shape spans are deterministic grid diagnostics, not confidence intervals.\n"
     )
     writer = csv.DictWriter(
         output,
         fieldnames=K_IV_TAU3_PROFILE_SHAPE_FIELDNAMES,
         extrasaction="raise",
-        lineterminator="\\n",
+        lineterminator="\n",
     )
     writer.writeheader()
     writer.writerows(rows)
