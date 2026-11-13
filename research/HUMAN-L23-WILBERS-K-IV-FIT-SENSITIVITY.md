@@ -23,7 +23,7 @@ The released `get_tau_inact_double_fixedtau2(x, y, est1=30, tau2=450)` function 
 I(t)=a_1 e^{-t/\tau_1}+a_2 e^{-t/450\,\mathrm{ms}}+s_s
 \]
 
-with free parameter order `(a1, tau1, a2, ss)`, nonnegative bounds on all four fitted parameters, \(0 < \tau_1 \le 300\) ms, fixed \(\tau_2=450\) ms, and a source acceptance threshold \(R^2>0.95\). It first shifts the supplied time vector by `x = x - x[0]`.
+with free parameter order `(a1, tau1, a2, ss)`, nonnegative bounds on all four fitted parameters, \(0 < \tau_1 \le 300\) ms, fixed \(\tau_2=450\) ms, and a source acceptance threshold R² > 0.95. It first shifts the supplied time vector by `x = x - x[0]`.
 
 The exact source initial vector is
 
