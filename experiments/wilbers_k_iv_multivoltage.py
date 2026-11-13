@@ -937,13 +937,9 @@ def validate_tau1_tau3_surface_rows(
                 abs_tol=1.0e-10,
             ):
                 raise ValueError("K_IV tau1-tau3 surface relative RSS is inconsistent")
-        if not math.isclose(
-            float(reference["selected_tau3_ms"]),
-            reference_tau3,
-            rel_tol=0.0,
-            abs_tol=1.0e-12,
-        ):
-            raise ValueError("K_IV center tau1 slice does not reproduce the reference tau3 optimum")
+        # The center tau1 slice is a re-profile over the surface's declared
+        # tau3 domain. Its optimum may differ from reference_tau3_ms, which is
+        # retained solely as the earlier, narrower 0.1..5-ms baseline.
         if not math.isclose(float(global_min_row["relative_rss_to_surface_min_pct"]), 0.0, abs_tol=1.0e-10):
             raise ValueError("K_IV global surface minimum must have zero relative RSS")
     return None
@@ -975,6 +971,9 @@ def tau1_tau3_surface_csv_text(rows: list[dict[str, Any]]) -> str:
     )
     output.write(
         "# Each row stores the conditional tau3 minimum and its 1/5/10% relative-full-RSS basin; relative_rss_to_surface_min_pct compares that slice minimum with the best minimum across tau1 values at the same voltage.\n"
+    )
+    output.write(
+        "# reference_tau3_ms is the pre-existing single-tau1 0.1..5 ms result; the wider surface can select a different center-slice tau3 when its domain is extended.\n"
     )
     output.write(
         "# Full/first-10-ms/after-10-ms RMSE values are diagnostics of the same full-waveform objective. This numerical sensitivity surface is not a confidence region or biological uncertainty estimate.\n"

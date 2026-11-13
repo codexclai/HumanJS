@@ -132,7 +132,7 @@ class KIVMultivoltageTests(unittest.TestCase):
                 "voltage_mv": voltage,
                 "coarse_tau1_ms": 100.0,
                 "local_tau1_ms": 100.0,
-                "tau3_ms": reference_tau3,
+                "tau3_ms": 2.9,
             }
             for voltage in K_IV_MULTIVOLTAGE_TARGETS_MV
         ]
@@ -156,7 +156,8 @@ class KIVMultivoltageTests(unittest.TestCase):
             group = [row for row in rows if row["voltage_mv"] == voltage]
             self.assertEqual([row["tau1_grid_index"] for row in group], [0, 1, 2])
             self.assertEqual([row["tau1_ms"] for row in group], [94.0, 100.0, 106.0])
-            self.assertAlmostEqual(group[1]["selected_tau3_ms"], reference_tau3, delta=1.0e-12)
+            self.assertAlmostEqual(group[1]["selected_tau3_ms"], reference_tau3, delta=0.06)
+            self.assertNotEqual(group[1]["selected_tau3_ms"], group[1]["reference_tau3_ms"])
             self.assertLess(group[1]["a3_ma_cm2"], 0.0)
             self.assertGreaterEqual(group[1]["rmse_full_ma_cm2"], 0.0)
             self.assertGreaterEqual(group[1]["rmse_first_10ms_ma_cm2"], 0.0)
