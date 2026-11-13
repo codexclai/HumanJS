@@ -2790,6 +2790,122 @@ mod tests {
     }
 
     #[test]
+    fn na_voltage_clamp_inactivation_prepulse_replays_human_availability_at_25c() {
+        // The deposited Na_IV_inact protocol uses 25°C, dt=0.005 ms:
+        // 1 ms at -70 mV, 50 ms at a conditioning voltage (-105..-47 mV
+        // in 2-mV steps), then a -10-mV test pulse. No -10-mV current-clamp
+        // voltage-shift correction is used in this pure voltage-clamp path.
+        let mut model = wilbers_model();
+        model.temperature_celsius = 25.0;
+        model.voltage_shift_mv = 0.0;
+
+        let parameters = model.sodium;
+        let source_rate = |voltage_mv: f64,
+                           half_voltage_mv: f64,
+                           prefactor: RatePrefactor,
+                           slope_mv: f64| {
+            let x = (voltage_mv - half_voltage_mv) / slope_mv;
+            let limit = prefactor.per_millivolt_per_ms * slope_mv;
+            if x == 0.0 {
+                limit
+            } else {
+                limit * x / -(-x).exp_m1()
+            }
+        };
+        let source_rates = |voltage_mv: f64| {
+            let alpha_m = source_rate(
+                voltage_mv,
+                parameters.activation_rate_half_voltage_mv,
+                parameters.activation_rate,
+                parameters.activation_rate_slope_mv,
+            );
+            let beta_m = source_rate(
+                -voltage_mv,
+                -parameters.activation_rate_half_voltage_mv,
+                parameters.activation_rate,
+                parameters.activation_rate_slope_mv,
+            );
+            let alpha_h = source_rate(
+                voltage_mv,
+                parameters.inactivation_rate_half_voltage_mv,
+                parameters.inactivation_rate,
+                parameters.inactivation_rate_slope_mv,
+            );
+            let beta_h = source_rate(
+                -voltage_mv,
+                -parameters.recovery_rate_half_voltage_mv,
+                parameters.recovery_rate,
+                parameters.recovery_rate_slope_mv,
+            );
+            (
+                GateRates {
+                    steady_state: super::sigmoid(
+                        (voltage_mv - parameters.activation_half_voltage_mv)
+                            / parameters.activation_slope_mv,
+                    ),
+                    time_constant_ms: 1.0 / (alpha_m + beta_m),
+                },
+                GateRates {
+                    steady_state: super::sigmoid(
+                        (parameters.inactivation_half_voltage_mv - voltage_mv)
+                            / parameters.inactivation_slope_mv,
+                    ),
+                    time_constant_ms: 1.0 / (alpha_h + beta_h),
+                },
+            )
+        };
+        let advance = |gate: f64, rates: GateRates, duration_ms: f64| {
+            rates.steady_state
+                + (gate - rates.steady_state) * (-duration_ms / rates.time_constant_ms).exp()
+        };
+
+        let (initial_m_rates, initial_h_rates) = source_rates(-70.0);
+        for index in 0..30 {
+            let conditioning_voltage_mv = -105.0 + index as f64 * 2.0;
+            let (conditioning_m_rates, conditioning_h_rates) =
+                source_rates(conditioning_voltage_mv);
+            let (test_m_rates, test_h_rates) = source_rates(-10.0);
+
+            // Initial() places m/h at steady state at the -70-mV holding
+            // potential. The 1-ms initial segment therefore preserves them.
+            let mut expected_m = initial_m_rates.steady_state;
+            let mut expected_h = initial_h_rates.steady_state;
+            expected_m = advance(expected_m, initial_m_rates, 1.0);
+            expected_h = advance(expected_h, initial_h_rates, 1.0);
+
+            // Apply the 50-ms conditioning prepulse exactly, then evaluate
+            // the source's 5-ms current-measurement window in the test step.
+            expected_m = advance(expected_m, conditioning_m_rates, 50.0);
+            expected_h = advance(expected_h, conditioning_h_rates, 50.0);
+            expected_m = advance(expected_m, test_m_rates, 5.0);
+            expected_h = advance(expected_h, test_h_rates, 5.0);
+
+            let model_initial = model.initial_state(Volts::from_millivolts(-70.0).unwrap()).unwrap();
+            let mut actual_m = model_initial.sodium_activation();
+            let mut actual_h = model_initial.sodium_inactivation();
+            let initial_rates = model.sodium_rates(-70.0).unwrap();
+            actual_m = advance(actual_m, initial_rates.activation, 1.0);
+            actual_h = advance(actual_h, initial_rates.inactivation, 1.0);
+            let conditioning_rates = model.sodium_rates(conditioning_voltage_mv).unwrap();
+            actual_m = advance(actual_m, conditioning_rates.activation, 50.0);
+            actual_h = advance(actual_h, conditioning_rates.inactivation, 50.0);
+            let test_rates = model.sodium_rates(-10.0).unwrap();
+            actual_m = advance(actual_m, test_rates.activation, 5.0);
+            actual_h = advance(actual_h, test_rates.inactivation, 5.0);
+
+            assert!(
+                (actual_m - expected_m).abs() < 1.0e-13,
+                "Na m-gate inactivation-protocol endpoint mismatch after {conditioning_voltage_mv} mV"
+            );
+            assert!(
+                (actual_h - expected_h).abs() < 1.0e-13,
+                "Na h-gate inactivation-protocol endpoint mismatch after {conditioning_voltage_mv} mV"
+            );
+            assert_eq!(model.sodium_temperature_factor().unwrap(), 1.0);
+        }
+    }
+
+    #[test]
     fn channel_temperature_scaling_matches_deposited_rate_contract() {
         let base_model = wilbers_model();
         let voltage_mv = -60.0;
