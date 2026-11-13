@@ -730,7 +730,7 @@ def iv_csv_text(result: dict[str, Any]) -> str:
         "# Source activation window is (t>20.4)&(t<520); source inactivation window is (t>520)&(t<570). Current fit is attempted only when max(I[activation_mask])>1e-8 mA/cm2.",
         "# Original get_tau_act, get_tau_inact_double_fixedtau2, fit_boltz_act and fit_boltz_inact helpers are called unchanged. The source fixed slow inactivation fit component is 450 ms.",
         "# Plotting and unavailable Experimental means overlays are omitted; no K tau CSVs or raw NWB K voltage-clamp traces were in the inspected Dataverse v3.0 inventory. These are model/source outputs, not empirical current refits or biological validation.",
-        ",".join(K_IV_FIELDNAMES),
+        # _write_csv emits the column header once.
         _write_csv(result["iv"]["rows"], K_IV_FIELDNAMES),
     ]
     return "\n".join(lines) + "\n"
@@ -750,7 +750,7 @@ def recovery_csv_text(result: dict[str, Any]) -> str:
         "# K_recovery protocol: 2 ms at -120 mV; 5000 ms at +40 mV; recovery at -90,-85,-80,-75,-70 mV for squared intervals 4..8464 ms; 5-ms test at +40 mV.",
         "# The source extracts max(I) over the strict interval (5002+recovery_time, 5007+recovery_time), then calls get_double_tau_rec(rectimes,pulse2) with unshifted times, original p0/bounds and R2>0.95.",
         "# Source recovery tau values are apparent double-exponential current-fit parameters, not microscopic gate recovery time constants. No raw human K NWB current traces or per-voltage K tau measurement CSVs were in the inspected Dataverse v3.0 inventory. This is model/source execution, not empirical current refitting or biological validation.",
-        ",".join(K_RECOVERY_FIELDNAMES),
+        # _write_csv emits the column header once.
         _write_csv(result["recovery"]["rows"], K_RECOVERY_FIELDNAMES),
     ]
     return "\n".join(lines) + "\n"
