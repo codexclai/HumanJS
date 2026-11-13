@@ -26,7 +26,7 @@ RECOVERY_MARKERS = (
     "K_recovery protocol: 2 ms at -120 mV; 5000 ms at +40 mV",
     "squared intervals 4..8464 ms", "get_double_tau_rec(rectimes,pulse2)",
     "apparent double-exponential current-fit parameters",
-    "no raw human K NWB current traces",
+    "No raw human K NWB current traces",
 )
 IV_FIELDS = (
     "voltage_mv", "samples_activation_window",
