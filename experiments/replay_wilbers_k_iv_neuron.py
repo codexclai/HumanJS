@@ -579,8 +579,6 @@ def run_protocol() -> dict[str, Any]:
                 "prop_inact": 0.85,
                 "prop_h2": 0.4,
                 "inact_rate_factor": 1.0,
-                "temp": 34.0,
-                "q10": 2.3,
                 "tha": -29.961798016904638,
                 "thb": -29.961798016904638,
                 "Ra": 0.018459250585411965,
@@ -598,6 +596,19 @@ def run_protocol() -> dict[str, Any]:
                     raise ReproductionError(
                         f"Unexpected pure human K mechanism default {name}: {actual}"
                     )
+            # NMODL declares temp and q10 GLOBAL, not RANGE; NEURON
+            # exposes them as mechanism-suffixed HOC globals rather than
+            # attributes on the segment mechanism object.
+            if not math.isclose(
+                float(getattr(h, "temp_k_human")), 34.0,
+                rel_tol=0.0, abs_tol=1.0e-12,
+            ):
+                raise ReproductionError("Unexpected pure human K global reference temperature")
+            if not math.isclose(
+                float(getattr(h, "q10_k_human")), 2.3,
+                rel_tol=0.0, abs_tol=1.0e-12,
+            ):
+                raise ReproductionError("Unexpected pure human K global Q10")
             if not math.isclose(
                 float(mechanism.th_inact_inf), -52.6, rel_tol=0.0, abs_tol=1.0e-12
             ):
