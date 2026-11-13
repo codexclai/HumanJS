@@ -2692,14 +2692,14 @@ mod tests {
         let parameters = model.sodium;
         let rate =
             |voltage_mv: f64, half_voltage_mv: f64, prefactor: RatePrefactor, slope_mv: f64| {
-            let x = (voltage_mv - half_voltage_mv) / slope_mv;
-            let scale = prefactor.per_millivolt_per_ms * slope_mv;
-            if x == 0.0 {
-                scale
-            } else {
-                scale * x / -(-x).exp_m1()
-            }
-        };
+                let x = (voltage_mv - half_voltage_mv) / slope_mv;
+                let scale = prefactor.per_millivolt_per_ms * slope_mv;
+                if x == 0.0 {
+                    scale
+                } else {
+                    scale * x / -(-x).exp_m1()
+                }
+            };
         let independent_rates = |voltage_mv: f64| {
             let alpha_m = rate(
                 voltage_mv,
