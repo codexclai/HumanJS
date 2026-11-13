@@ -2800,10 +2800,8 @@ mod tests {
         model.voltage_shift_mv = 0.0;
 
         let parameters = model.sodium;
-        let source_rate = |voltage_mv: f64,
-                           half_voltage_mv: f64,
-                           prefactor: RatePrefactor,
-                           slope_mv: f64| {
+        let source_rate =
+            |voltage_mv: f64, half_voltage_mv: f64, prefactor: RatePrefactor, slope_mv: f64| {
             let x = (voltage_mv - half_voltage_mv) / slope_mv;
             let limit = prefactor.per_millivolt_per_ms * slope_mv;
             if x == 0.0 {
@@ -2880,7 +2878,9 @@ mod tests {
             expected_m = advance(expected_m, test_m_rates, 5.0);
             expected_h = advance(expected_h, test_h_rates, 5.0);
 
-            let model_initial = model.initial_state(Volts::from_millivolts(-70.0).unwrap()).unwrap();
+            let model_initial = model
+                .initial_state(Volts::from_millivolts(-70.0).unwrap())
+                .unwrap();
             let mut actual_m = model_initial.sodium_activation();
             let mut actual_h = model_initial.sodium_inactivation();
             let initial_rates = model.sodium_rates(-70.0).unwrap();
