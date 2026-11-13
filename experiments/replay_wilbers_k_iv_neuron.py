@@ -249,12 +249,16 @@ def run_k_iv(
             (times > K_IV_INACTIVATION_MASK_START_MS)
             & (times < K_IV_INACTIVATION_MASK_END_MS)
         )
-        if (
-            int(np.count_nonzero(activation_mask)) != 4995
-            or int(np.count_nonzero(inactivation_mask)) != 499
-        ):
+        activation_sample_count = int(np.count_nonzero(activation_mask))
+        inactivation_sample_count = int(np.count_nonzero(inactivation_mask))
+        # The helper compares its strict masks against NEURON's accumulated
+        # floating-point clock. Boundary inclusion can differ by one sample;
+        # retain the actual count and first/last timestamp rather than
+        # replacing that recorded time vector with an idealized grid.
+        if activation_sample_count not in (4995, 4996) or inactivation_sample_count not in (499, 500):
             raise ReproductionError(
-                f"K_IV source sample-mask count differs at {voltage:g} mV"
+                f"K_IV source sample-mask count differs at {voltage:g} mV: "
+                f"{activation_sample_count}/{inactivation_sample_count}"
             )
 
         activation_current = current[activation_mask]
