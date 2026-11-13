@@ -2678,13 +2678,167 @@ mod tests {
     }
 
     #[test]
-    fn channel_temperature_scaling_matches_the_deposited_mechanisms() {
-        let model = wilbers_model();
-        let sodium = model.sodium_temperature_factor().unwrap();
-        let potassium = model.potassium_temperature_factor().unwrap();
+    fn channel_temperature_scaling_matches_deposited_rate_contract() {
+        let base_model = wilbers_model();
+        let voltage_mv = -60.0;
 
-        assert!((sodium - 2.3_f64.powf(0.9)).abs() < 1.0e-12);
-        assert!((potassium - 1.0).abs() < 1.0e-12);
+        // The deposited pure Na mechanism uses temp=25°C and Q10=2.3.
+        let mut sodium_reference_model = base_model;
+        sodium_reference_model.temperature_celsius = 25.0;
+        let sodium_reference = sodium_reference_model.sodium_rates(voltage_mv).unwrap();
+
+        // The deposited pure K mechanism uses temp=34°C and Q10=2.3.
+        let mut potassium_reference_model = base_model;
+        potassium_reference_model.temperature_celsius = 34.0;
+        let potassium_reference_recovery = potassium_reference_model
+            .potassium_rates(voltage_mv, 0.0)
+            .unwrap();
+        let potassium_reference_inactivation = potassium_reference_model
+            .potassium_rates(voltage_mv, 1.0)
+            .unwrap();
+
+        // This grid includes both channel-specific source reference temperatures
+        // and the 34°C current-clamp operating point. It checks the deposited
+        // Q10 equations; it is not evidence that the same Q10 is biologically
+        // valid across this entire temperature interval.
+        for temperature_celsius in [20.0, 25.0, 30.0, 34.0, 37.0] {
+            let mut model = base_model;
+            model.temperature_celsius = temperature_celsius;
+
+            let sodium_factor = model.sodium_temperature_factor().unwrap();
+            let potassium_factor = model.potassium_temperature_factor().unwrap();
+            let expected_sodium_factor = 2.3_f64.powf((temperature_celsius - 25.0) / 10.0);
+            let expected_potassium_factor = 2.3_f64.powf((temperature_celsius - 34.0) / 10.0);
+            assert!(
+                (sodium_factor - expected_sodium_factor).abs() < 1.0e-12,
+                "Na Q10 factor mismatch at {temperature_celsius}°C"
+            );
+            assert!(
+                (potassium_factor - expected_potassium_factor).abs() < 1.0e-12,
+                "K Q10 factor mismatch at {temperature_celsius}°C"
+            );
+
+            let sodium = model.sodium_rates(voltage_mv).unwrap();
+            assert!(
+                (sodium.activation.time_constant_ms * sodium_factor
+                    - sodium_reference.activation.time_constant_ms)
+                    .abs()
+                    < 1.0e-12,
+                "Na activation tau did not scale inversely with Q10 at {temperature_celsius}°C"
+            );
+            assert!(
+                (sodium.inactivation.time_constant_ms * sodium_factor
+                    - sodium_reference.inactivation.time_constant_ms)
+                    .abs()
+                    < 1.0e-12,
+                "Na inactivation tau did not scale inversely with Q10 at {temperature_celsius}°C"
+            );
+            assert_eq!(
+                sodium.activation.steady_state,
+                sodium_reference.activation.steady_state
+            );
+            assert_eq!(
+                sodium.inactivation.steady_state,
+                sodium_reference.inactivation.steady_state
+            );
+
+            let potassium_recovery = model.potassium_rates(voltage_mv, 0.0).unwrap();
+            let potassium_inactivation = model.potassium_rates(voltage_mv, 1.0).unwrap();
+            assert!(
+                (potassium_recovery.activation.time_constant_ms * potassium_factor
+                    - potassium_reference_recovery.activation.time_constant_ms)
+                    .abs()
+                    < 1.0e-12,
+                "K activation tau did not scale inversely with Q10 at {temperature_celsius}°C"
+            );
+            assert!(
+                (potassium_recovery.fast_inactivation.time_constant_ms * potassium_factor
+                    - potassium_reference_recovery.fast_inactivation.time_constant_ms)
+                    .abs()
+                    < 1.0e-12,
+                "K fast-inactivation tau did not scale inversely with Q10 at {temperature_celsius}°C"
+            );
+            assert!(
+                (potassium_inactivation.fast_inactivation.time_constant_ms * potassium_factor
+                    - potassium_reference_inactivation.fast_inactivation.time_constant_ms)
+                    .abs()
+                    < 1.0e-12,
+                "K fast-inactivation tau in the inactivation branch did not scale at {temperature_celsius}°C"
+            );
+            assert_eq!(
+                potassium_recovery.activation.steady_state,
+                potassium_reference_recovery.activation.steady_state
+            );
+            assert_eq!(
+                potassium_recovery.fast_inactivation.steady_state,
+                potassium_reference_recovery.fast_inactivation.steady_state
+            );
+            assert_eq!(
+                potassium_inactivation.slow_inactivation_time_constant_ms,
+                450.0
+            );
+            assert_eq!(
+                potassium_recovery.slow_inactivation_time_constant_ms,
+                2789.7929428108187
+            );
+        }
+    }
+
+    #[test]
+    fn temperature_adjustment_scales_sodium_conductance_but_not_potassium_or_leak() {
+        let base_model = wilbers_model();
+        let initial_conditions =
+            HumanL23SingleCompartmentInitialConditions::new(Volts::from_millivolts(-60.0).unwrap());
+        let zero_current = Amperes::from_amperes(0.0).unwrap();
+
+        // Use the Na reference temperature as the conductance comparison point.
+        // At identical voltage and gate state, the deposited Na equation has
+        // gNa = T_adj * gbar * m^3 * h, whereas K has no T_adj multiplier on gbar.
+        let mut reference_model = base_model;
+        reference_model.temperature_celsius = 25.0;
+        let reference_simulation =
+            HumanL23SingleCompartmentSimulation::new(reference_model, initial_conditions).unwrap();
+        let reference_state = reference_simulation.state();
+        let reference_balance = reference_simulation.current_balance(zero_current).unwrap();
+
+        assert!(reference_balance.sodium_current_density_a_per_m2().abs() > 1.0e-12);
+        assert!(reference_balance.potassium_current_density_a_per_m2().abs() > 1.0e-12);
+        assert!(reference_balance.leak_current_density_a_per_m2().abs() > 1.0e-12);
+
+        for temperature_celsius in [20.0, 25.0, 30.0, 34.0, 37.0] {
+            let mut model = base_model;
+            model.temperature_celsius = temperature_celsius;
+            let simulation =
+                HumanL23SingleCompartmentSimulation::new(model, initial_conditions).unwrap();
+
+            // Boltzmann steady states do not depend on temperature in these
+            // deposited equations, so the initial gate vector is identical.
+            assert_eq!(simulation.state(), reference_state);
+            let balance = simulation.current_balance(zero_current).unwrap();
+            let expected_sodium_factor =
+                2.3_f64.powf((temperature_celsius - 25.0) / 10.0);
+            let observed_sodium_factor = balance.sodium_current_density_a_per_m2()
+                / reference_balance.sodium_current_density_a_per_m2();
+
+            assert!(
+                (observed_sodium_factor - expected_sodium_factor).abs() < 1.0e-12,
+                "Na maximal conductance/current did not scale by T_adj at {temperature_celsius}°C"
+            );
+            assert!(
+                (balance.potassium_current_density_a_per_m2()
+                    - reference_balance.potassium_current_density_a_per_m2())
+                    .abs()
+                    < 1.0e-12,
+                "K maximal conductance was incorrectly temperature-scaled at {temperature_celsius}°C"
+            );
+            assert!(
+                (balance.leak_current_density_a_per_m2()
+                    - reference_balance.leak_current_density_a_per_m2())
+                    .abs()
+                    < 1.0e-12,
+                "Leak current changed with channel temperature at {temperature_celsius}°C"
+            );
+        }
     }
 
     #[test]
