@@ -54,7 +54,7 @@ class WilbersNaIvCurrentFitTests(unittest.TestCase):
         self.assertEqual(len(rows), 19)
         self.assertEqual([row["voltage_mv"] for row in rows], list(replay.TEST_VOLTAGES_MV))
         self.assertTrue(all(row["samples_fitted"] == 997 for row in rows))
-        self.assertTrue(all(row["absolute_current_gate_passed"] for row in rows))
+        self.assertTrue(all(row["source_current_density_gate_passed"] for row in rows))
         self.assertGreaterEqual(len(replay.SOURCE_NA_RATE_TABLE[0]), 200)
         accepted = [
             row["voltage_mv"] for row in rows if row["passed_joint_fit_r2"]
@@ -81,7 +81,7 @@ class WilbersNaIvCurrentFitTests(unittest.TestCase):
     def test_low_r_squared_step_returns_nan_taus_as_source_does(self) -> None:
         row = replay.replay_na_iv_current_fits()[0]
         self.assertEqual(row["voltage_mv"], -80.0)
-        self.assertTrue(row["absolute_current_gate_passed"])
+        self.assertTrue(row["source_current_density_gate_passed"])
         self.assertFalse(row["passed_joint_fit_r2"])
         self.assertTrue(math.isnan(row["source_mapped_tau_m_ms"]))
         self.assertTrue(math.isnan(row["source_mapped_tau_h_ms"]))

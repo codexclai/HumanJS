@@ -13,7 +13,7 @@ CSV_PATH = ROOT / "research" / "HUMAN-L23-WILBERS-NA-IV-CURRENT-FIT-REPLAY.csv"
 REQUIRED_PROVENANCE = (
     "615595a270c6170987757cd35743f5d5b5b2af0e",
     "b199d70c3d0e7a2e991fd8d26c54b1318e3c0970",
-    "absolute-current gate",
+    "current-density selection gate",
     "not individual microscopic HH gate taus",
 )
 
@@ -49,7 +49,7 @@ def main() -> None:
             raise SystemExit(f"Voltage-grid mismatch: {actual['voltage_mv']}")
         if int(actual["samples_fitted"]) != 997:
             raise SystemExit(f"Unexpected fitted sample count at {voltage:g} mV")
-        if actual["absolute_current_gate_passed"] != str(bool(reference["absolute_current_gate_passed"])):
+        if actual["source_current_density_gate_passed"] != str(bool(reference["source_current_density_gate_passed"])):
             raise SystemExit(f"Absolute-current gate mismatch at {voltage:g} mV")
         for field in strict_fields:
             value = actual[field]
@@ -85,10 +85,10 @@ def main() -> None:
             raise SystemExit(f"joint tau_h bound flag mismatch at {voltage:g} mV")
 
     passed = sum(bool(row["passed_joint_fit_r2"]) for row in expected)
-    amplitude_passed = sum(bool(row["absolute_current_gate_passed"]) for row in expected)
+    amplitude_passed = sum(bool(row["source_current_density_gate_passed"]) for row in expected)
     print(
         f"Validated 19 Na_IV density-current replay rows "
-        f"({amplitude_passed} passed the source absolute-current gate; "
+        f"({amplitude_passed} passed the source current-density selection gate; "
         f"{passed} also passed joint-fit R² > 0.95), source hashes and caveats."
     )
     print(

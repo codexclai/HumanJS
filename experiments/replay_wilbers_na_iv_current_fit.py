@@ -42,7 +42,7 @@ FIT_R2_THRESHOLD = 0.95
 
 _FIELDNAMES = (
     "voltage_mv", "samples_fitted", "source_ina_min_ma_cm2",
-    "absolute_current_gate_passed", "gate_tau_m_ms", "gate_tau_h_ms",
+    "source_current_density_gate_passed", "gate_tau_m_ms", "gate_tau_h_ms",
     "preliminary_tau_m_ms", "preliminary_tau_h_ms",
     "preliminary_tau_m_r_squared", "preliminary_tau_h_r_squared",
     "joint_tau_m_ms", "joint_tau_h_ms",
@@ -243,7 +243,7 @@ def replay_na_iv_current_fits() -> list[dict[str, Any]]:
             "voltage_mv": voltage,
             "samples_fitted": int(np.count_nonzero(mask)),
             "source_ina_min_ma_cm2": source_ina_min,
-            "absolute_current_gate_passed": amplitude_gate_passed,
+            "source_current_density_gate_passed": amplitude_gate_passed,
             "gate_tau_m_ms": gate_tau_m,
             "gate_tau_h_ms": gate_tau_h,
         }
@@ -262,7 +262,7 @@ def replay_na_iv_current_fits() -> list[dict[str, Any]]:
                     "joint_r_squared": math.nan,
                     "passed_joint_fit_r2": False,
                     "joint_tau_h_at_upper_bound": False,
-                    "fit_error": "source absolute inward-current threshold not met",
+                    "fit_error": "source current-density threshold not met",
                 }
             )
             continue
@@ -315,10 +315,10 @@ def main() -> int:
             for key, value in row.items()
         }
         writer.writerow(serializable)
-    amplitude_passed = sum(bool(row["absolute_current_gate_passed"]) for row in rows)
+    amplitude_passed = sum(bool(row["source_current_density_gate_passed"]) for row in rows)
     accepted = sum(bool(row["passed_joint_fit_r2"]) for row in rows)
     print(
-        f"# Source absolute-current gate passed at {amplitude_passed}/{len(rows)} voltages; "
+        f"# Source current-density selection gate passed at {amplitude_passed}/{len(rows)} voltages; "
         f"{accepted} also passed joint-fit R² > {FIT_R2_THRESHOLD:.2f}.",
         file=sys.stderr,
     )
