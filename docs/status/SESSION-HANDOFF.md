@@ -1,17 +1,16 @@
 # HumanJS — current session handoff
 
-**Updated:** 2026-11-12
+**Updated:** 2026-11-13
 **Canonical repository:** `codexclai/HumanJS`, branch `main` only.
-**Latest implementation/test and research change:** `32b5438f3e4ec26dcf91920e7505815c3ea556d0` (AP1 current-balance stages, source-order replay, and matched-state solver attribution; verified by Actions run `43213115000`).
+**Latest verified base before this session's evidence update:** `dde92f10f229a7a3249cc32be4dcd9ac37726fe9` (CN midpoint-current replay; Actions run `43286606816` passed).
 **Previous evidence availability cross-check:** `30dcee632b9ad5a64e4d6c1f496b9f00e03d3c64` (bounded public-archive search).
-**Latest verified implementation commit:** `32b5438f3e4ec26dcf91920e7505815c3ea556d0` (workflow `43213115000` passed). Re-fetch the current main HEAD before relying on this handoff.
+**Re-fetch the current main HEAD and newest workflow before relying on this handoff; the new 5-µs study is being recorded directly on main.**
 Verify the live HEAD and newest workflow before relying on this handoff.
 
 ## Verified repository state at handoff
 
-- Public repository; default branch `main`; complete recursive tree: 75 entries; exactly one branch (`main`); no open issues or pull requests. Fetch live main HEAD before starting work.
-- Full recursive tree: 75 entries, not truncated. Live branch listing: exactly `main`. No open issues or pull requests.
-- GitHub Actions run `43213115000` passed on implementation commit `32b5438f3e4ec26dcf91920e7505815c3ea556d0`: https://github.com/codexclai/HumanJS/actions/runs/43213115000. Subsequent documentation-only refreshes passed runs `43213384881` and `43213562532`. The workflow passed Rust formatting, Clippy, workspace tests, Python experiment syntax, Wilbers current-balance/source-order regressions, both Wilbers validators, and repository policy. The local pinned NEURON 9.0.2 replay and all 16 Python experiment tests also passed. These are numerical source-reproduction and software checks, not biological validation.
+- Public repository; default branch `main`; live parent HEAD before the current documentation update: `dde92f10f229a7a3249cc32be4dcd9ac37726fe9`; recursive tree 75 entries, not truncated; exactly one branch (`main`); no open issues or pull requests.
+- GitHub Actions run `43286606816` passed on that exact parent HEAD: https://github.com/codexclai/HumanJS/actions/runs/43286606816. It passed Rust formatting, Clippy, Rust workspace tests, Python experiment syntax/tests, both Wilbers validators, and repository policy. Numerical source/model results are not biological validation.
 - Fresh independent NEURON 9.0.2 `modlunit` invocation on unmodified `k_human.mod` and `k_mouse.mod` again failed at the untyped `trates(v+vshift)` call, line 82. Both species' repeated diagnostics are now recorded in `research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md`. The original files still compile with `nrnivmodl`; see ADR-014 for the temporary typed-probe findings. No source file was changed. The same research record clarifies that the article's public Dataverse data statement is satisfied by deposited summary/model files; it does not mean the missing per-cell K kinetic CSVs or raw voltage-clamp traces occur in the inspected 65-file v3.0 inventory.
 - On a clean clone of the parent commit, `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets --all-features -- -D warnings`, and `cargo test --workspace --locked` passed (31 unit tests, 3 synapse integration tests, 6 passive-membrane integration tests). All five experiment scripts parsed, both Wilbers validators passed, and repository policy passed. HumanJS 20-µs and 1-µs examples emitted the expected 1,450 and 29,000 post-step samples; the optional gate CSVs contain matching row counts.
 - The NEURON 9.0.2 source baseline was independently rerun and the diagnostic passed end-to-end with pinned Python dependencies. Temporary counters recorded zero entries into the flawed `trap0` fallback; its instrumented and unmodified source traces were identical. The new gate comparison records five NMODL states and confirms that the biggest internal-state errors are in the fast gates during the AP upstroke.
@@ -440,3 +439,21 @@ The 10-µs and 5-µs matched-step convergence runs use the same exporter with --
 - Final local verification: 22 Python experiment tests, Python syntax, Rust format/Clippy/workspace tests, both Wilbers validators, repository policy and diff checks passed before documentation cleanup.
 
 Next concrete step: compare prescribed-path CN midpoint/left-gate currents and fully evolved source/HumanJS current mismatch across matched timestep refinement and both Na TABLE settings. Keep biological parameters fixed and retain the author-default NEURON configuration.
+
+
+### 2026-11-13 — matched 5-µs AP1 current-history refinement
+
+The latest clean checkout was synchronized to parent dde92f10f229a7a3249cc32be4dcd9ac37726fe9. A fresh HumanJS 5-µs run exported 5,800 aligned post-step voltage, five-gate, voltage-stage and current-stage samples. The pinned research environment was Ubuntu 22.04, Rust 1.85.0, Python 3.10.12, NEURON 9.0.2, NumPy 1.26.4 and g++ 11.4.0. The unmodified author helper retained its 20-µs, secondorder=0, Na TABLE-on baseline; rheobase remained 20 pA and AP1 current 30 pA. No channel density or biological parameter changed.
+
+| Na TABLE | HumanJS vs NEURON voltage RMSE | Actual source CN midpoint vs HumanJS RK4-weighted current RMSE | Source CN replay vs NEURON voltage RMSE |
+|---|---:|---:|---:|
+| On | 0.02487096 mV | 0.00208318 A/m² | 0.00055897 mV |
+| Off | 0.00463648 mV | 0.000408145 A/m² | 0.00055720 mV |
+
+The actual TABLE-off current components are Na 3.99798e-4, K 3.43948e-5 and leak 4.68564e-6 A/m² RMSE; TABLE-on components are Na 0.00203776, K 0.000162507 and leak 0.0000248763. Sodium dominates the upstroke; potassium grows comparable/larger during late repolarization; leak dominates the tail. The CN source and RK4 HumanJS capacitor-current identities close below 8.7e-13 A/m², and the voltage-residual/current-difference identity closes below 2.51e-12 A/m².
+
+The prescribed-HumanJS-path CN midpoint/left-gate counterfactual is 0.00785330 A/m² RMSE for both table settings. It is not a coupled membrane trajectory and does not use the NEURON lookup-table setting. At TABLE off, current RMSE is about 23.4-fold higher at 5 µs than at the earlier 250-ns run; the held-left-gate counterfactual is about 19.5-fold higher. This is consistent with timestep sensitivity but does not establish convergence order. The Na TABLE-on comparison has a materially larger residual than the direct-rate counterfactual; TABLE off does not replace the author's reference setting.
+
+A new matched 1-µs HumanJS trace was generated, but the two-mode NEURON extension did not finish: nrnivmodl exceeded a 600-s compiler allowance in the 1-GiB VM. No 1-µs current diagnostic JSON or metrics were produced; the cleanup exception after the compiler timeout is recorded as environment/tooling failure. The earlier 1-µs source/CN result remains separate. All generated traces and JSON remain outside Git. The single-compartment model remains exploratory and unaccepted; these numerical comparisons are not biological validation.
+
+**Next step:** rerun the matched 1-µs and 250-ns Na TABLE on/off matrix in an environment with a reliable NEURON mechanism build, then assess current-residual scaling with at least three matched resolutions before making any numerical-order claim.

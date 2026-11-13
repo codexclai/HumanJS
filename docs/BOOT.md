@@ -1,6 +1,6 @@
 # HumanJS — session boot
 
-**Updated:** 2026-11-12  
+**Updated:** 2026-11-13  
 **Canonical source:** public GitHub repository `codexclai/HumanJS`, branch `main`.
 
 Read this file first whenever a new session begins. GitHub `main` is authoritative. The ChatGPT Project Sources area is expected to be empty; no upload or local snapshot is a project dependency.
@@ -41,7 +41,7 @@ Do not search for or request old uploads or copied source snapshots. If evidence
 
 `main` is the only branch to use, permanently. Never create, check out, update, merge, or otherwise use another branch. Make authorized changes directly on `main`. Do not create branches, PRs, or automation that opens non-main update branches. No branch protection, rulesets, or deletion-prevention settings are required. Force pushes are permitted but exceptional and must be inspected and verified.
 
-The live repository check on 2026-11-12 verified default branch `main`, a complete 75-entry tree, exactly one branch (`main`), and no open issues or pull requests. The latest implementation commit is `32b5438f3e4ec26dcf91920e7505815c3ea556d0`; its GitHub Actions run `43213115000` passed. Subsequent documentation-only refreshes passed runs `43213384881` and `43213562532`. Re-fetch the live main HEAD and newest workflow at every session start; do not rely on a stored SHA as current.
+The live repository check at the start of the 2026-11-13 session verified default branch `main`, current HEAD `dde92f10f229a7a3249cc32be4dcd9ac37726fe9`, a complete non-truncated 75-entry tree, exactly one branch (`main`), and no open issues or pull requests. GitHub Actions run `43286606816` completed successfully on that exact HEAD. Re-fetch the live main HEAD and newest workflow at every session start; do not rely on a stored SHA as current.
 
 ## Session procedure
 
@@ -370,3 +370,17 @@ The 10-µs and 5-µs matched-step convergence runs use the same exporter with --
 ### CN midpoint-current replay and coupled state-history attribution (2026-11-13)
 
 The AP1 diagnostics now reconstruct NEURON secondorder=1 with midpoint membrane voltage and the previous gate state, followed by CNEXP gate updates at endpoint voltage. At 1 µs and 250 ns, this replay reproduces actual NEURON voltage within 0.000558 mV RMSE and gates within 2.87e-6 aggregate RMSE. At 250 ns, the CN midpoint and HumanJS RK4 weighted current-balance identities close below 1.1e-12 A/m²; the derivative of their actual voltage residual equals the negative current difference to 4.2e-11 A/m² maximum. Actual source/HumanJS total current RMSE is 1.742e-5 A/m². A same-HumanJS-path CN midpoint/left-gate counterfactual is larger (4.023e-4 A/m²), showing that the fully evolved state histories matter and that a one-step current-evaluation comparison cannot be mistaken for the coupled source trajectory. A fresh 125-ns HumanJS trace was generated, but the expanded NEURON run hit the VM memory limit; no 125-ns source current result is claimed. See the Wilbers experiment/research records. The mechanism remains exploratory and unaccepted.
+
+
+### 2026-11-13 — matched 5-µs current-history refinement
+
+A fresh 5-µs HumanJS trace (voltage, five gates, exact voltage stages and RK4 current stages) was paired with NEURON 9.0.2 secondorder=1 at the same step. The unchanged author-helper baseline remains 20 µs / secondorder=0 / Na TABLE on, with 20-pA rheobase and 30-pA AP1 current. No biological parameters changed.
+
+| NEURON Na TABLE | HumanJS vs source voltage RMSE | Actual source CN midpoint vs HumanJS RK4 total-current RMSE | Held-left-gate HumanJS-path counterfactual RMSE |
+|---|---:|---:|---:|
+| On | 0.02487096 mV | 0.00208318 A/m² | 0.00785330 A/m² |
+| Off | 0.00463648 mV | 0.000408145 A/m² | 0.00785330 A/m² |
+
+The actual source/HumanJS difference is dominated by Na current during the upstroke, with K becoming comparable/larger during late repolarization and leak largest in the post-spike tail. Both capacitor-current identities close below 8.7×10⁻¹³ A/m²; the voltage-residual/current-difference identity closes below 2.51×10⁻¹² A/m². The prescribed-path value is a held-left-gate current counterfactual, not a coupled CN simulation; it is intentionally not interchangeable with the fully evolved source/HumanJS path.
+
+At TABLE-off, the 5-µs actual total-current RMSE (4.08145×10⁻⁴ A/m²) is about 23.4× the earlier 250-ns value (1.74232×10⁻⁵); the prescribed-path counterfactual falls by about 19.5× between those same resolutions. This is consistent with timestep sensitivity, not proof of an asymptotic order. A fresh matched 1-µs HumanJS trace exists, but its NEURON rerun failed because nrnivmodl exceeded a 600-s build allowance in the 1-GiB VM; no new 1-µs current results are claimed. The 125-ns full NEURON run remains separately memory-limited as previously documented. No generated traces were committed. The mechanism remains exploratory/unaccepted; numerical comparisons do not constitute biological validation.
