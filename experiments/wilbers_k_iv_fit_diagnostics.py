@@ -46,7 +46,7 @@ K_IV_PROFILE_FIELDNAMES = (
     "fit_rmse_ma_cm2",
     "residual_sum_squares",
     "solver_success",
-    "solver_optimality,
+    "solver_optimality",
 )
 
 
