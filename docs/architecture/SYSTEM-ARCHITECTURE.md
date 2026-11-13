@@ -115,6 +115,10 @@ A separate source-execution runner now compiles the deposited pure human na_huma
 
 This is execution of the deposited computational model and its analysis code, not empirical current-trace refitting. The inspected Dataverse v3.0 listing does not contain raw human NWB voltage-clamp current traces. The main Rust spike-capable single-compartment model remains exploratory; these source-protocol software checks do not satisfy biological validation or ADR-014 acceptance.
 
+The pure-human potassium mechanism is now also executed directly in NEURON 9.0.2. The source-runner invokes the original K_IV 34-voltage protocol and K_recovery five-voltage × ten-delay paired-pulse protocol using the original caller parameters and unchanged k_human.mod. K_IV produced 32/34 finite activation fits and 27/34 finite fast-inactivation fits, with Boltzmann activation/inactivation Vhalf values −2.666291/−50.891061 mV; K_recovery produced 50 paired-pulse results and finite fast/slow source fits at all five recovery voltages. The exact K inactivation helper was re-audited: four free parameters with four p0 values and fixed tau2=450 ms; the earlier alleged arity error was incorrect.
+
+The NEURON K_IV current and Boltzmann outputs are stable between recorded and repeated CI executions, but its nonlinear fast-inactivation tau estimates show substantial optimizer sensitivity (at −70 mV: 213.819 vs 183.493 ms). The output validator checks fit availability, acceptance state and source parameter bounds rather than falsely asserting exact repeatability. Raw experimental K traces and per-cell kinetic CSVs remain absent, so this does not establish a human empirical K fit or biological validation.
+
 
 
 ## 13. Intrinsic spike-initiation boundary — exploratory code, not scientific acceptance

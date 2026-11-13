@@ -2,13 +2,13 @@
 
 **Updated:** 2026-11-13
 **Canonical repository:** codexclai/HumanJS, branch main only.
-**Latest verified code HEAD before this handoff documentation refresh:** 84f7acf5e6983620575da90b994a55bc4a58b3e8; GitHub Actions run 43442540640 passed on that exact commit.
+**Latest verified code HEAD before this handoff documentation refresh:** f6c567bc6bae159e21ee6f18fa688e537f9199f4; GitHub Actions run 43452329852 passed on that exact commit.
 **Next session:** refresh metadata, read live docs/BOOT.md, and recheck HEAD/tree/workflow/issues/PRs/branch refs before relying on this handoff.
 
 ## Verified repository state at handoff
 
-- Public repository; default branch main; code HEAD before this documentation refresh: 84f7acf5e6983620575da90b994a55bc4a58b3e8; recursive tree has 88 entries and is not truncated; exactly one branch (main); zero open issues and zero open pull requests.
-- Workflow [43442540640](https://github.com/codexclai/HumanJS/actions/runs/43442540640) passed on exact documentation commit 84f7acf5e6983620575da90b994a55bc4a58b3e8: rustfmt, Clippy, 41 Rust unit tests, 3 synapse integration tests, 6 passive-membrane integration tests, Python syntax for 14 experiment scripts, 31 Python experiment tests, all Wilbers validators, ideal-command and original NEURON/VClamp Na_IV replays, Na_IV_inact and Na_recovery source executions and validators, and repository policy.
+- Public repository; default branch main; code HEAD before this documentation refresh: f6c567bc6bae159e21ee6f18fa688e537f9199f4; recursive tree has 93 entries and is not truncated; exactly one branch (main); zero open issues and zero open pull requests.
+- Workflow [43452329852](https://github.com/codexclai/HumanJS/actions/runs/43452329852) passed on exact code commit f6c567bc6bae159e21ee6f18fa688e537f9199f4: rustfmt, Clippy, 41 Rust unit tests, 3 synapse integration tests, 6 passive-membrane integration tests, Python syntax for 17 experiment scripts, 34 Python experiment tests, all existing Wilbers validators, the ideal-command and original NEURON/VClamp Na_IV source runs, Na_IV_inact, Na_recovery, K_IV and K_recovery source runs and their result validators, and repository policy.
 - The direct NEURON runner verifies and executes the pure human sodium NMODL mechanism plus the original Dataverse channel_tools.py source helpers under the source fitting caller's cell configuration. Main Na_IV passes current-density selection at 19/19 voltages and joint-fit R² at 17/19; Na_IV_inact produces 30 conditioning points and Boltzmann Vhalf/slope −68.251977/8.472251 mV; Na_recovery records 156 paired-pulse traces and 13/13 finite apparent recovery taus.
 - The raw result records are research/HUMAN-L23-WILBERS-NA-IV-NEURON-REPLAY.csv, research/HUMAN-L23-WILBERS-NA-IV-INACT-NEURON-REPLAY.csv, and research/HUMAN-L23-WILBERS-NA-RECOVERY-NEURON-REPLAY.csv. Validators compare CI reruns with these per-protocol records. Actual NEURON timer masks can include a boundary sample because the helper compares recorded floating-point timestamps strictly; first/last times and counts are preserved rather than imposing ideal counts.
 - The separate ideal-command Na_IV equation replay remains an approximation; its apparent tau outputs are not substituted for finite-feedback NEURON results. Neither source execution uses raw experimental NWB voltage-clamp records. No raw-trace refit or biological validation is claimed.
@@ -588,3 +588,33 @@ The three source-execution result records are tracked in the corresponding HUMAN
 Limits: the inspected 65-file Dataverse v3.0 inventory has no raw human NWB voltage-clamp current traces. These runs reproduce original model/source code and its analysis functions; they do not compare to raw experimental recordings, establish biological validity, or clear ADR-014. The Rust single-compartment Na/K spike mechanism remains exploratory and unaccepted.
 
 **Next concrete step:** inspect the original potassium voltage-clamp protocol path and determine which complete source routines can be faithfully executed and recorded using the deposited pure human K mechanism, preserving its known trap0 defects and clearly separating source execution from unavailable raw human K current data. Do not patch the original NMODL or invent missing kinetic target CSVs.
+
+
+### Latest handoff — original human sodium and potassium voltage-clamp source execution (2026-11-13)
+
+**Verified code state:** f6c567bc6bae159e21ee6f18fa688e537f9199f4; full GitHub Actions workflow [43452329852](https://github.com/codexclai/HumanJS/actions/runs/43452329852) passed on this exact commit. The public repository is main-only, with a 93-entry non-truncated tree, zero open issues and zero open pull requests.
+
+The pure-human Na and K NMODL mechanisms have both now been compiled unchanged and executed with NEURON 9.0.2 and the original Dataverse `channel_tools.py` numerical protocol helpers. No original mechanism file or biological parameter was patched.
+
+**Sodium source coverage:** Na_IV covers 19 test voltages (19/19 current-density selections, 17/19 joint-fit R² passes); Na_IV_inact covers 30 conditioning voltages (Vhalf/slope −68.251977/8.472251 mV); Na_recovery covers 156 paired pulses and yields 13/13 finite apparent recovery taus. The ideal-command Na_IV equation replay remains separate from the finite-feedback VClamp run.
+
+**Potassium source coverage:** K_IV covers 34 voltages at 34°C, with 32/34 finite activation fits and 27/34 finite fast-inactivation fits. Source Boltzmann activation Vhalf/slope are −2.666291/14.516246 mV; inactivation Vhalf/slope are −50.891061/12.286798 mV. The fixed slow inactivation component is 450 ms. K_recovery covers 50 paired-pulse traces (five recovery voltages × ten delays) and all five voltages produce finite fast and slow source recovery-fit components. Result tables are `research/HUMAN-L23-WILBERS-K-IV-NEURON-REPLAY.csv` and `research/HUMAN-L23-WILBERS-K-RECOVERY-NEURON-REPLAY.csv`.
+
+**Source correction and limitation:** the exact deposited `get_tau_inact_double_fixedtau2` has four free parameters and four `p0` values; `tau2` is fixed at 450 ms. The previous documentation's claim of a five-value `p0` and SciPy arity error was false and has been corrected. The K_IV fast-inactivation fitted tau is sensitive across repeated hosted runs: at −70 mV the preserved reference is 213.819 ms and the latest run returned 183.493 ms, while activation/current peak and steady-state Boltzmann quantities were unchanged. The output validator therefore verifies the source pass/availability state and parameter bounds, but does not claim exact repeatability of these nonlinear tau estimates. This sensitivity deserves a separate numerical investigation before using those estimates as stable kinetic targets.
+
+**Limits:** the inspected 65-file Dataverse v3.0 inventory has no raw human K NWB voltage-clamp traces or individual K tau CSVs. The available NEURON executions reproduce the deposited model and source analysis software, not empirical raw-current refits or biological validity. The Figure S5 final plotting script is still not in the deposit. The HumanJS Na/K single-compartment spike mechanism remains exploratory and unaccepted under ADR-014. No outreach to authors/researchers is permitted or planned.
+
+**Next concrete step when work resumes:** isolate the K_IV fast-inactivation optimizer sensitivity with repeated source runs and inspect fit conditioning, starting values and source acceptance rules; keep empirical K validation blocked until public per-cell/raw human data become available. 
+
+
+### Latest handoff — original human potassium voltage-clamp source execution (2026-11-13)
+
+Latest code HEAD before this documentation update: f6c567bc6bae159e21ee6f18fa688e537f9199f4; GitHub Actions [43452329852](https://github.com/codexclai/HumanJS/actions/runs/43452329852) passed on that exact main commit. The repo has 93 tracked entries, one branch (`main`), zero open issues and zero open PRs.
+
+The original pure-human `k_human.mod`, Dataverse `channel_tools.py`, and `fit_k_hh_cma_human.py` were hash/size verified, the original NMODL compiled unchanged, and the K_IV/K_recovery numerical routines ran with NEURON 9.0.2/VClamp. K_IV completed 34 voltage commands with 32 finite activation fits and 27 finite fast-inactivation fits; Boltzmann activation Vhalf/slope −2.666291/14.516246 mV and inactivation −50.891061/12.286798 mV. K_recovery completed 50 paired-pulse traces; all five recovery voltages had finite fast and slow source fit outputs. Original result CSVs and the runner/test/validator are listed above and in `research/` and `experiments/`.
+
+The earlier source-helper defect claim is retracted: exact `get_tau_inact_double_fixedtau2` has four free parameters, four starting values, and fixed `tau2=450 ms`. The final Figure S5 generator and raw human K data files remain absent. K_IV nonlinear fast-inactivation tau outputs showed repeat-run sensitivity (−70 mV: stored 213.819 ms, latest replay 183.493 ms), while current maxima and Boltzmann fits remained stable. The validator therefore checks fit acceptance/availability and source bounds but not exact equality of this nonlinear tau estimate. This is unresolved numerical sensitivity, not biological evidence.
+
+No raw human K NWB recordings or individual K tau data CSVs were included in the inspected 65-file Dataverse release. No biological validation, raw-trace refit, human-only reparameterization, or acceptance of the exploratory spike model is claimed. No authors or researchers are to be contacted.
+
+**Next work item if resumed:** investigate the K_IV fast-inactivation optimizer sensitivity under the pinned NEURON/NumPy/SciPy environment and preserve each independently reproduced fit outcome. Keep empirical K validation blocked until raw/per-cell human data are publicly available.
