@@ -12,10 +12,12 @@ import numpy as np
 from wilbers_k_iv_multivoltage import (
     K_IV_MULTIVOLTAGE_TARGETS_MV,
     analyze_k_iv_waveform,
+    analyze_tau1_tau3_surface,
     read_postpeak_waveforms,
     summarize_tau3_profile_shape,
     validate_summary_rows,
     validate_tau3_profile_shape_rows,
+    validate_tau1_tau3_surface_rows,
 )
 from wilbers_k_iv_three_component import profile_three_exponential_correction
 
@@ -102,6 +104,63 @@ class KIVMultivoltageTests(unittest.TestCase):
             shape["near_minimum_10pct_objective_span_ms"],
         )
         self.assertFalse(shape["minimum_at_grid_boundary"])
+
+    def test_tau1_tau3_surface_stays_inside_the_existing_local_tau1_window(self) -> None:
+        times = np.arange(0.0, 120.0, 0.1)
+        current = (
+            6.0e-5 * np.exp(-times / 100.0)
+            + 2.6e-5 * np.exp(-times / 450.0)
+            - 3.2e-7 * np.exp(-times / 3.2)
+            + 4.144e-4
+        )
+        waveforms = {
+            voltage: (times.copy(), times.copy() + 30.0, current.copy())
+            for voltage in K_IV_MULTIVOLTAGE_TARGETS_MV
+        }
+        baseline_rows = [
+            {
+                "voltage_mv": voltage,
+                "coarse_tau1_ms": 100.0,
+                "local_tau1_ms": 100.0,
+                "tau3_ms": 3.2,
+            }
+            for voltage in K_IV_MULTIVOLTAGE_TARGETS_MV
+        ]
+        rows = analyze_tau1_tau3_surface(
+            waveforms,
+            baseline_rows,
+            tau1_grid_points=3,
+            tau3_min_ms=0.1,
+            tau3_max_ms=5.0,
+            tau3_grid_points=101,
+        )
+        validate_tau1_tau3_surface_rows(
+            rows,
+            tau1_grid_points=3,
+            tau3_grid_points=101,
+            tau3_min_ms=0.1,
+            tau3_max_ms=5.0,
+        )
+        self.assertEqual(len(rows), 9)
+        for voltage in (-30.0, -60.0, 55.0):
+            group = [row for row in rows if row["voltage_mv"] == voltage]
+            self.assertEqual([row["tau1_grid_index"] for row in group], [0, 1, 2])
+            self.assertEqual([row["tau1_ms"] for row in group], [94.0, 100.0, 106.0])
+            self.assertAlmostEqual(group[1]["selected_tau3_ms"], 3.2, delta=0.06)
+            self.assertLess(group[1]["a3_ma_cm2"], 0.0)
+            self.assertGreaterEqual(group[1]["rmse_full_ma_cm2"], 0.0)
+            self.assertGreaterEqual(group[1]["rmse_first_10ms_ma_cm2"], 0.0)
+            self.assertGreaterEqual(group[1]["rmse_after_10ms_ma_cm2"], 0.0)
+            self.assertEqual(sum(row["is_global_surface_minimum"] for row in group), 1)
+        rows[0]["tau1_ms"] = 107.0
+        with self.assertRaises(ValueError):
+            validate_tau1_tau3_surface_rows(
+                rows,
+                tau1_grid_points=3,
+                tau3_grid_points=101,
+                tau3_min_ms=0.1,
+                tau3_max_ms=5.0,
+            )
 
     def test_tau3_boundary_flag_is_enforced_by_summary_validation(self) -> None:
         times = np.arange(0.0, 489.0, 0.1)

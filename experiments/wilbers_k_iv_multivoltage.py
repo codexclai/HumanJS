@@ -99,6 +99,70 @@ K_IV_TAU3_PROFILE_SHAPE_FIELDNAMES = (
 K_IV_TAU3_PROFILE_SHAPE_INT_FIELDS = frozenset(["profile_grid_points","near_minimum_1pct_objective_point_count","near_minimum_5pct_objective_point_count","near_minimum_10pct_objective_point_count"])
 K_IV_TAU3_PROFILE_SHAPE_BOOL_FIELDS = frozenset(["minimum_at_grid_boundary","near_minimum_1pct_touches_grid_edge","near_minimum_5pct_touches_grid_edge","near_minimum_10pct_touches_grid_edge"])
 
+K_IV_TAU1_TAU3_SURFACE_VOLTAGES_MV = (-30.0, -60.0, 55.0)
+K_IV_TAU1_TAU3_SURFACE_FIELDNAMES = (
+    "voltage_mv",
+    "tau1_grid_index",
+    "tau1_grid_points",
+    "coarse_tau1_ms",
+    "tau1_window_min_ms",
+    "tau1_window_max_ms",
+    "reference_tau1_ms",
+    "reference_tau3_ms",
+    "tau1_ms",
+    "tau1_offset_from_reference_pct",
+    "tau1_at_window_boundary",
+    "tau3_grid_points",
+    "tau3_min_ms",
+    "tau3_max_ms",
+    "selected_tau3_ms",
+    "tau3_minimum_at_grid_boundary",
+    "rss_full",
+    "relative_rss_to_surface_min_pct",
+    "rmse_full_ma_cm2",
+    "rmse_first_10ms_ma_cm2",
+    "rmse_after_10ms_ma_cm2",
+    "a1_ma_cm2",
+    "a2_ma_cm2",
+    "a3_ma_cm2",
+    "steady_offset_ma_cm2",
+    "profile_objective_normalized_curvature_per_ms2",
+    "left_neighbor_delta_rss_pct",
+    "right_neighbor_delta_rss_pct",
+    "near_minimum_1pct_objective_lower_ms",
+    "near_minimum_1pct_objective_upper_ms",
+    "near_minimum_1pct_objective_span_ms",
+    "near_minimum_1pct_objective_point_count",
+    "near_minimum_1pct_touches_grid_edge",
+    "near_minimum_5pct_objective_lower_ms",
+    "near_minimum_5pct_objective_upper_ms",
+    "near_minimum_5pct_objective_span_ms",
+    "near_minimum_5pct_objective_point_count",
+    "near_minimum_5pct_touches_grid_edge",
+    "near_minimum_10pct_objective_lower_ms",
+    "near_minimum_10pct_objective_upper_ms",
+    "near_minimum_10pct_objective_span_ms",
+    "near_minimum_10pct_objective_point_count",
+    "near_minimum_10pct_touches_grid_edge",
+    "is_global_surface_minimum",
+)
+K_IV_TAU1_TAU3_SURFACE_INT_FIELDS = frozenset({
+    "tau1_grid_index",
+    "tau1_grid_points",
+    "tau3_grid_points",
+    "near_minimum_1pct_objective_point_count",
+    "near_minimum_5pct_objective_point_count",
+    "near_minimum_10pct_objective_point_count",
+})
+K_IV_TAU1_TAU3_SURFACE_BOOL_FIELDS = frozenset({
+    "tau1_at_window_boundary",
+    "tau3_minimum_at_grid_boundary",
+    "near_minimum_1pct_touches_grid_edge",
+    "near_minimum_5pct_touches_grid_edge",
+    "near_minimum_10pct_touches_grid_edge",
+    "is_global_surface_minimum",
+})
+
 
 def summarize_tau3_profile_shape(
     voltage_mv: float,
@@ -511,6 +575,418 @@ def analyze_postpeak_waveforms(
         )
         for voltage in K_IV_MULTIVOLTAGE_TARGETS_MV
     ]
+
+
+
+
+
+def _local_tau1_neighborhood(
+    coarse_tau1_ms: float,
+    reference_tau1_ms: float,
+    grid_points: int,
+) -> tuple[np.ndarray, float, float]:
+    """Build a tau1 grid confined to the already defined 6% local window."""
+    if (
+        not math.isfinite(coarse_tau1_ms)
+        or not math.isfinite(reference_tau1_ms)
+        or coarse_tau1_ms <= 0.0
+        or grid_points < 3
+        or grid_points % 2 == 0
+    ):
+        raise ValueError("K_IV tau1 surface requires a positive odd grid of at least three points")
+    lower = max(0.05, coarse_tau1_ms * 0.94)
+    upper = min(1200.0, coarse_tau1_ms * 1.06)
+    if not lower < reference_tau1_ms < upper:
+        raise ValueError("K_IV reference tau1 must lie inside its pre-existing 6% neighborhood")
+    half = (grid_points - 1) // 2
+    left = np.linspace(lower, reference_tau1_ms, half + 1)
+    right = np.linspace(reference_tau1_ms, upper, half + 1)
+    grid = np.concatenate((left, right[1:]))
+    return grid, float(lower), float(upper)
+
+
+def analyze_tau1_tau3_surface(
+    waveforms: dict[float, tuple[np.ndarray, np.ndarray, np.ndarray]],
+    baseline_rows: list[dict[str, Any]],
+    *,
+    tau1_grid_points: int = 9,
+    tau3_min_ms: float = 0.1,
+    tau3_max_ms: float = 5.0,
+    tau3_grid_points: int = 2801,
+) -> list[dict[str, Any]]:
+    """Profile tau3 while tau1 varies within three predeclared local windows.
+
+    Each row is one tau1 slice of the conditional tau3 profile surface. All
+    coefficients are refit against the complete waveform at every tau3 grid
+    point. The stored row captures that slice's minimum, basin shape and
+    full/early/late residual diagnostics; it is not a statistical uncertainty
+    region or biological parameter estimate.
+    """
+    if tuple(sorted(waveforms)) != K_IV_MULTIVOLTAGE_TARGETS_MV:
+        raise ValueError("K_IV tau1-tau3 surface requires all 27 source-fit waveforms")
+    if tuple(row.get("voltage_mv") for row in baseline_rows) != K_IV_MULTIVOLTAGE_TARGETS_MV:
+        raise ValueError("K_IV tau1-tau3 surface requires the ordered 27-row baseline profile")
+    if (
+        not math.isfinite(tau3_min_ms)
+        or not math.isfinite(tau3_max_ms)
+        or tau3_min_ms <= 0.0
+        or tau3_max_ms <= tau3_min_ms
+    ):
+        raise ValueError("K_IV surface tau3 bounds must be finite, positive, and increasing")
+    if (
+        isinstance(tau3_grid_points, bool)
+        or int(tau3_grid_points) != tau3_grid_points
+        or tau3_grid_points < 3
+    ):
+        raise ValueError("K_IV surface tau3 grid must contain at least three integer points")
+    if (
+        isinstance(tau1_grid_points, bool)
+        or int(tau1_grid_points) != tau1_grid_points
+        or tau1_grid_points < 3
+        or tau1_grid_points % 2 == 0
+    ):
+        raise ValueError("K_IV surface tau1 grid must contain an odd number of at least three points")
+
+    baseline_by_voltage = {float(row["voltage_mv"]): row for row in baseline_rows}
+    output: list[dict[str, Any]] = []
+    for voltage in K_IV_TAU1_TAU3_SURFACE_VOLTAGES_MV:
+        baseline = baseline_by_voltage[voltage]
+        coarse_tau1 = float(baseline["coarse_tau1_ms"])
+        reference_tau1 = float(baseline["local_tau1_ms"])
+        reference_tau3 = float(baseline["tau3_ms"])
+        tau1_grid, tau1_lower, tau1_upper = _local_tau1_neighborhood(
+            coarse_tau1, reference_tau1, int(tau1_grid_points)
+        )
+        times, _, current = waveforms[voltage]
+        slices: list[dict[str, Any]] = []
+        for tau1_index, tau1 in enumerate(tau1_grid):
+            fit = profile_three_exponential_correction(
+                times,
+                current,
+                float(tau1),
+                tau2_ms=450.0,
+                tau3_min_ms=tau3_min_ms,
+                tau3_max_ms=tau3_max_ms,
+                grid_points=int(tau3_grid_points),
+            )
+            profile = fit["profile"]
+            best_index = min(range(len(profile)), key=lambda index: profile[index]["rss_full"])
+            best = profile[best_index]
+            shape = summarize_tau3_profile_shape(voltage, float(tau1), profile)
+            slices.append({
+                "tau1_grid_index": tau1_index,
+                "tau1_ms": float(tau1),
+                "best_index": best_index,
+                "best": best,
+                "shape": shape,
+            })
+
+        global_slice = min(
+            slices,
+            key=lambda item: float(item["best"]["rss_full"]),
+        )
+        global_rss = float(global_slice["best"]["rss_full"])
+        if not math.isfinite(global_rss) or global_rss <= 0.0:
+            raise ValueError("K_IV tau1-tau3 surface has an invalid global full-waveform RSS")
+
+        for item in slices:
+            best = item["best"]
+            shape = item["shape"]
+            tau1 = float(item["tau1_ms"])
+            tau1_index = int(item["tau1_grid_index"])
+            rss = float(best["rss_full"])
+            row: dict[str, Any] = {
+                "voltage_mv": float(voltage),
+                "tau1_grid_index": tau1_index,
+                "tau1_grid_points": int(tau1_grid_points),
+                "coarse_tau1_ms": coarse_tau1,
+                "tau1_window_min_ms": tau1_lower,
+                "tau1_window_max_ms": tau1_upper,
+                "reference_tau1_ms": reference_tau1,
+                "reference_tau3_ms": reference_tau3,
+                "tau1_ms": tau1,
+                "tau1_offset_from_reference_pct": 100.0 * (tau1 / reference_tau1 - 1.0),
+                "tau1_at_window_boundary": bool(
+                    tau1_index in (0, int(tau1_grid_points) - 1)
+                ),
+                "tau3_grid_points": int(tau3_grid_points),
+                "tau3_min_ms": float(tau3_min_ms),
+                "tau3_max_ms": float(tau3_max_ms),
+                "selected_tau3_ms": float(best["tau3_ms"]),
+                "tau3_minimum_at_grid_boundary": bool(shape["minimum_at_grid_boundary"]),
+                "rss_full": rss,
+                "relative_rss_to_surface_min_pct": 100.0 * (rss / global_rss - 1.0),
+                "rmse_full_ma_cm2": float(best["rmse_full_ma_cm2"]),
+                "rmse_first_10ms_ma_cm2": float(best["rmse_first_10ms_ma_cm2"]),
+                "rmse_after_10ms_ma_cm2": float(best["rmse_after_10ms_ma_cm2"]),
+                "a1_ma_cm2": float(best["a1_ma_cm2"]),
+                "a2_ma_cm2": float(best["a2_ma_cm2"]),
+                "a3_ma_cm2": float(best["a3_ma_cm2"]),
+                "steady_offset_ma_cm2": float(best["steady_offset_ma_cm2"]),
+                "profile_objective_normalized_curvature_per_ms2": float(
+                    shape["profile_objective_normalized_curvature_per_ms2"]
+                ),
+                "left_neighbor_delta_rss_pct": float(shape["left_neighbor_delta_rss_pct"]),
+                "right_neighbor_delta_rss_pct": float(shape["right_neighbor_delta_rss_pct"]),
+                "is_global_surface_minimum": bool(
+                    tau1_index == int(global_slice["tau1_grid_index"])
+                ),
+            }
+            for threshold_pct in (1, 5, 10):
+                for suffix in (
+                    "objective_lower_ms",
+                    "objective_upper_ms",
+                    "objective_span_ms",
+                    "objective_point_count",
+                    "touches_grid_edge",
+                ):
+                    field = f"near_minimum_{threshold_pct}pct_{suffix}"
+                    row[field] = shape[field]
+            output.append(row)
+
+    validate_tau1_tau3_surface_rows(
+        output,
+        tau1_grid_points=int(tau1_grid_points),
+        tau3_grid_points=int(tau3_grid_points),
+        tau3_min_ms=tau3_min_ms,
+        tau3_max_ms=tau3_max_ms,
+    )
+    return output
+
+
+def validate_tau1_tau3_surface_rows(
+    rows: list[dict[str, Any]],
+    *,
+    tau1_grid_points: int = 9,
+    tau3_grid_points: int = 2801,
+    tau3_min_ms: float = 0.1,
+    tau3_max_ms: float = 5.0,
+) -> None:
+    """Validate the ordered conditional tau1-tau3 objective-surface summary."""
+    expected_count = (
+        len(K_IV_TAU1_TAU3_SURFACE_VOLTAGES_MV) * int(tau1_grid_points)
+    )
+    expected_voltages = tuple(
+        voltage
+        for voltage in K_IV_TAU1_TAU3_SURFACE_VOLTAGES_MV
+        for _ in range(int(tau1_grid_points))
+    )
+    if len(rows) != expected_count or tuple(
+        row.get("voltage_mv") for row in rows
+    ) != expected_voltages:
+        raise ValueError("K_IV tau1-tau3 surface must preserve all three ordered voltages and tau1 slices")
+    if (
+        isinstance(tau1_grid_points, bool)
+        or int(tau1_grid_points) != tau1_grid_points
+        or tau1_grid_points < 3
+        or tau1_grid_points % 2 == 0
+        or isinstance(tau3_grid_points, bool)
+        or int(tau3_grid_points) != tau3_grid_points
+        or tau3_grid_points < 3
+    ):
+        raise ValueError("K_IV tau1-tau3 surface grid dimensions are invalid")
+    expected_numeric = set(K_IV_TAU1_TAU3_SURFACE_FIELDNAMES) - (
+        K_IV_TAU1_TAU3_SURFACE_INT_FIELDS | K_IV_TAU1_TAU3_SURFACE_BOOL_FIELDS
+    )
+    allowed_boundary_nan = {
+        "profile_objective_normalized_curvature_per_ms2",
+        "left_neighbor_delta_rss_pct",
+        "right_neighbor_delta_rss_pct",
+    }
+    if (
+        not math.isfinite(tau3_min_ms)
+        or not math.isfinite(tau3_max_ms)
+        or tau3_min_ms <= 0.0
+        or tau3_max_ms <= tau3_min_ms
+    ):
+        raise ValueError("K_IV tau1-tau3 surface tau3 bounds are invalid")
+
+    cursor = 0
+    for voltage in K_IV_TAU1_TAU3_SURFACE_VOLTAGES_MV:
+        group = rows[cursor : cursor + int(tau1_grid_points)]
+        cursor += int(tau1_grid_points)
+        reference = group[int(tau1_grid_points) // 2]
+        coarse_tau1 = float(reference.get("coarse_tau1_ms", math.nan))
+        reference_tau1 = float(reference.get("reference_tau1_ms", math.nan))
+        reference_tau3 = float(reference.get("reference_tau3_ms", math.nan))
+        lower = max(0.05, coarse_tau1 * 0.94)
+        upper = min(1200.0, coarse_tau1 * 1.06)
+        if not (
+            math.isfinite(coarse_tau1)
+            and math.isfinite(reference_tau1)
+            and math.isfinite(reference_tau3)
+            and lower < reference_tau1 < upper
+            and lower < upper
+        ):
+            raise ValueError("K_IV tau1-tau3 surface has invalid reference tau/window")
+        tau1_grid, expected_lower, expected_upper = _local_tau1_neighborhood(
+            coarse_tau1, reference_tau1, int(tau1_grid_points)
+        )
+        if not math.isclose(expected_lower, lower, rel_tol=0.0, abs_tol=1.0e-12) or not math.isclose(
+            expected_upper, upper, rel_tol=0.0, abs_tol=1.0e-12
+        ):
+            raise ValueError("K_IV tau1-tau3 surface changed the 6% tau1 window")
+        global_min_row: dict[str, Any] | None = None
+        for tau1_index, row in enumerate(group):
+            if row.get("voltage_mv") != voltage or row.get("tau1_grid_index") != tau1_index:
+                raise ValueError("K_IV tau1-tau3 surface tau1 slice order/index changed")
+            for integer_field in K_IV_TAU1_TAU3_SURFACE_INT_FIELDS:
+                value = row.get(integer_field)
+                if not isinstance(value, int) or isinstance(value, bool):
+                    raise ValueError(f"K_IV tau1-tau3 surface integer field is invalid: {integer_field}")
+            for boolean_field in K_IV_TAU1_TAU3_SURFACE_BOOL_FIELDS:
+                if not isinstance(row.get(boolean_field), bool):
+                    raise ValueError(f"K_IV tau1-tau3 surface Boolean field is invalid: {boolean_field}")
+            for numeric_field in expected_numeric:
+                value = row.get(numeric_field)
+                if not isinstance(value, (int, float)):
+                    raise ValueError(f"K_IV tau1-tau3 surface numeric field is invalid: {numeric_field}")
+                if not math.isfinite(float(value)):
+                    if not (
+                        row["tau3_minimum_at_grid_boundary"]
+                        and numeric_field in allowed_boundary_nan
+                        and math.isnan(float(value))
+                    ):
+                        raise ValueError(f"K_IV tau1-tau3 surface has non-finite {numeric_field}")
+            if (
+                row["tau1_grid_points"] != int(tau1_grid_points)
+                or row["tau3_grid_points"] != int(tau3_grid_points)
+            ):
+                raise ValueError("K_IV tau1-tau3 surface grid-point metadata is inconsistent")
+            for name, expected_value in (
+                ("coarse_tau1_ms", coarse_tau1),
+                ("tau1_window_min_ms", lower),
+                ("tau1_window_max_ms", upper),
+                ("reference_tau1_ms", reference_tau1),
+                ("reference_tau3_ms", reference_tau3),
+                ("tau1_ms", float(tau1_grid[tau1_index])),
+                ("tau3_min_ms", tau3_min_ms),
+                ("tau3_max_ms", tau3_max_ms),
+            ):
+                if not math.isclose(float(row[name]), expected_value, rel_tol=0.0, abs_tol=1.0e-12):
+                    raise ValueError(f"K_IV tau1-tau3 surface {name} differs from its declared grid")
+            expected_offset = 100.0 * (float(row["tau1_ms"]) / reference_tau1 - 1.0)
+            if not math.isclose(
+                row["tau1_offset_from_reference_pct"], expected_offset,
+                rel_tol=1.0e-10, abs_tol=1.0e-12
+            ):
+                raise ValueError("K_IV tau1-tau3 surface tau1 offset is inconsistent")
+            if row["tau1_at_window_boundary"] is not (
+                tau1_index in (0, int(tau1_grid_points) - 1)
+            ):
+                raise ValueError("K_IV tau1-tau3 surface tau1 boundary flag is inconsistent")
+            if not (tau3_min_ms <= row["selected_tau3_ms"] <= tau3_max_ms):
+                raise ValueError("K_IV tau1-tau3 surface selected tau3 is outside its grid")
+            if not row["tau3_minimum_at_grid_boundary"] and not (
+                tau3_min_ms < row["selected_tau3_ms"] < tau3_max_ms
+            ):
+                raise ValueError("K_IV tau1-tau3 surface interior flag is inconsistent")
+            if row["rss_full"] <= 0.0 or row["relative_rss_to_surface_min_pct"] < -1.0e-8:
+                raise ValueError("K_IV tau1-tau3 surface full-waveform RSS is invalid")
+            if any(row[name] < 0.0 for name in (
+                "rmse_full_ma_cm2",
+                "rmse_first_10ms_ma_cm2",
+                "rmse_after_10ms_ma_cm2",
+                "a1_ma_cm2",
+                "a2_ma_cm2",
+                "steady_offset_ma_cm2",
+            )):
+                raise ValueError("K_IV tau1-tau3 surface contains a negative constrained term")
+            if not row["tau3_minimum_at_grid_boundary"]:
+                if (
+                    row["profile_objective_normalized_curvature_per_ms2"] < -1.0e-8
+                    or row["left_neighbor_delta_rss_pct"] < -1.0e-8
+                    or row["right_neighbor_delta_rss_pct"] < -1.0e-8
+                ):
+                    raise ValueError("K_IV tau1-tau3 surface selected point is not a local minimum")
+            previous_lower = math.inf
+            previous_upper = -math.inf
+            previous_count = 0
+            for threshold_pct in (1, 5, 10):
+                lower_basin = row[f"near_minimum_{threshold_pct}pct_objective_lower_ms"]
+                upper_basin = row[f"near_minimum_{threshold_pct}pct_objective_upper_ms"]
+                span = row[f"near_minimum_{threshold_pct}pct_objective_span_ms"]
+                count = row[f"near_minimum_{threshold_pct}pct_objective_point_count"]
+                if not (
+                    lower_basin <= row["selected_tau3_ms"] <= upper_basin
+                    and upper_basin >= lower_basin
+                    and math.isclose(span, upper_basin - lower_basin, rel_tol=0.0, abs_tol=1.0e-12)
+                    and 1 <= count <= int(tau3_grid_points)
+                    and count >= previous_count
+                    and lower_basin <= previous_lower + 1.0e-12
+                    and upper_basin >= previous_upper - 1.0e-12
+                    and isinstance(row[f"near_minimum_{threshold_pct}pct_touches_grid_edge"], bool)
+                ):
+                    raise ValueError("K_IV tau1-tau3 surface conditional basin is inconsistent")
+                previous_lower, previous_upper, previous_count = lower_basin, upper_basin, count
+            if row["is_global_surface_minimum"]:
+                if global_min_row is not None:
+                    raise ValueError("K_IV tau1-tau3 surface has more than one global minimum")
+                global_min_row = row
+        if global_min_row is None:
+            raise ValueError("K_IV tau1-tau3 surface lacks a global minimum")
+        minimum_rss = min(float(row["rss_full"]) for row in group)
+        if not math.isclose(float(global_min_row["rss_full"]), minimum_rss, rel_tol=1.0e-12, abs_tol=1.0e-24):
+            raise ValueError("K_IV tau1-tau3 surface global-minimum flag does not mark the minimum")
+        for row in group:
+            expected_relative = 100.0 * (float(row["rss_full"]) / minimum_rss - 1.0)
+            if not math.isclose(
+                float(row["relative_rss_to_surface_min_pct"]),
+                expected_relative,
+                rel_tol=2.0e-8,
+                abs_tol=1.0e-10,
+            ):
+                raise ValueError("K_IV tau1-tau3 surface relative RSS is inconsistent")
+        if not math.isclose(
+            float(reference["selected_tau3_ms"]),
+            reference_tau3,
+            rel_tol=0.0,
+            abs_tol=1.0e-12,
+        ):
+            raise ValueError("K_IV center tau1 slice does not reproduce the reference tau3 optimum")
+        if not math.isclose(float(global_min_row["relative_rss_to_surface_min_pct"]), 0.0, abs_tol=1.0e-10):
+            raise ValueError("K_IV global surface minimum must have zero relative RSS")
+    return None
+
+
+def tau1_tau3_surface_csv_text(rows: list[dict[str, Any]]) -> str:
+    """Serialize the reduced three-voltage tau1-tau3 conditional profile surface."""
+    import io
+
+    output = io.StringIO()
+    output.write(
+        "# Conditional tau1-tau3 sensitivity surface for predeclared K_IV commands -30, -60, and +55 mV.
+"
+    )
+    output.write(
+        "# Waveforms are deterministic NEURON 9.0.2/VClamp outputs from the unchanged DataverseNL v3.0 pure-human K source replay; not raw human experimental current.
+"
+    )
+    output.write(
+        "# At each voltage, nine tau1 values span only the existing local 6% refinement interval from the independently profiled coarse tau1; the center node is the existing selected local tau1.
+"
+    )
+    output.write(
+        "# At each tau1 node, tau3 is profiled over 0.1..5.0 ms on 2,801 equally spaced points and all four coefficients are refit against the full waveform; tau2 remains fixed at 450 ms.
+"
+    )
+    output.write(
+        "# Each row stores the conditional tau3 minimum and its 1/5/10% relative-full-RSS basin; relative_rss_to_surface_min_pct compares that slice minimum with the best minimum across tau1 values at the same voltage.
+"
+    )
+    output.write(
+        "# Full/first-10-ms/after-10-ms RMSE values are diagnostics of the same full-waveform objective. This numerical sensitivity surface is not a confidence region or biological uncertainty estimate.
+"
+    )
+    writer = csv.DictWriter(
+        output,
+        fieldnames=K_IV_TAU1_TAU3_SURFACE_FIELDNAMES,
+        extrasaction="raise",
+        lineterminator="\n",
+    )
+    writer.writeheader()
+    writer.writerows(rows)
+    return output.getvalue()
 
 
 def summary_csv_text(rows: list[dict[str, Any]]) -> str:
