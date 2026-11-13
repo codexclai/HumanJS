@@ -1220,3 +1220,27 @@ The workbook contains 34 cell records (19 human and 15 mouse). `research/HUMAN-L
 **Critical grid/provenance boundary.** The workbook has 25 `iv_volt` columns from −65 to +55 mV, whereas the source model `Na_IV`/ `Na_IV_ss` helper executes 19 commands from −80 to +10 mV. The released plotting/statistics scripts consume precomputed workbook `iv_tau_m/h` fields, rather than recomputing them from the model helper in that script. Consequently, do not treat this CSV as a same-grid validation target for Rust's model-side gate taus or assume that the workbook fit fields use exactly the helper's composite model-fitting route. This was a transparent summary extraction using the published filters, not an independent fit reproduction.
 
 The inspected Dataverse v3.0 inventory contains 65 files and no raw NWB voltage-clamp current traces. No raw-trace refit, independent kinetic re-optimization, or biological validation is claimed. The current single-compartment Na/K implementation remains exploratory under ADR-014; no production code, fitted parameters, or original source mechanisms were changed by this audit.
+
+### Human Na_IV composite-current fitting replay (2026-11-13)
+
+**Files and source provenance.** The fitting procedure was extracted from the released DataverseNL v3.0 channel_tools.py (file 326242; SHA-1 615595a270c6170987757cd35743f5d5b5b2af0e) and the pure human na_human.mod mechanism (file 318629; SHA-1 b199d70c3d0e7a2e991fd8d26c54b1318e3c0970). Dataset DOI: 10.34894/L5J0SD, CC0-1.0. The original source files were not modified.
+
+**Reconstruction method.** experiments/replay_wilbers_na_iv_current_fit.py follows the Na_IV protocol: 25°C, 0.01-ms sample step, 2-ms hold at −120 mV, then 10-ms test commands from −80 to +10 mV in 5-mV increments. Initial gates use the pure human sodium mechanism's steady state at the holding voltage. Gate trajectories use the source rate equations and the exact exponential update for a piecewise-constant command. To isolate fitted time constants from an unknown overall scale, the inward-current waveform is normalized to unit maximal conductance and the deposited reversal-potential factor; no specific cell conductance or membrane area is claimed.
+
+The post-command samples are selected exactly by the helper's (t > 2.02) & (t < 12) mask: 997 points from 2.03 to 11.99 ms. The fit runner reproduces the released code's preliminary rise/decay estimates and its 50-µs-delay composite current function:
+I(t) = (1 − exp(−(t−d)/tau_m)) × (a exp(−(t−d)/tau_h) + I_ss), with d=0.05 ms. It applies the source's initial estimates, bounded curve_fit parameters, and R² calculation. Six Python tests cover the command grid/sample mask, delay, invariance of time constants to a multiplicative current scale, the 19-voltage result, the fit-output mapping, and the low-R² failure case.
+
+**Results.** Eighteen of the 19 test voltages meet the source's joint-fit R² > 0.95 criterion; the −80-mV step has R² 0.84551 and fails. The fit table is preserved at research/HUMAN-L23-WILBERS-NA-IV-CURRENT-FIT-REPLAY.csv; its validator compares all recorded values against the script and checks source hashes and interpretive caveats. Representative −70-mV values are:
+
+| Quantity | Activation | Inactivation |
+|---|---:|---:|
+| Pure gate time constant | 0.2255 ms | 22.0314 ms |
+| Preliminary current fit | 0.3859 ms | 24.9805 ms |
+| Joint composite-current fit | 0.3636 ms | 49.9610 ms |
+| Value mapped to the source output arrays (conditional on R²) | 0.3636 ms | 24.9805 ms |
+
+This exposes the source's actual output asymmetry: tau_m is overwritten by popt[0], while the preliminary tau_h is retained because assignment from popt[1] is commented out. The joint fit's second parameter reaches its upper bound at several more-negative test voltages, which is another reason not to interpret that parameter as a measured microscopic h-gate tau. Neither returned apparent fit value is equivalent by definition to the individual Na activation/inactivation gate tau.
+
+**Unresolved source selection gate.** The original Na_IV helper proceeds to fitting only when I[mask].min() < -1e-6 A (for its inward-current sign convention). The absolute current depends on the exact calling cell's gbar, membrane area, and setup. Those amplitude inputs have not been reconstructed, so the replay normalizes current and intentionally does not evaluate that threshold. Its r2_conditional_tau_m/h columns are conditional on the unknown amplitude gate passing and must not be called exact source-run Na_IV outputs. The result also does not run NEURON, reproduce access resistance/noise, replay raw NWB data, reproduce the Figure 3 per-cell workbook fits, or validate biology. It is a reproducible model-equation and fitting-method reconstruction only.
+
+**Verification.** GitHub Actions [43430420027](https://github.com/codexclai/HumanJS/actions/runs/43430420027) passed on exact code commit 777c1e2546de1fc1a88998b703c02780b932c02c: 41 Rust unit, 3 synapse integration and 6 passive-membrane integration tests; syntax parsing for 10 Python scripts; 28 Python experiment tests; voltage-sampling, Figure S5, current-clamp, Figure 3 Na IV summary, new 19-voltage replay and replay-CSV validators; rustfmt, Clippy and repository policy. The spike-capable HumanJS single-compartment model remains exploratory and unaccepted under ADR-014.

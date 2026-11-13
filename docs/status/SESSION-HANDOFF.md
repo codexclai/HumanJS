@@ -1,18 +1,18 @@
 # HumanJS — current session handoff
 
 **Updated:** 2026-11-13
-**Canonical repository:** `codexclai/HumanJS`, branch `main` only.
-**Latest verified code HEAD before this handoff documentation refresh:** `10572f593f7b9b89c6cbca850d6934388ccc0c1e`; GitHub Actions run `43428846977` passed on that exact commit.
-**Next session:** refresh metadata, read live `docs/BOOT.md`, and recheck HEAD/tree/workflow/issues/PRs/branch refs before relying on this handoff.
+**Canonical repository:** codexclai/HumanJS, branch main only.
+**Latest verified code HEAD before this handoff documentation refresh:** 777c1e2546de1fc1a88998b703c02780b932c02c; GitHub Actions run 43430420027 passed on that exact commit.
+**Next session:** refresh metadata, read live docs/BOOT.md, and recheck HEAD/tree/workflow/issues/PRs/branch refs before relying on this handoff.
 
 ## Verified repository state at handoff
 
-- Public repository; default branch `main`; code HEAD before this documentation refresh: `10572f593f7b9b89c6cbca850d6934388ccc0c1e`; recursive tree has 77 entries and is not truncated; exactly one branch (`main`); zero open issues and zero open pull requests.
-- Workflow [43428846977](https://github.com/codexclai/HumanJS/actions/runs/43428846977) completed successfully on exact code commit `10572f593f7b9b89c6cbca850d6934388ccc0c1e`: rustfmt, Clippy, 41 Rust unit tests, 3 synapse integration tests, 6 passive-membrane integration tests, Python syntax for 7 scripts, 22 Python experiment tests, voltage-sampling checks, Figure S5/current-clamp/Na IV summary validators and repository policy.
-- Code commits `60bbb062e5fb84749740ad0bde96992dcd10d949`, `ed04bae89b087e0898e7e6579ff424033401d334`, and `10572f593f7b9b89c6cbca850d6934388ccc0c1e` add and format two Na voltage-clamp protocol gate regressions. No production equation, parameter, or external NMODL file was modified.
-- Research commit `fdba25437d84cf41cd5c545280dd664759837e19` adds the 40-group Figure 3 Na IV current-derived tau summary, source hashes, analysis filters, a validator and a CI step. The workbook grid differs from the source model command grid, and these values are not individual gate tau targets.
-- Three intermediate rustfmt-only workflow attempts failed before any lint/test steps; the final code state was restored to the prior verified source context plus the intended test, and the complete workflow passed. No test tolerance was loosened. Local checkout verification was unavailable because this container could not resolve `github.com`.
-- The exploratory Na/K single-compartment spike model remains scientifically unaccepted and not biologically validated. The new command-sequence tests are numerical/software regressions only.
+- Public repository; default branch main; code HEAD before this documentation refresh: 777c1e2546de1fc1a88998b703c02780b932c02c; recursive tree has 81 entries and is not truncated; exactly one branch (main); zero open issues and zero open pull requests.
+- Workflow [43430420027](https://github.com/codexclai/HumanJS/actions/runs/43430420027) passed on exact code commit 777c1e2546de1fc1a88998b703c02780b932c02c: rustfmt, Clippy, 41 Rust unit tests, 3 synapse integration tests, 6 passive-membrane integration tests, Python syntax for 10 experiment scripts, 28 Python experiment tests, all existing Wilbers validators, the Na_IV composite-current replay plus value validator, and repository policy.
+- Commit 777c1e2546de1fc1a88998b703c02780b932c02c adds the normalized 25°C Na_IV current-fit reproduction, six focused Python tests, and a validator for its 19-row recorded results. SciPy 1.11.4 is pinned in CI next to NumPy 1.26.4.
+- Eighteen voltages pass R² > 0.95; −80 mV fails. The current-fit output preserves the source's asymmetric output mapping: joint-fit tau_m, preliminary single-exponential tau_h. The joint fit's second tau is not the source's returned inactivation tau.
+- The current amplitude is normalized; the source's absolute I.min() < -1e-6 selection is not tested. Values in the r2_conditional_tau_* columns are conditional on that unknown amplitude gate passing. No raw NWB recordings or NEURON execution were used for this replay.
+- The exploratory Na/K single-compartment spike model remains scientifically unaccepted and not biologically validated.
 
 ## Current HumanJS implementation
 
@@ -565,3 +565,11 @@ The pure Wilbers Na voltage-clamp gate paths are now explicitly replayed in Rust
 The derived Figure 3 file `research/HUMAN-L23-WILBERS-FIG3-NA-IV-TAU-SUMMARY.csv` summarizes the released workbook's existing per-cell `iv_tau_m/h` fits using the official `RsComp`, exclude, GOF and voltage-range filters. It is validated by `experiments/validate_wilbers_na_iv_tau_summary.py`, wired into CI. These are composite/current-derived fitted fields rather than direct gate tau targets; the workbook 25-point grid (−65…+55 mV) is not the same as the model-side 19-point Na_IV protocol. The inspected Dataverse release still contains no raw NWB voltage-clamp traces, so no trace-level refit is possible from that release.
 
 **Next concrete step:** inspect and independently replay the source Na_IV composite-current fitting path separately from the gate-only regressions. Keep its 50-µs delayed waveform and the source's asymmetrical tau output mapping explicit: `tau_m` is taken from the joint current-waveform fit, whereas the published helper retains the preliminary decay estimate for `tau_h`. Do not use the workbook IV taus as individual channel-gate targets and do not promote the model.
+
+### Latest handoff — Na_IV composite-current fit replay (2026-11-13)
+
+The source fitting path is now implemented in experiments/replay_wilbers_na_iv_current_fit.py. It simulates the pure human Na gates at 25°C under the deposited 2-ms −120-mV hold and 19 test voltages, derives a normalized inward current, runs the source preliminary exponential estimates, and fits the source 50-µs-delayed composite current equation with the deposited p0/bounds/R² rule. A 19-row derived table is preserved in research/HUMAN-L23-WILBERS-NA-IV-CURRENT-FIT-REPLAY.csv; experiments/validate_wilbers_na_iv_current_fit_replay.py verifies all recorded values against the runner and checks source provenance/caveats.
+
+The R² criterion passes for −75…+10 mV and fails at −80 mV. The implementation deliberately does not claim the exact original source runner's accepted fit set because its absolute current selection threshold cannot be evaluated without the source calling cell's exact conductance/area amplitude. Returned apparent tau_m and tau_h remain current-fit parameters, not individual Markov/Hodgkin–Huxley gate taus. At −70 mV the gate time constants (≈0.225/22.03 ms), preliminary apparent current-fit values (≈0.386/24.98 ms), and joint fit values (≈0.364/49.96 ms) differ substantially; the source returns the joint tau_m but the preliminary tau_h.
+
+**Next concrete step:** independently reconstruct the pure NMODL voltage-clamp absolute current scale and source-cell initialization so the I.min() < -1e-6 gate can be evaluated. Only then can we decide whether this normalized replay reproduces the full deposited Na_IV fitting selection. Do not use it as raw experimental validation and do not promote the single-compartment model.

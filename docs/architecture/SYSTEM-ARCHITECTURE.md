@@ -109,6 +109,9 @@ This is not a complete biological synapse. Explicitly unmodeled are presynaptic 
 
 The current Rust tests validate SI input handling, time arithmetic, exact passive RC integration, normalized conductance kernels, voltage-dependent magnesium unblock, fitted-scale short-term resource dynamics, depolarizing synaptic current, approximate step-size convergence, atomic failure behavior, and selected human Na/K source-equation and temperature contracts. The temperature tests exercise the distinct Na 25°C and K 34°C Q10 reference temperatures, inverse time-constant scaling, temperature-invariant steady states, fixed K slow-gate branch times, and the source-specific conductance rule (Na gbar multiplied by T_adj; K gbar and leak not multiplied). GitHub Actions runs formatting, Clippy, workspace tests, the Python experiment tests, scientific-data validators, and repository policy checks. These are software/source-equation checks only; they do not validate Q10 biologically across the test interval or establish biological validation or whole-brain functionality.
 
+The Python scientific workflow now also replays the deposited pure-human Na_IV command protocol and its model-side composite-current fit: 25°C, 2-ms −120-mV hold, 19 test steps, 50-µs delayed joint waveform, and the source's preliminary/joint fit distinction. Its recorded per-voltage outputs are validated in CI. The replay uses normalized current because the original source call's absolute conductance/area scale is not reconstructed; it explicitly leaves the source's absolute-current selection threshold unresolved. These are model-equation and analysis-method regressions, not NEURON execution, raw current-trace fitting, or biological validation.
+
+
 
 ## 13. Intrinsic spike-initiation boundary — exploratory code, not scientific acceptance
 

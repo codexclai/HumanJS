@@ -5,14 +5,15 @@
 
 ## Canonical repository and live state
 
-- Repository: `codexclai/HumanJS`, public, default branch `main`.
-- Live verification immediately before this status refresh: main HEAD `10572f593f7b9b89c6cbca850d6934388ccc0c1e`; recursive tree has 77 entries and is not truncated; branch listing contains exactly `main`; zero open issues and zero open pull requests.
-- Workflow [43428846977](https://github.com/codexclai/HumanJS/actions/runs/43428846977) completed successfully on exact code HEAD `10572f593f7b9b89c6cbca850d6934388ccc0c1e`. It passed `cargo fmt --all -- --check`, Clippy with `-D warnings`, 41 Rust unit tests, 3 synapse integration tests, 6 passive-membrane integration tests, syntax parsing of all 7 experiment scripts, 22 Python experiment tests, Wilbers voltage-sampling checks, Figure S5/current-clamp/Na IV summary validators, and repository policy.
-- Sodium voltage-clamp test commit [`60bbb06`](https://github.com/codexclai/HumanJS/commit/60bbb062e5fb84749740ad0bde96992dcd10d949) replays the pure Wilbers Na_IV 25°C gate command sequence. Prepulse regression commit [`ed04bae`](https://github.com/codexclai/HumanJS/commit/ed04bae89b087e0898e7e6579ff424033401d334) adds the Na_IV_inact conditioning sequence. Final source restoration/format commit [`10572f5`](https://github.com/codexclai/HumanJS/commit/10572f593f7b9b89c6cbca850d6934388ccc0c1e) is the exact CI-tested code state.
-- Research commit [`fdba254`](https://github.com/codexclai/HumanJS/commit/fdba25437d84cf41cd5c545280dd664759837e19) adds a 40-row derived summary of Figure 3 per-cell Na current-derived IV tau fields, its provenance, a validating Python script, and the CI step. The model-side 19-point gate protocol and workbook 25-point empirical summary use different voltage grids; no direct gate-vs-workbook fit claim is made.
-- Several intermediate attempts stopped at rustfmt only; those runs did not execute lints or tests. An intermediate whitespace edit unintentionally reindented unrelated test code; the subsequent code commit restored the source from the last clean parent and retained the intended prepulse test with the formatter-required closure shape. The final exact-head workflow above passed without weakening assertions.
-- A local clean clone was unavailable because the current container could not resolve `github.com`; no local Cargo command is claimed. GitHub Actions performed the verified commands against the exact main commit.
-- No biological parameters, production channel equations, or external Dataverse NMODL files were changed. The spike-capable single-compartment model remains exploratory and unaccepted.
+- Repository: codexclai/HumanJS, public, default branch main.
+- Live verification immediately before this status refresh: main HEAD 777c1e2546de1fc1a88998b703c02780b932c02c; recursive tree has 81 entries and is not truncated; branch listing contains exactly main; zero open issues and zero open pull requests.
+- Workflow [43430420027](https://github.com/codexclai/HumanJS/actions/runs/43430420027) passed on exact HEAD 777c1e2546de1fc1a88998b703c02780b932c02c: cargo fmt --all -- --check, cargo clippy --workspace --all-targets -- -D warnings, 41 Rust unit tests, 3 synapse integration tests, 6 passive-membrane integration tests, Python syntax for 10 scripts, 28 Python experiment tests, Wilbers voltage-sampling checks, Figure S5/current-clamp/Na IV summary validators, the composite-current replay and its CSV validator, and repository policy.
+- Code commit [777c1e2](https://github.com/codexclai/HumanJS/commit/777c1e2546de1fc1a88998b703c02780b932c02c) adds the Na_IV current-fitting runner, six focused Python tests, pinned SciPy CI dependency, a per-voltage model-current replay CSV, and a validator that compares all 19 rows with the runner.
+- The new analysis uses the exact 25°C Na_IV command grid and source composite fit shape, including its 50-µs delay, preliminary exponential estimates, source bounds, and R² calculation. Eighteen of 19 voltages exceed R² 0.95; the −80-mV fit does not.
+- The source returns joint-fit popt[0] as apparent tau_m, but retains preliminary post-peak tau_h because the assignment from joint popt[1] is commented out. The joint tau_h fit parameter reaches the upper bound at several negative voltages; it is recorded for diagnostic comparison but is not the returned source tau_h.
+- The replay is normalized because the called source cell's absolute current scale (and therefore the I.min() < -1e-6 gate) is not reconstructed. The r2_conditional_tau_* columns are conditional on that unknown amplitude gate passing; they are not claimed as exact source-run outputs. It is a model-equation/fitting-method reconstruction, not a NEURON run, raw trace refit, or biological validation.
+- A local clean clone was unavailable because the current container could not resolve github.com; no local Cargo command is claimed. GitHub Actions verified the exact pushed main commit.
+- No biological parameter, production runtime equation, or original Dataverse NMODL file was changed. The spike-capable single-compartment model remains exploratory and unaccepted.
 
 ## Implemented Rust CPU mechanisms
 
@@ -71,6 +72,13 @@ The exact source/protocol and data caveats are documented in `research/HUMAN-NEO
 - HumanJS adds two software regressions for these gate command sequences. They check the exact parameterized exponential gate equations; they do not reproduce the source's whole-cell current amplitude, curve-fit machinery, or raw experimental current traces.
 - Figure 3 source filters are reproduced in `research/HUMAN-L23-WILBERS-FIG3-NA-IV-TAU-SUMMARY.csv`: 40 voltage/species groups of precomputed `iv_tau_m/h` summaries, with the original workbook and plotting/statistics script hashes. These are current-derived fitted fields, not microscopic gate taus. The empirical workbook grid (−65…+55 mV) differs from the source model Na_IV grid (−80…+10 mV).
 - No raw NWB Na voltage-clamp traces were present in the inspected Dataverse v3.0 65-file inventory. This work does not claim raw-trace reproduction, independent refitting, or biological validation.
+
+### Na_IV apparent-current fitting replay
+
+The normalized model-side replay and its per-voltage record are documented in research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md and stored in research/HUMAN-L23-WILBERS-NA-IV-CURRENT-FIT-REPLAY.csv. The runner and validator are experiments/replay_wilbers_na_iv_current_fit.py and experiments/validate_wilbers_na_iv_current_fit_replay.py; both are part of CI.
+
+The source's 50-µs-delayed composite current fit was replayed at 19 test voltages. Eighteen pass the source's joint-fit R² > 0.95 criterion. Source output semantics are asymmetric: apparent tau_m is the first parameter of the joint waveform fit; tau_h remains the preliminary post-peak decay fit, while the joint fit's second parameter is not assigned to the returned array. These apparent current-fit values are distinct from the gate time constants. The replay normalizes current amplitude, so the absolute-current selection threshold remains untested; values are expressly conditional and are not exact source-run outputs or biological validation.
+
 
 ## Human spike-initiation evidence and external model reproduction
 
