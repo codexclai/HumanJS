@@ -6,9 +6,9 @@
 ## Canonical repository and live state
 
 - Repository: `codexclai/HumanJS`, public, default branch `main`.
-- Live verification on 2026-11-13 immediately before this update: default branch main; HEAD `8ef0b7c95aa7f5fb549cfd5b49983581464e954d`; complete non-truncated 75-entry tree; exactly one branch (`main`); zero open issues and pull requests. Workflow run `43359647702` completed successfully on that exact HEAD. Re-fetch the resulting HEAD/workflow after this update before claiming repository verification.
+- Live verification on 2026-11-13 immediately before this update: default branch main; HEAD `c8ae85158cbec52394a797ff52444a4596b47dc0`; complete non-truncated 75-entry tree; exactly one branch (`main`); zero open issues and pull requests. Workflow run `43362308222` completed successfully on that exact HEAD. Re-fetch the resulting HEAD/workflow after this update before claiming repository verification.
 - Latest code/test and research change on the verified base: `dde92f10f229a7a3249cc32be4dcd9ac37726fe9` (CN midpoint-current replay and matched-state current-balance diagnostics). This session adds the matched 5-µs Na TABLE/current-history study below.
-- GitHub Actions run `43359647702` passed on exact verified parent `8ef0b7c95aa7f5fb549cfd5b49983581464e954d`: https://github.com/codexclai/HumanJS/actions/runs/43359647702. Rust formatting, Clippy, all Rust tests, Python experiment syntax/tests, Wilbers voltage-sampling tests, both scientific-data validators, and repository policy passed. These are software/evidence-integrity checks, not biological validation.
+- GitHub Actions run `43362308222` passed on exact verified parent `c8ae85158cbec52394a797ff52444a4596b47dc0`: https://github.com/codexclai/HumanJS/actions/runs/43362308222. Rust formatting, Clippy, all Rust tests, Python experiment syntax/tests, Wilbers voltage-sampling tests, both scientific-data validators, and repository policy passed. These are software/evidence-integrity checks, not biological validation.
 - A fresh NEURON 9.0.2 check independently reconfirmed that unchanged `k_human.mod` and `k_mouse.mod` compile with `nrnivmodl` but fail unmodified `modlunit` at the untyped `trates(v+vshift)` call (line 82). This is a source unit-annotation failure, not a HumanJS CI failure; ADR-014 records the typed temporary diagnostic findings. No deposited source was modified.
 - A synchronized clean clone based on parent `900f650adb17da10aa4091d36427b255d7d414b2` passed `cargo fmt --all -- --check`, Clippy with `-D warnings`, all Rust workspace tests (31 unit, 3 synapse integration, 6 passive membrane integration), syntax parsing for all five experiment scripts, both Wilbers validators, and repository policy. The NEURON 9.0.2 AP1 solver/gate and shared-voltage diagnostics passed end-to-end with the pinned runtime and checksum-verified source. CI run `43149669478` independently passed on the committed code. These are software/evidence-integrity checks, not biological validation.
 
@@ -456,3 +456,21 @@ Direct-rate voltage RMSE reaches a floor near 0.001476 mV between 1 µs and 250 
 The prescribed HumanJS midpoint/left-gate current counterfactual falls 0.0078533 → 0.0015841 → 0.0004023 A/m², with empirical refinement slopes about 0.99; it is not the fully coupled source trajectory. Actual TABLE-off source/HumanJS current RMSE is non-monotonic at the two finest steps (1.2767e-5 at 1 µs; 1.7423e-5 at 250 ns), so no convergence order is claimed. Capacitor-current balance identities remain closed to approximately 1e-13 A/m², and the voltage/current residual identity closes below 4.12e-11 A/m².
 
 A 125-ns HumanJS trace was generated, but the new memory-reduced NEURON attempt produced no JSON and its failure mode was not captured. A previous 125-ns NEURON attempt was killed at the VM memory limit. No new 125-ns source current figures are claimed. No model parameters changed; the spike mechanism remains exploratory and unaccepted.
+
+
+### 2026-11-13 — Na TABLE resolution and K trap0 interaction
+
+A controlled 250-ns counterfactual varied only the temporary sodium TABLE from the original 200 nodes to 400, 800 and 1,600 nodes. The original 20-pA rheobase / 30-pA AP1 pulse, channel densities, secondorder=1, and direct-rate control were held fixed.
+
+| Nodes | TABLE-on voltage RMSE (mV) | TABLE-off voltage RMSE (mV) | TABLE-on evolved current RMSE (A/m²) |
+|---:|---:|---:|---:|
+| 200 | 0.028847 | 0.001477 | 0.002490 |
+| 400 | 0.006918 | 0.001477 | 0.0006111 |
+| 800 | 0.002102 | 0.001477 | 0.0001640 |
+| 1,600 | 0.001466 | 0.001477 | 0.00005147 |
+
+The TABLE-on source/HumanJS voltage residual approaches the direct-rate floor as the grid is refined. The shared-voltage Na-gate interpolation error drops 63-fold from 200 to 1,600 nodes; the coupled source TABLE-on/off voltage perturbation drops about 65-fold. Both show approximately second-order scaling over these four accepted grid sizes. The direct-rate source control remains unchanged.
+
+The 3,200-node TABLE-on trial is excluded: at 4.402 ms the source trajectory reaches the K activation guard where the deposited trap0 predicate checks v+th while its denominator singularity is at v-th. The independent K activation recurrence then fails its 1e-4 tolerance (maximum residual 1.385e-3). A 3,200-node TABLE-off-only control passes and reproduces the 250-ns direct-rate reference. No 3,200-node TABLE-on current/voltage result is accepted.
+
+Original source files and HumanJS model parameters were not modified. Temporary copies, compiled libraries and traces stayed outside Git. The author baseline remains 200 nodes / 20 µs / secondorder=0 / TABLE on. This is numerical evidence, not biological validation; the spike mechanism remains exploratory and unaccepted.
