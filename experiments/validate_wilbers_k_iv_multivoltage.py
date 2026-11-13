@@ -19,6 +19,7 @@ BOOL_FIELDS = {
     "local_profile_at_boundary",
     "signed_extra_is_negative",
     "nonnegative_control_collapsed",
+    "tau3_profile_at_boundary",
 }
 INT_FIELDS = {
     "sample_count",
@@ -95,25 +96,35 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--actual", type=Path, required=True)
     parser.add_argument("--expected", type=Path)
+    parser.add_argument("--tau3-min-ms", type=float, default=0.6)
+    parser.add_argument("--tau3-max-ms", type=float, default=2.0)
     args = parser.parse_args()
     actual = read_summary(args.actual)
     try:
-        validate_summary_rows(actual)
+        validate_summary_rows(
+            actual, tau3_min_ms=args.tau3_min_ms, tau3_max_ms=args.tau3_max_ms
+        )
     except ValueError as exc:
         raise SystemExit(str(exc)) from exc
     if args.expected:
         expected = read_summary(args.expected)
         try:
-            validate_summary_rows(expected)
+            validate_summary_rows(
+                expected, tau3_min_ms=args.tau3_min_ms, tau3_max_ms=args.tau3_max_ms
+            )
         except ValueError as exc:
             raise SystemExit(f"Invalid expected summary: {exc}") from exc
         compare_expected(actual, expected)
         print(
             "K_IV residual summary matches the committed 27-command "
-            "finite-positive source-fit reference."
+            f"finite-positive source-fit reference ({args.tau3_min_ms:g}.."
+            f"{args.tau3_max_ms:g} ms tau3 grid)."
         )
     else:
-        print("K_IV 27-command finite-source-fit residual summary passed structural validation.")
+        print(
+            "K_IV 27-command finite-source-fit residual summary passed structural validation "
+            f"({args.tau3_min_ms:g}..{args.tau3_max_ms:g} ms tau3 grid)."
+        )
     for row in actual:
         print(
             f"{row['voltage_mv']:g} mV: tau1={row['local_tau1_ms']:.6g} ms; "
@@ -122,7 +133,8 @@ def main() -> int:
             f"early={row['first_10ms_improvement_pct']:.3f}%; "
             f"late={row['after_10ms_improvement_pct']:.3f}%; "
             f"negative correction={row['signed_extra_is_negative']}; "
-            f"nonnegative control collapsed={row['nonnegative_control_collapsed']}"
+            f"nonnegative control collapsed={row['nonnegative_control_collapsed']}; "
+            f"tau3 boundary={row['tau3_profile_at_boundary']}"
         )
     return 0
 

@@ -62,6 +62,9 @@ K_IV_MULTIVOLTAGE_FIELDNAMES = (
     "local_profile_at_boundary",
     "signed_extra_is_negative",
     "nonnegative_control_collapsed",
+    "tau3_profile_min_ms",
+    "tau3_profile_max_ms",
+    "tau3_profile_at_boundary",
 )
 
 
@@ -81,6 +84,8 @@ def analyze_k_iv_waveform(
     coarse_profile_points: int = 901,
     local_profile_points: int = 801,
     short_profile_points: int = 801,
+    tau3_min_ms: float = 0.6,
+    tau3_max_ms: float = 2.0,
 ) -> dict[str, Any]:
     """Profile long tau1, then test the signed short residual over all samples."""
     if not math.isfinite(voltage_mv):
@@ -138,8 +143,8 @@ def analyze_k_iv_waveform(
         current,
         tau1,
         tau2_ms=450.0,
-        tau3_min_ms=0.6,
-        tau3_max_ms=2.0,
+        tau3_min_ms=tau3_min_ms,
+        tau3_max_ms=tau3_max_ms,
         grid_points=short_profile_points,
     )
     baseline = three["baseline"]
@@ -226,6 +231,12 @@ def analyze_k_iv_waveform(
         "local_profile_at_boundary": bool(local_at_boundary),
         "signed_extra_is_negative": bool(signed["a3_ma_cm2"] < 0.0),
         "nonnegative_control_collapsed": bool(positive_collapsed),
+        "tau3_profile_min_ms": float(tau3_min_ms),
+        "tau3_profile_max_ms": float(tau3_max_ms),
+        "tau3_profile_at_boundary": bool(
+            math.isclose(signed["tau3_ms"], tau3_min_ms, rel_tol=0.0, abs_tol=1.0e-12)
+            or math.isclose(signed["tau3_ms"], tau3_max_ms, rel_tol=0.0, abs_tol=1.0e-12)
+        ),
     }
 
 
@@ -299,6 +310,8 @@ def analyze_postpeak_waveforms(
     coarse_profile_points: int = 901,
     local_profile_points: int = 801,
     short_profile_points: int = 801,
+    tau3_min_ms: float = 0.6,
+    tau3_max_ms: float = 2.0,
 ) -> list[dict[str, Any]]:
     waveforms = read_postpeak_waveforms(path)
     return [
@@ -308,6 +321,8 @@ def analyze_postpeak_waveforms(
             coarse_profile_points=coarse_profile_points,
             local_profile_points=local_profile_points,
             short_profile_points=short_profile_points,
+            tau3_min_ms=tau3_min_ms,
+            tau3_max_ms=tau3_max_ms,
         )
         for voltage in K_IV_MULTIVOLTAGE_TARGETS_MV
     ]
@@ -337,9 +352,15 @@ def summary_csv_text(rows: list[dict[str, Any]]) -> str:
         "# Long tau1 is profiled independently at each eligible voltage (0.05..1200 ms coarse grid, "
         "then 6% local refinement); source tau2 remains fixed at 450 ms.\n"
     )
+    if not rows:
+        raise ValueError("K_IV summary requires all 27 eligible voltage rows")
+    tau3_min_ms = float(rows[0]["tau3_profile_min_ms"])
+    tau3_max_ms = float(rows[0]["tau3_profile_max_ms"])
+    tau3_points = int(rows[0]["short_component_profile_points"])
     output.write(
-        "# Short tau3 is independently profiled at each eligible voltage (0.6..2.0 ms); signed a3 "
-        "is a descriptive model-residual correction, not a channel kinetic parameter.\n"
+        f"# Short tau3 is independently profiled at each eligible voltage "
+        f"({tau3_min_ms:g}..{tau3_max_ms:g} ms; {tau3_points} equally spaced points); "
+        "signed a3 is a descriptive model-residual correction, not a channel kinetic parameter.\n"
     )
     writer = csv.DictWriter(
         output,
@@ -352,8 +373,20 @@ def summary_csv_text(rows: list[dict[str, Any]]) -> str:
     return output.getvalue()
 
 
-def validate_summary_rows(rows: list[dict[str, Any]]) -> None:
+def validate_summary_rows(
+    rows: list[dict[str, Any]],
+    *,
+    tau3_min_ms: float = 0.6,
+    tau3_max_ms: float = 2.0,
+) -> None:
     """Check structural and numerical invariants without requiring improvement."""
+    if (
+        not math.isfinite(tau3_min_ms)
+        or not math.isfinite(tau3_max_ms)
+        or tau3_min_ms <= 0.0
+        or tau3_max_ms <= tau3_min_ms
+    ):
+        raise ValueError("K_IV tau3 validation bounds must be finite, positive, and increasing")
     if tuple(row.get("voltage_mv") for row in rows) != K_IV_MULTIVOLTAGE_TARGETS_MV:
         raise ValueError("K_IV multivoltage summary must preserve all 27 ordered eligible commands")
     for row in rows:
@@ -364,6 +397,7 @@ def validate_summary_rows(rows: list[dict[str, Any]]) -> None:
                 "local_profile_at_boundary",
                 "signed_extra_is_negative",
                 "nonnegative_control_collapsed",
+                "tau3_profile_at_boundary",
                 "sample_count",
                 "coarse_profile_points",
                 "local_profile_points",
@@ -377,8 +411,20 @@ def validate_summary_rows(rows: list[dict[str, Any]]) -> None:
             raise ValueError("K_IV multivoltage profile lacks adequate samples")
         if row["local_profile_points"] < 2 or row["short_component_profile_points"] < 2:
             raise ValueError("K_IV local/short profile grid is underspecified")
-        if not (0.6 <= row["tau3_ms"] <= 2.0):
+        if not math.isclose(
+            row["tau3_profile_min_ms"], tau3_min_ms, rel_tol=0.0, abs_tol=1.0e-12
+        ) or not math.isclose(
+            row["tau3_profile_max_ms"], tau3_max_ms, rel_tol=0.0, abs_tol=1.0e-12
+        ):
+            raise ValueError("K_IV summary tau3 bounds differ from the declared validation grid")
+        if not (tau3_min_ms <= row["tau3_ms"] <= tau3_max_ms):
             raise ValueError("K_IV short time constant fell outside its declared grid")
+        expected_boundary = (
+            math.isclose(row["tau3_ms"], tau3_min_ms, rel_tol=0.0, abs_tol=1.0e-12)
+            or math.isclose(row["tau3_ms"], tau3_max_ms, rel_tol=0.0, abs_tol=1.0e-12)
+        )
+        if row["tau3_profile_at_boundary"] is not expected_boundary:
+            raise ValueError("K_IV tau3 boundary flag does not match the selected grid point")
         if row["extra_amplitude_pct_peak"] < 0.0:
             raise ValueError("K_IV extra-amplitude magnitude must not be negative")
         if row["positive_control_full_rmse_ma_cm2"] < 0.0:

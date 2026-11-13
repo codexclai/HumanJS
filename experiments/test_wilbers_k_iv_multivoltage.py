@@ -43,6 +43,69 @@ class KIVMultivoltageTests(unittest.TestCase):
         self.assertLess(result["full_improvement_pct"], 100.0)
         self.assertGreater(result["full_improvement_pct"], 50.0)
         self.assertAlmostEqual(result["tau3_ms"], 1.23, delta=0.1)
+        self.assertAlmostEqual(result["tau3_profile_min_ms"], 0.6)
+        self.assertAlmostEqual(result["tau3_profile_max_ms"], 2.0)
+        self.assertFalse(result["tau3_profile_at_boundary"])
+
+    def test_wider_tau3_grid_recovers_component_outside_previous_bounds(self) -> None:
+        times = np.arange(0.0, 489.0, 0.1)
+        source_times = times + 30.9
+        current = (
+            6.0e-5 * np.exp(-times / 339.4)
+            + 2.6e-5 * np.exp(-times / 450.0)
+            - 3.2e-7 * np.exp(-times / 3.2)
+            + 4.144e-4
+        )
+        result = analyze_k_iv_waveform(
+            -70.0, times, source_times, current,
+            coarse_profile_points=201,
+            local_profile_points=101,
+            short_profile_points=201,
+            tau3_min_ms=0.1,
+            tau3_max_ms=5.0,
+        )
+        self.assertAlmostEqual(result["tau3_profile_min_ms"], 0.1)
+        self.assertAlmostEqual(result["tau3_profile_max_ms"], 5.0)
+        self.assertAlmostEqual(result["tau3_ms"], 3.2, delta=0.12)
+        self.assertFalse(result["tau3_profile_at_boundary"])
+        rows = []
+        for voltage in K_IV_MULTIVOLTAGE_TARGETS_MV:
+            row = dict(result)
+            row["voltage_mv"] = voltage
+            rows.append(row)
+        validate_summary_rows(rows, tau3_min_ms=0.1, tau3_max_ms=5.0)
+        with self.assertRaises(ValueError):
+            validate_summary_rows(rows)
+
+    def test_tau3_boundary_flag_is_enforced_by_summary_validation(self) -> None:
+        times = np.arange(0.0, 489.0, 0.1)
+        source_times = times + 30.9
+        current = (
+            6.0e-5 * np.exp(-times / 339.4)
+            + 2.6e-5 * np.exp(-times / 450.0)
+            - 3.2e-7 * np.exp(-times / 3.2)
+            + 4.144e-4
+        )
+        result = analyze_k_iv_waveform(
+            -70.0, times, source_times, current,
+            coarse_profile_points=101,
+            local_profile_points=81,
+            short_profile_points=101,
+            tau3_min_ms=0.1,
+            tau3_max_ms=5.0,
+        )
+        row = dict(result)
+        row["tau3_ms"] = 0.1
+        row["tau3_profile_at_boundary"] = True
+        rows = []
+        for voltage in K_IV_MULTIVOLTAGE_TARGETS_MV:
+            cloned = dict(row)
+            cloned["voltage_mv"] = voltage
+            rows.append(cloned)
+        validate_summary_rows(rows, tau3_min_ms=0.1, tau3_max_ms=5.0)
+        rows[0]["tau3_profile_at_boundary"] = False
+        with self.assertRaises(ValueError):
+            validate_summary_rows(rows, tau3_min_ms=0.1, tau3_max_ms=5.0)
 
     def test_reader_preserves_exact_voltage_and_two_clock_contract(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

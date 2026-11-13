@@ -21,6 +21,8 @@ def main() -> int:
     parser.add_argument("--coarse-profile-points", type=int, default=901)
     parser.add_argument("--local-profile-points", type=int, default=801)
     parser.add_argument("--short-profile-points", type=int, default=801)
+    parser.add_argument("--tau3-min-ms", type=float, default=0.6)
+    parser.add_argument("--tau3-max-ms", type=float, default=2.0)
     parser.add_argument(
         "--emit-to-stdout",
         action="store_true",
@@ -32,8 +34,12 @@ def main() -> int:
         coarse_profile_points=args.coarse_profile_points,
         local_profile_points=args.local_profile_points,
         short_profile_points=args.short_profile_points,
+        tau3_min_ms=args.tau3_min_ms,
+        tau3_max_ms=args.tau3_max_ms,
     )
-    validate_summary_rows(rows)
+    validate_summary_rows(
+        rows, tau3_min_ms=args.tau3_min_ms, tau3_max_ms=args.tau3_max_ms
+    )
     content = summary_csv_text(rows)
     args.output.expanduser().resolve().write_text(content, encoding="utf-8")
     if args.emit_to_stdout:
@@ -48,7 +54,8 @@ def main() -> int:
             f"{row['full_improvement_pct']:.2f}%/"
             f"{row['first_10ms_improvement_pct']:.2f}%/"
             f"{row['after_10ms_improvement_pct']:.2f}%, "
-            f"positive control collapsed={row['nonnegative_control_collapsed']}"
+            f"positive control collapsed={row['nonnegative_control_collapsed']}, "
+            f"tau3 boundary={row['tau3_profile_at_boundary']}"
         )
     return 0
 
