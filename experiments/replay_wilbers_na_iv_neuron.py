@@ -215,13 +215,17 @@ def run_protocol() -> dict[str, Any]:
             h.celsius = 25.0
             h.dt = SAMPLE_INTERVAL_MS
             secondorder = float(h.secondorder)
+            if secondorder != 0.0:
+                raise ReproductionError(
+                    f"Expected NEURON's unmodified secondorder=0 default, found {secondorder}"
+                )
 
             # These are the built-in NEURON VClamp defaults; runIna does not
             # override them. A temporary probe is discarded before the replay.
             probe = h.VClamp(cell(0.5))
             vclamp = {
                 "gain": float(probe.gain),
-                "rstim_ohm": float(probe.rstim),
+                "rstim_mohm": float(probe.rstim),
                 "tau1_ms": float(probe.tau1),
                 "tau2_ms": float(probe.tau2),
                 "fac": float(probe.fac),
@@ -229,7 +233,7 @@ def run_protocol() -> dict[str, Any]:
             del probe
             expected_vclamp = {
                 "gain": 1.0e5,
-                "rstim_ohm": 1.0e6,
+                "rstim_mohm": 1.0,
                 "tau1_ms": 0.001,
                 "tau2_ms": 0.0,
                 "fac": 0.0,
@@ -397,7 +401,7 @@ def csv_text(result: dict[str, Any]) -> str:
         f"# Environment: Python {env['python']}; NEURON {env['neuron']}; NumPy {env['numpy']}; SciPy {env['scipy']}; compiler {result['compiler']}.",
         f"# Source cell: diameter {env['cell_diameter_um']:g} um; length {env['cell_length_um']:g} um (NEURON default); Ra={env['cell_axial_resistance_ohm_cm']:g}; cm={env['cell_capacitance_uF_cm2']:g}; ena={env['na_reversal_mV']:g} mV; default gbar={env['na_default_gbar_pS_um2']:g} pS/um2; vshift={env['na_voltage_shift_mV']:g} mV.",
         f"# Protocol: {env['temperature_celsius']:g} C; dt={env['dt_ms']:g} ms; secondorder={env['secondorder']}; hold -120 mV for 2 ms; 19 test steps -80..+10 mV for 10 ms.",
-        f"# Built-in VClamp defaults (not changed by runIna): gain={clamp['gain']:g}; rstim={clamp['rstim_ohm']:g} ohm; tau1={clamp['tau1_ms']:g} ms; tau2={clamp['tau2_ms']:g} ms; fac={clamp['fac']:g}.",
+        f"# Built-in VClamp defaults (not changed by runIna): gain={clamp['gain']:g}; rstim={clamp['rstim_mohm']:g} MOhm; tau1={clamp['tau1_ms']:g} ms; tau2={clamp['tau2_ms']:g} ms; fac={clamp['fac']:g}.",
         "# Source fits use current density ina (mA/cm2), the exact (t>2.02)&(t<12) 997-sample mask, original preliminary exponential helpers and joint composite-fit helper.",
         "# Source output mapping: joint fit parameter 0 is tau_m; tau_h remains the preliminary post-peak decay estimate; no raw human NWB traces are involved.",
         "# This is original NMODL/VClamp model execution, not experimental-current refitting or biological validation.",
