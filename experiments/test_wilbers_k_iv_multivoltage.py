@@ -38,6 +38,7 @@ class KIVMultivoltageTests(unittest.TestCase):
         )
         self.assertTrue(result["signed_extra_is_negative"])
         self.assertTrue(result["nonnegative_control_collapsed"])
+        self.assertEqual(result["positive_control_improvement_pct"], 0.0)
         self.assertLess(result["corrected_full_rmse_ma_cm2"], result["baseline_full_rmse_ma_cm2"])
         self.assertLess(result["full_improvement_pct"], 100.0)
         self.assertGreater(result["full_improvement_pct"], 50.0)

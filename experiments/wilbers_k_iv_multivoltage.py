@@ -160,6 +160,13 @@ def analyze_k_iv_waveform(
         signed["steady_offset_ma_cm2"] / baseline["steady_offset_ma_cm2"] - 1.0
     )
     positive_collapsed = abs(float(positive["a3_ma_cm2"])) <= 1.0e-13
+    positive_control_improvement = reduction(
+        baseline["rmse_full_ma_cm2"], positive["rmse_full_ma_cm2"]
+    )
+    # The control collapses to the baseline mathematically; report sub-1e-8%
+    # differences as zero rather than preserving floating-point solver residue.
+    if abs(positive_control_improvement) < 1.0e-8:
+        positive_control_improvement = 0.0
 
     return {
         "voltage_mv": float(voltage_mv),
@@ -211,9 +218,7 @@ def analyze_k_iv_waveform(
         "positive_control_full_rmse_ma_cm2": float(
             positive["rmse_full_ma_cm2"]
         ),
-        "positive_control_improvement_pct": reduction(
-            baseline["rmse_full_ma_cm2"], positive["rmse_full_ma_cm2"]
-        ),
+        "positive_control_improvement_pct": float(positive_control_improvement),
         "coarse_profile_points": int(coarse_profile_points),
         "local_profile_points": int(local_profile_points),
         "short_component_profile_points": int(short_profile_points),
