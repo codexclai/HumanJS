@@ -141,6 +141,11 @@ The same investigation checked crates/humanjs-core/src/ion_channels.rs: HumanJS 
 The unchanged pure-human `na_human.mod` has the same false-guard predicate and incorrect fallback structure as the K mechanism. In direct NEURON 9.0.2 rate calls, the m activation, h alpha and h beta paths produce discontinuous or negative time constants at the false guards, and NaN at their true denominator singularities. Their analytically continued taus remain finite. The deposited 200-node Na TABLE path avoids these microvolt-scale samples and returns finite interpolated values, with bounded but nonzero interpolation error over an ordinary voltage grid. Therefore direct-rate and default TABLE execution must be distinguished when interpreting numerical source reproductions. The original Na source remains unchanged; detailed values and method are in the 2026-11-13 sodium probe records.
 
 
+### ADR-014 follow-up — AP1 does not enter the narrow Na trap0 windows (2026-11-13)
+
+The matched original-source 250-ns AP1 trajectories with Na TABLE off and on did not enter any of the Na false-guard windows or land exactly on a true singularity. The closest false guard was h-alpha: the direct-rate sample remained 0.00103467 mV from its centre (143 times its microvolt-scale half-width), while the TABLE path remained 0.0000882037 mV away (12.2 times the half-width). The other false guards were outside this AP1 path's effective-voltage range. Therefore, do not attribute the AP1 TABLE-on/off voltage residual to a Na false-guard activation. The result is stimulus/step-specific and does not generalize to all possible voltage paths. See the detailed 2026-11-13 trajectory check in the canonical experiment and spike-initiation records.
+
+
 ## ADR-015 — Published-model reproduction is evidence, not HumanJS implementation
 
 **Status:** Accepted · **Date:** 2026-11-11

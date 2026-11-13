@@ -436,3 +436,16 @@ A 441-point direct-rate sweep from −120 to +100 mV in 0.5-mV steps contained n
 The source's default 200-node TABLE path largely masks these narrow point defects by precomputing rates on its coarser voltage grid and interpolating. Its 441-point 0.5-mV sweep was finite throughout, with maximum absolute tau interpolation errors of 3.54675e-5 ms for m (maximum relative error 0.02963%, at −57.5 mV) and 0.0198396 ms for h (0.18848%, at −67.5 mV). At the six pathological landmarks, `trates(v)` returned finite interpolated values close to the analytic limits rather than the direct `rates(v)` wrong-branch/NaN results. This distinction matters: the direct-rate defects are present in the deposited equations but are generally bypassed by the default TABLE execution unless its grid/parameter configuration encounters a pathological sample.
 
 No source NMODL, fitted parameter, HumanJS implementation, or author-default protocol was changed. The table-off/direct-rate check is a numerical diagnostic; the author's 200-node TABLE-on baseline remains authoritative. This is source-equation and software analysis, not biological validation.
+
+
+### AP1 trajectory proximity check for sodium trap0 landmarks (2026-11-13)
+
+The original, unmodified source was then run through the exact 250-ns AP1 diagnostic for both direct Na rates (`usetable_na_human=0`) and the default 200-node TABLE (`usetable_na_human=1`), with secondorder=1, the original all-human conductance endpoint, 20-pA rheobase and 30-pA AP1 pulse. Each recorded source path contained 116,001 samples including the initial state. Effective channel voltage was taken as the recorded NEURON membrane voltage minus the source's −10-mV channel shift.
+
+Neither trajectory sampled any of the three Na false-guard windows: no sample met `fabs((v+th)/q) <= 1e-6` for the corresponding alpha/beta call. The h-alpha false guard at +39.29867691 mV was the closest:
+- Direct-rate path: closest sample was 0.00103467 mV from the guard centre (normalized distance 1.43378e-4, about 143 times the half-width).
+- TABLE path: closest sample was 0.0000882037 mV from the guard centre (normalized distance 1.22227e-5, about 12.2 times the half-width).
+
+The m false guard at +58.59235669 mV and h-beta false guard at +77.16674532 mV were outside the AP1 effective-voltage range (maximum about +40.82 mV). Neither trajectory landed exactly on a true denominator singularity either. In the direct-rate run, the closest normalized distances to the m, h-alpha and h-beta true singularities were 1.25432e-4, 1.67559e-4 and 7.33742e-6 respectively; the nearest h-beta sample was 3.48487e-5 mV from its singularity at 13.6655 ms.
+
+Thus the direct Na branch defects measured at exact mathematical landmarks are not sampled by this particular 250-ns AP1 trajectory. They should not be invoked as the cause of its observed Na TABLE-on/off voltage residual. That remains a separate table-interpolation/state-history effect: the matched TABLE-off voltage RMSE is 0.00147738 mV, while the 200-node TABLE-on value is 0.02884722 mV. The direct-rate CN gate replay's maximum source-gate residual remains 6.76001e-5, below the existing 1e-4 diagnostic tolerance. This one AP1 stimulus and step size do not prove that other stimuli, time steps, or parameter configurations avoid the narrow windows.
