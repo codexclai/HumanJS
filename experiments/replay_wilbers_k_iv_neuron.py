@@ -798,7 +798,7 @@ def fit_profile_csv_text(result: dict[str, Any]) -> str:
         "# This profile measures numerical identifiability of a model-current fit; it is not a human experimental current fit or biological validation.",
         _write_csv(result["iv"]["fit_profile"], K_IV_PROFILE_FIELDNAMES),
     ]
-    return "\\n".join(lines) + "\\n"
+    return "\n".join(lines) + "\n"
 
 
 def recovery_csv_text(result: dict[str, Any]) -> str:
