@@ -117,5 +117,7 @@ jobs:
           python3 experiments/validate_wilbers_k_iv_fit_residuals.py \
             --actual /tmp/wilbers-k-iv-fit-profile-residuals.csv \
             --profile /tmp/wilbers-k-iv-fit-profile-local.csv
+      - name: Validate non-source K_IV three-exponential residual counterfactual
+        run: python3 experiments/validate_wilbers_k_iv_three_component.py
       - name: Validate repository policy
         run: python3 .github/scripts/repository_policy.py
