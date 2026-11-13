@@ -592,7 +592,10 @@ def run_protocol() -> dict[str, Any]:
             }
             for name, expected in expected_defaults.items():
                 actual = float(getattr(mechanism, name))
-                if not math.isclose(actual, expected, rel_tol=0.0, abs_tol=1.0e-12):
+                # NMODL translates PARAMETER literals into compiled
+                # mechanism defaults with finite decimal precision; the
+                # original source SHA-1 above remains the exact identity check.
+                if not math.isclose(actual, expected, rel_tol=5.0e-6, abs_tol=1.0e-7):
                     raise ReproductionError(
                         f"Unexpected pure human K mechanism default {name}: {actual}"
                     )
