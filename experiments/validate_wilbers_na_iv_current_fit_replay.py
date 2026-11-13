@@ -54,9 +54,9 @@ def main() -> None:
             if abs(float(value) - float(ref_value)) > 1.0e-12:
                 raise SystemExit(f"{field} mismatch at {voltage:g} mV")
 
-        # SciPy's bounded nonlinear fit can differ by sub-microsecond amounts
-        # across hosted runners/BLAS builds. Keep the gate equations exact,
-        # but bound fit-output drift to 2 microseconds in absolute tau units.
+        # SciPy's bounded nonlinear fit can differ by sub-nanosecond amounts
+        # across hosted runners/BLAS builds. Keep gate equations exact, but
+        # bound fit-output drift to 2 ns (2e-6 ms) in absolute tau units.
         for field in fit_fields:
             value = actual[field]
             ref_value = reference.get(field)
