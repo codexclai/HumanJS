@@ -41,7 +41,7 @@ Do not search for or request old uploads or copied source snapshots. If evidence
 
 `main` is the only branch to use, permanently. Never create, check out, update, merge, or otherwise use another branch. Make authorized changes directly on `main`. Do not create branches, PRs, or automation that opens non-main update branches. No branch protection, rulesets, or deletion-prevention settings are required. Force pushes are permitted but exceptional and must be inspected and verified.
 
-The live repository check immediately before the 2026-11-13 Na TABLE resolution update verified default branch `main`, HEAD `c8ae85158cbec52394a797ff52444a4596b47dc0`, a complete non-truncated 75-entry tree, exactly one branch (`main`), no open issues and no open pull requests. GitHub Actions run `43362308222` completed successfully on that exact HEAD. Re-fetch the live main HEAD and newest workflow at every session start; do not rely on a stored SHA as current.
+The live repository check immediately before the 2026-11-13 high-resolution K trap0 counterfactual update verified default branch `main`, HEAD `8ca2e5ccb11bca23d5092bdb63c2b7d8c2d8ad67`, a complete non-truncated 75-entry tree, exactly one branch (`main`), no open issues and no open pull requests. GitHub Actions run `43364815457` completed successfully on that exact HEAD. Re-fetch the live main HEAD and newest workflow at every session start; do not rely on a stored SHA as current.
 
 ## Session procedure
 
@@ -426,3 +426,12 @@ Original source files and HumanJS model parameters were not modified. Temporary 
 A focused NEURON 9.0.2 probe evaluated the unchanged K NMODL rate procedure at 34°C around the wrong-sign branch. For tha=-29.961798 mV and qa=6.590406 mV, the predicate fabs((v+tha)/qa) triggers within only ±6.59041e-6 mV of v=-tha, although the denominator singularity is at v=tha.
 
 At the trigger, the source rates are a=36.552210 and b=-23.371390, versus 1.106272 and +0.000124457 from the continuous source formula. The source mtau drops abruptly from about 0.903835 ms to 0.075868 ms (11.91-fold), while minf stays 0.925478. This confirms a finite branch discontinuity, not a true rate singularity. It explains why a fine-table trajectory can trigger a large K activation recurrence error. Original NMODL source and HumanJS parameters are unchanged; no biological validation is claimed.
+
+
+### 2026-11-13 — high-resolution Na TABLE and K trap0 control
+
+A fresh pinned NEURON 9.0.2 run regenerated the 250-ns HumanJS AP1 trace (116,000 post-step samples). The original 3,200-node Na-table / original-K run reproduced the gate-replay failure: m_k maximum error 0.00138525 at 4.402 ms. The wrong-sign guard fabs((v+th)/q) triggered at 2.37e-7 although the true denominator distance fabs((v-th)/q) was 9.09255.
+
+A temporary K-only mathematical control changed the guard to v-th and the small-x limit to a*q; no parameters changed and no repository source was patched. The same 3,200-node AP1 run then passed the gate check (corrected m_k maximum replay error 1.5844e-5, 87.4-fold lower). A 6,400-node run also passed. At 3,200/6,400 nodes, TABLE-on voltage RMSE was 0.0014623/0.0014729 mV and evolved current RMSE 2.4856e-5/1.9107e-5 A/m²; the direct-rate control stayed at 0.0014774 mV and 1.7423e-5 A/m². Shared-path Na-table gate error and actual source TABLE-on/off voltage perturbation each fell about fourfold when the grid doubled from 3,200 to 6,400 nodes. The result extends the prior approximately second-order table-spacing trend but is still a bounded numerical counterfactual, not a biological comparison.
+
+The corrected-K source CN replay matches NEURON within about 0.000557 mV; its aggregate gate replay RMSE is 2.86e-6 and maximum error 6.76e-5. Current-balance identities remain closed at approximately 1e-13 A/m². Original Dataverse mechanisms, 20-pA rheobase, 30-pA AP1 stimulus, and conductances were preserved; modified NMODL copies and all traces remained outside Git. The author baseline remains 200 nodes / 20 µs / secondorder=0 / TABLE on.

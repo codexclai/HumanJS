@@ -2,15 +2,15 @@
 
 **Updated:** 2026-11-13
 **Canonical repository:** `codexclai/HumanJS`, branch `main` only.
-**Latest verified base before the Na TABLE resolution update:** `c8ae85158cbec52394a797ff52444a4596b47dc0` (three-resolution AP1 current matrix; Actions run `43362308222` passed).
+**Latest verified base before the high-resolution K trap0 counterfactual:** `8ca2e5ccb11bca23d5092bdb63c2b7d8c2d8ad67` (Na TABLE resolution and K trap0 source probe; Actions run `43364815457` passed).
 **Previous evidence availability cross-check:** `30dcee632b9ad5a64e4d6c1f496b9f00e03d3c64` (bounded public-archive search).
-**Re-fetch the current main HEAD and newest workflow before relying on this handoff; the Na TABLE grid sweep and K trap0 interaction are being recorded directly on main.**
+**Re-fetch the current main HEAD and newest workflow before relying on this handoff; the high-resolution corrected-K counterfactual is being recorded directly on main.**
 Verify the live HEAD and newest workflow before relying on this handoff.
 
 ## Verified repository state at handoff
 
-- Public repository; default branch `main`; live parent HEAD before this update: `c8ae85158cbec52394a797ff52444a4596b47dc0`; recursive tree 75 entries, not truncated; exactly one branch (`main`); no open issues and no open pull requests.
-- GitHub Actions run `43362308222` passed on that exact parent HEAD: https://github.com/codexclai/HumanJS/actions/runs/43362308222. It passed formatting, Clippy, Rust workspace tests, Python experiment syntax/unit tests, both Wilbers validators, and repository policy. Numerical source/model results are not biological validation.
+- Public repository; default branch `main`; live parent HEAD before this update: `8ca2e5ccb11bca23d5092bdb63c2b7d8c2d8ad67`; recursive tree 75 entries, not truncated; exactly one branch (`main`); no open issues and no open pull requests.
+- GitHub Actions run `43364815457` passed on that exact parent HEAD: https://github.com/codexclai/HumanJS/actions/runs/43364815457. It passed formatting, Clippy, Rust workspace tests, Python experiment syntax/unit tests, both Wilbers validators, and repository policy. Numerical source/model results are not biological validation.
 - Fresh independent NEURON 9.0.2 `modlunit` invocation on unmodified `k_human.mod` and `k_mouse.mod` again failed at the untyped `trates(v+vshift)` call, line 82. Both species' repeated diagnostics are now recorded in `research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md`. The original files still compile with `nrnivmodl`; see ADR-014 for the temporary typed-probe findings. No source file was changed. The same research record clarifies that the article's public Dataverse data statement is satisfied by deposited summary/model files; it does not mean the missing per-cell K kinetic CSVs or raw voltage-clamp traces occur in the inspected 65-file v3.0 inventory.
 - On a clean clone of the parent commit, `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets --all-features -- -D warnings`, and `cargo test --workspace --locked` passed (31 unit tests, 3 synapse integration tests, 6 passive-membrane integration tests). All five experiment scripts parsed, both Wilbers validators passed, and repository policy passed. HumanJS 20-µs and 1-µs examples emitted the expected 1,450 and 29,000 post-step samples; the optional gate CSVs contain matching row counts.
 - The NEURON 9.0.2 source baseline was independently rerun and the diagnostic passed end-to-end with pinned Python dependencies. Temporary counters recorded zero entries into the flawed `trap0` fallback; its instrumented and unmodified source traces were identical. The new gate comparison records five NMODL states and confirms that the biggest internal-state errors are in the fast gates during the AP upstroke.
@@ -499,3 +499,12 @@ Original source files and HumanJS model parameters were not modified. Temporary 
 A focused NEURON 9.0.2 probe evaluated the unchanged K NMODL rate procedure at 34°C around the wrong-sign branch. For tha=-29.961798 mV and qa=6.590406 mV, the predicate fabs((v+tha)/qa) triggers within only ±6.59041e-6 mV of v=-tha, although the denominator singularity is at v=tha.
 
 At the trigger, the source rates are a=36.552210 and b=-23.371390, versus 1.106272 and +0.000124457 from the continuous source formula. The source mtau drops abruptly from about 0.903835 ms to 0.075868 ms (11.91-fold), while minf stays 0.925478. This confirms a finite branch discontinuity, not a true rate singularity. It explains why a fine-table trajectory can trigger a large K activation recurrence error. Original NMODL source and HumanJS parameters are unchanged; no biological validation is claimed.
+
+
+### 2026-11-13 — high-resolution Na TABLE and K trap0 control
+
+A fresh pinned NEURON 9.0.2 run regenerated the 250-ns HumanJS AP1 trace (116,000 post-step samples). The original 3,200-node Na-table / original-K run reproduced the gate-replay failure: m_k maximum error 0.00138525 at 4.402 ms. The wrong-sign guard fabs((v+th)/q) triggered at 2.37e-7 although the true denominator distance fabs((v-th)/q) was 9.09255.
+
+A temporary K-only mathematical control changed the guard to v-th and the small-x limit to a*q; no parameters changed and no repository source was patched. The same 3,200-node AP1 run then passed the gate check (corrected m_k maximum replay error 1.5844e-5, 87.4-fold lower). A 6,400-node run also passed. At 3,200/6,400 nodes, TABLE-on voltage RMSE was 0.0014623/0.0014729 mV and evolved current RMSE 2.4856e-5/1.9107e-5 A/m²; the direct-rate control stayed at 0.0014774 mV and 1.7423e-5 A/m². Shared-path Na-table gate error and actual source TABLE-on/off voltage perturbation each fell about fourfold when the grid doubled from 3,200 to 6,400 nodes. The result extends the prior approximately second-order table-spacing trend but is still a bounded numerical counterfactual, not a biological comparison.
+
+The corrected-K source CN replay matches NEURON within about 0.000557 mV; its aggregate gate replay RMSE is 2.86e-6 and maximum error 6.76e-5. Current-balance identities remain closed at approximately 1e-13 A/m². Original Dataverse mechanisms, 20-pA rheobase, 30-pA AP1 stimulus, and conductances were preserved; modified NMODL copies and all traces remained outside Git. The author baseline remains 200 nodes / 20 µs / secondorder=0 / TABLE on.
