@@ -1,0 +1,53 @@
+# Source: Wilbers et al. (2023), Science Advances 9, eade3300, DataverseNL DOI 10.34894/L5J0SD v3.0 (CC0-1.0).
+# Workbook: data_fig3.xlsx, file 318666, 179094 bytes, SHA-1 2cb734a19306dadbb3db051d3a55b18b08c86639.
+# Figure analysis: plots_fig3.py file 318533 SHA-1 82c5541d1bdc8f68ec0b2057386550bba3385cd3; stats_fig3.py file 318534 SHA-1 4ba8e1e347e667b7cd43bf8c6d86d8d4b884ea0a.
+# Separate model helper inspected: channel_tools.py file 326242 SHA-1 615595a270c6170987757cd35743f5d5b5b2af0e.
+# Base record filter from Figure 3 scripts: RsComp > 50 and not df.exclude.
+# tau_m filter from plots_fig3.py/stats_fig3.py: iv_gof_m > 0.9 and -40 < iv_volt < 11 mV.
+# tau_h filter from plots_fig3.py/stats_fig3.py: iv_gof_h > 0.9 and -45 <= iv_volt <= 0 mV.
+# Each row contains mean, sample SD, median and count across workbook per-cell records at one voltage/species.
+# This is a derived summary of precomputed workbook fit fields; no NWB raw traces were accessed or refitted.
+# The columns are reported current-derived IV tau fit fields; do not equate them with individual HH/Markov gate time constants.
+# Workbook iv_volt has 25 points (-65..+55 mV); channel_tools.py Na_IV/Na_IV_ss model protocol uses 19 points (-80..+10 mV).
+# The two voltage grids differ; this file is not a direct gate-kinetic validation target for the Rust model.
+component,voltage_mV,species,n,mean_ms,sample_sd_ms,median_ms
+tau_m,-35,human,11,0.308832925,0.204481740,0.239268263
+tau_m,-35,mouse,15,0.205597911,0.051940889,0.193179999
+tau_m,-30,human,14,0.241694519,0.066281746,0.240072817
+tau_m,-30,mouse,15,0.178991433,0.046631038,0.171826172
+tau_m,-25,human,14,0.212940754,0.050203240,0.217551848
+tau_m,-25,mouse,15,0.149706125,0.040828030,0.127678988
+tau_m,-20,human,16,0.194777613,0.067220000,0.188457472
+tau_m,-20,mouse,15,0.129060009,0.034619125,0.118902722
+tau_m,-15,human,16,0.168341044,0.060935137,0.158582747
+tau_m,-15,mouse,14,0.107049399,0.025353730,0.104567396
+tau_m,-10,human,17,0.146070782,0.057104367,0.133241266
+tau_m,-10,mouse,14,0.105450227,0.035134898,0.096249204
+tau_m,-5,human,14,0.135802410,0.105371753,0.110674867
+tau_m,-5,mouse,13,0.088850286,0.019744648,0.081105004
+tau_m,0,human,12,0.107447650,0.051777389,0.089452061
+tau_m,0,mouse,11,0.069970061,0.015572405,0.075107105
+tau_m,5,human,12,0.077464409,0.030207573,0.068851574
+tau_m,5,mouse,7,0.063156795,0.011538726,0.061833840
+tau_m,10,human,9,0.053568241,0.021875017,0.048798130
+tau_m,10,mouse,4,0.051989377,0.013732413,0.050644472
+tau_h,-45,human,8,4.415904085,0.730255431,4.444891146
+tau_h,-45,mouse,14,3.062758808,0.992247531,3.015578166
+tau_h,-40,human,14,3.310752335,0.821701815,3.514771752
+tau_h,-40,mouse,15,2.300128959,0.844648939,2.342554360
+tau_h,-35,human,17,2.549695192,0.717050838,2.704791012
+tau_h,-35,mouse,15,1.541378411,0.522610193,1.426322817
+tau_h,-30,human,19,1.984545925,0.812050575,1.753532543
+tau_h,-30,mouse,15,1.081968668,0.326983378,1.057385681
+tau_h,-25,human,19,1.459280995,0.611448542,1.359911873
+tau_h,-25,mouse,15,0.811355660,0.203393724,0.807492935
+tau_h,-20,human,18,1.082810479,0.383870518,1.030562804
+tau_h,-20,mouse,15,0.644211380,0.156950501,0.622712926
+tau_h,-15,human,19,0.839343126,0.247509681,0.831295568
+tau_h,-15,mouse,15,0.528462581,0.103922506,0.537350822
+tau_h,-10,human,18,0.726989662,0.231130695,0.672954700
+tau_h,-10,mouse,15,0.459670281,0.068980528,0.460724447
+tau_h,-5,human,17,0.607192233,0.176546720,0.560097296
+tau_h,-5,mouse,15,0.401858504,0.057665420,0.391200991
+tau_h,0,human,15,0.551427097,0.169011236,0.496890854
+tau_h,0,mouse,15,0.375495162,0.045974691,0.371763463

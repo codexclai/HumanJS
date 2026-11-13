@@ -52,5 +52,7 @@ jobs:
         run: python3 experiments/validate_wilbers_fig_s5_digitization.py
       - name: Validate Wilbers current-clamp conductance grid
         run: python3 experiments/validate_wilbers_current_clamp_grid.py
+      - name: Validate Wilbers sodium IV tau summary
+        run: python3 experiments/validate_wilbers_na_iv_tau_summary.py
       - name: Validate repository policy
         run: python3 .github/scripts/repository_policy.py
