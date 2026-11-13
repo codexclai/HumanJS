@@ -1,5 +1,6 @@
-# Pinned environment for reproduce_wilbers_current_clamp_neuron.py
-# Use Python 3.10.x; nrnivmodl also requires a working C++ compiler and make.
+# Pinned environment for Wilbers NEURON source replays.
+# The current-clamp runner is verified on Python 3.10.x; Na_IV CI uses Python 3.12.
+# nrnivmodl also requires a working C++ compiler and make.
 neuron==9.0.2
 numpy==1.26.4
 scipy==1.11.4
