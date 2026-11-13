@@ -1,6 +1,6 @@
 # HumanJS — session boot
 
-**Updated:** 2026-11-13  
+**Updated:** 2026-11-13
 **Canonical source:** public GitHub repository `codexclai/HumanJS`, branch `main`.
 
 Read this file first whenever a new session begins. GitHub `main` is authoritative. The ChatGPT Project Sources area is expected to be empty; no upload or local snapshot is a project dependency.
