@@ -349,3 +349,28 @@ A 3,200-node TABLE-on counterfactual is not accepted. Its source voltage path re
 The 3,200-node compiled build's TABLE-off-only control passes and reproduces the earlier 250-ns direct-rate reference (voltage RMSE 0.00147738 mV; evolved current RMSE 1.74232e-5 A/m²; maximum gate recurrence residual 1.77e-6). This supports attributing the failed 3,200-node TABLE-on check to the source trajectory's encounter with the pre-existing K trap0 branch defect, not a generic build/link failure. No source mechanism or tracked code was patched; all altered NMODL copies, compiled libraries, voltage/gate/current traces and temporary diagnostic modules stayed outside Git.
 
 Interpretation: the deposited 200-node Na TABLE is a material numerical contributor to the TABLE-on voltage/current residual, and its interpolation component follows the expected approximately second-order table-spacing trend over the four accepted grid sizes. But finer source-table resolution also steers the coupled voltage path into a separate known K trap0 branch defect at 3,200 nodes. This is evidence of an interaction between two numerical artifacts in the deposited source, not grounds to silently repair or replace either mechanism. The original author baseline remains 200 nodes, 20 µs, secondorder=0, TABLE on. All results are numerical source-evaluation diagnostics, not biological validation; HumanJS spike code remains exploratory and unaccepted.
+
+
+### Direct K trap0 rate discontinuity probe (2026-11-13)
+
+The 3,200-node failure was followed by a focused probe of the unchanged k_human NMODL rates at 34°C. The exact compiled mechanism was loaded in NEURON 9.0.2; the K mechanism's public rates procedure was evaluated on voltages around the source's wrong-sign guard. No NMODL source, channel parameter or HumanJS code was edited.
+
+For K activation, the deposited values are tha = -29.961798016904638 mV, qa = 6.590405688881463 mV, and Ra = Rb = 0.018459250585411965/ms. The defective branch predicate is fabs((v+tha)/qa), so its trigger half-width about v = -tha is only 6.59041e-6 mV on either side. The denominator in the ordinary trap0 expression is instead 1-exp(-(v-tha)/qa), whose singularity is at v=tha, not v=-tha.
+
+At v = -tha (effective channel voltage), the source fallback returns:
+- activation a = 36.552210, versus 1.106272 from the continuous numerator/denominator formula at the same voltage;
+- deactivation b = -23.371390, versus +0.000124457 from the same formula;
+- source mtau = 0.075867814 ms, versus 0.903835007 ms from the continuous formula.
+
+The source therefore flips the sign of the deactivation rate and shortens the activation time constant by 11.9133-fold. The independently computed minf remains 0.925478206; the error is in the rate/time-constant branch, not the separate steady-state sigmoid.
+
+The discontinuity is directly visible on either side of the guard:
+| Offset from v=-tha (mV) | Source mtau (ms) | Continuous formula mtau (ms) |
+|---:|---:|---:|
+| -6.60e-6 | 0.903835106 | 0.903835106 |
+| -6.59e-6 | 0.075867814 | 0.903835106 |
+| 0 | 0.075867814 | 0.903835007 |
+| +6.59e-6 | 0.075867814 | 0.903834908 |
+| +6.60e-6 | 0.903834907 | 0.903834907 |
+
+The deposited guard's narrow window can therefore create a finite step-sized gate-update error if a trajectory sample lands inside it. This is consistent with the 3,200-node TABLE-on trace encountering the guard near 4.402 ms and the independent K activation replay failing with maximum gate-fraction residual 0.00138525. The 3,200-node TABLE-off control did not encounter the trigger and passed its replay check. This targeted probe strengthens the causal diagnosis of the source bug; it does not validate a repaired mechanism or justify modifying the deposited source without an explicit evidence-backed decision.
