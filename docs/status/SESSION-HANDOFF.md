@@ -2,18 +2,16 @@
 
 **Updated:** 2026-11-13
 **Canonical repository:** `codexclai/HumanJS`, branch `main` only.
-**Latest verified main before this handoff correction:** `b9aebdd833172c049e52628191f74d472893c0cd` (sodium trap0 direct-rate and AP1 trajectory-proximity research; Actions run `43423674648` passed).
-**Previous evidence availability cross-check:** `30dcee632b9ad5a64e4d6c1f496b9f00e03d3c64` (bounded public-archive search).
-**Re-fetch the current main HEAD and newest workflow before relying on this handoff; direct Na/K trap0 probes and AP1 trajectory checks are now recorded in the canonical research/experiment records.**
-Verify the live HEAD and newest workflow before relying on this handoff.
+**Latest verified main before this handoff documentation refresh:** `ed07cec9982622f9c3dcb8c0825c7951c3515442`; GitHub Actions run `43425235022` passed on that exact code commit.
+**Next session:** refresh the live repository metadata, `docs/BOOT.md`, HEAD, tree, workflow results, issues/PRs and branch refs before proceeding. Do not rely on this handoff as a substitute for live verification.
 
 ## Verified repository state at handoff
 
-- Public repository; default branch `main`; live parent HEAD before this update: `b9aebdd833172c049e52628191f74d472893c0cd`; recursive tree 75 entries, not truncated; exactly one branch (`main`); no open issues and no open pull requests.
-- GitHub Actions run `43423674648` passed on that exact parent HEAD: https://github.com/codexclai/HumanJS/actions/runs/43423674648. It passed formatting, Clippy, Rust workspace tests, Python experiment syntax/unit tests, both Wilbers validators, and repository policy. Numerical source/model results are not biological validation.
-- Fresh independent NEURON 9.0.2 `modlunit` invocation on unmodified `k_human.mod` and `k_mouse.mod` again failed at the untyped `trates(v+vshift)` call, line 82. Both species' repeated diagnostics are now recorded in `research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md`. The original files still compile with `nrnivmodl`; see ADR-014 for the temporary typed-probe findings. No source file was changed. The same research record clarifies that the article's public Dataverse data statement is satisfied by deposited summary/model files; it does not mean the missing per-cell K kinetic CSVs or raw voltage-clamp traces occur in the inspected 65-file v3.0 inventory.
-- On a clean clone of the parent commit, `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets --all-features -- -D warnings`, and `cargo test --workspace --locked` passed (31 unit tests, 3 synapse integration tests, 6 passive-membrane integration tests). All five experiment scripts parsed, both Wilbers validators passed, and repository policy passed. HumanJS 20-µs and 1-µs examples emitted the expected 1,450 and 29,000 post-step samples; the optional gate CSVs contain matching row counts.
-- The NEURON 9.0.2 source baseline was independently rerun and the diagnostic passed end-to-end with pinned Python dependencies. Temporary counters recorded zero entries into the flawed `trap0` fallback; its instrumented and unmodified source traces were identical. The new gate comparison records five NMODL states and confirms that the biggest internal-state errors are in the fast gates during the AP upstroke.
+- Public repository; default branch `main`; HEAD before this documentation refresh: `ed07cec9982622f9c3dcb8c0825c7951c3515442`; recursive tree has 75 entries and is not truncated; branch listing contains only `main`; zero open issues and pull requests.
+- Run [43425235022](https://github.com/codexclai/HumanJS/actions/runs/43425235022) completed successfully on `ed07cec9982622f9c3dcb8c0825c7951c3515442`. It passed rustfmt, Clippy, `cargo test --workspace --locked` (38 unit, 3 synapse integration, 6 passive-membrane integration), Python experiment syntax and 22 experiment tests, Wilbers voltage-sampling checks, both research-data validators and repository policy.
+- Code commit `ed07cec9982622f9c3dcb8c0825c7951c3515442` adds two sodium rate tests: all six m/h alpha/beta wrong-sign guard and true-singularity landmarks plus a 441-point analytic-equation sweep of sodium activation/inactivation time constants and steady states. The configured −10-mV current-clamp voltage shift is accounted for.
+- This is numerical source-equation and software verification. No external NMODL source, fit parameter, or production runtime code was changed. The exploratory spike mechanism remains unaccepted and not biologically validated.
+- A local clone attempt failed because the current container could not resolve `github.com`; no local cargo command is claimed. GitHub Actions completed the checks on the exact commit.
 
 ## Current HumanJS implementation
 
@@ -546,3 +544,9 @@ The 441-point direct-rate sweep (−120…+100 mV, 0.5-mV spacing) avoids these 
 The matched original-source 250-ns AP1 run (both Na TABLE off/on, 116,001 samples, secondorder=1, 20-pA rheobase/30-pA pulse) did not enter any Na false-guard window or land exactly on a true singularity. The closest point was the h-alpha false guard: 0.00103467 mV away with TABLE off (143× guard half-width), and 0.0000882037 mV away with TABLE on (12.2×). The other two false guards were outside the trajectory's effective-voltage range. The nearest true singularity was h-beta, still 7.34e-6 normalized q away in the direct-rate path.
 
 Therefore the direct sodium branch faults characterized at exact landmarks do not explain this specific AP1 voltage residual. The 200-node TABLE-on/off difference remains an independent interpolation/state-history effect (0.0288472 vs 0.00147738 mV voltage RMSE). This is only a path-specific check, not a guarantee for other stimuli or step sizes.
+
+### Latest handoff — sodium regression pass (2026-11-13)
+
+The HumanJS Rust sodium channel now has channel-specific regression coverage for the three wrong-sign guard windows and three true denominator singularities discovered in unchanged Wilbers `na_human.mod`. The 441-voltage grid test checks m/h kinetics and steady state against the independent continuous equation. CI is green on code commit `ed07cec9982622f9c3dcb8c0825c7951c3515442` (run 43425235022).
+
+**Next concrete step:** audit temperature behavior as a complete contract rather than only checking one Q10 point. Add independent tests for sodium and potassium rate scaling and the different source conductance-temperature treatment across a small explicit temperature grid, while keeping channel parameters fixed. Continue to classify this as software/source-equation validation only. Raw human K kinetic targets and per-cell voltage-clamp traces remain unavailable in the inspected Dataverse v3.0 inventory; do not contact researchers and do not promote the provisional spike mechanism.
