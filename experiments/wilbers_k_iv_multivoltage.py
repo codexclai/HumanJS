@@ -953,6 +953,11 @@ def tau1_tau3_surface_csv_text(rows: list[dict[str, Any]]) -> str:
     """Serialize the reduced three-voltage tau1-tau3 conditional profile surface."""
     import io
 
+    if not rows:
+        raise ValueError("K_IV tau1-tau3 surface CSV requires all 27 conditional slices")
+    tau3_min_ms = float(rows[0]["tau3_min_ms"])
+    tau3_max_ms = float(rows[0]["tau3_max_ms"])
+    tau3_grid_points = int(rows[0]["tau3_grid_points"])
     output = io.StringIO()
     output.write(
         "# Conditional tau1-tau3 sensitivity surface for predeclared K_IV commands -30, -60, and +55 mV.\n"
@@ -964,7 +969,9 @@ def tau1_tau3_surface_csv_text(rows: list[dict[str, Any]]) -> str:
         "# At each voltage, nine tau1 values span only the existing local 6% refinement interval from the independently profiled coarse tau1; the center node is the existing selected local tau1.\n"
     )
     output.write(
-        "# At each tau1 node, tau3 is profiled over 0.1..5.0 ms on 2,801 equally spaced points and all four coefficients are refit against the full waveform; tau2 remains fixed at 450 ms.\n"
+        f"# At each tau1 node, tau3 is profiled over {tau3_min_ms:g}..{tau3_max_ms:g} ms "
+        f"on {tau3_grid_points} equally spaced points and all four coefficients are refit "
+        "against the full waveform; tau2 remains fixed at 450 ms.\n"
     )
     output.write(
         "# Each row stores the conditional tau3 minimum and its 1/5/10% relative-full-RSS basin; relative_rss_to_surface_min_pct compares that slice minimum with the best minimum across tau1 values at the same voltage.\n"

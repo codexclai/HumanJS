@@ -94,9 +94,9 @@ def main() -> int:
     parser.add_argument("--actual", type=Path, required=True)
     parser.add_argument("--expected", type=Path)
     parser.add_argument("--tau1-grid-points", type=int, default=9)
-    parser.add_argument("--tau3-grid-points", type=int, default=2801)
+    parser.add_argument("--tau3-grid-points", type=int, default=5601)
     parser.add_argument("--tau3-min-ms", type=float, default=0.1)
-    parser.add_argument("--tau3-max-ms", type=float, default=5.0)
+    parser.add_argument("--tau3-max-ms", type=float, default=10.0)
     args = parser.parse_args()
 
     actual = read_surface(args.actual)

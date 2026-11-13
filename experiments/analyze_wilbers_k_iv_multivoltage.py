@@ -32,6 +32,8 @@ def main() -> int:
     parser.add_argument("--profile-shape-output", type=Path)
     parser.add_argument("--tau1-tau3-surface-output", type=Path)
     parser.add_argument("--surface-tau1-points", type=int, default=9)
+    parser.add_argument("--surface-tau3-points", type=int, default=5601)
+    parser.add_argument("--surface-tau3-max-ms", type=float, default=10.0)
     parser.add_argument(
         "--emit-to-stdout",
         action="store_true",
@@ -66,15 +68,15 @@ def main() -> int:
             rows,
             tau1_grid_points=args.surface_tau1_points,
             tau3_min_ms=args.tau3_min_ms,
-            tau3_max_ms=args.tau3_max_ms,
-            tau3_grid_points=args.short_profile_points,
+            tau3_max_ms=args.surface_tau3_max_ms,
+            tau3_grid_points=args.surface_tau3_points,
         )
         validate_tau1_tau3_surface_rows(
             surface_rows,
             tau1_grid_points=args.surface_tau1_points,
-            tau3_grid_points=args.short_profile_points,
+            tau3_grid_points=args.surface_tau3_points,
             tau3_min_ms=args.tau3_min_ms,
-            tau3_max_ms=args.tau3_max_ms,
+            tau3_max_ms=args.surface_tau3_max_ms,
         )
         surface_content = tau1_tau3_surface_csv_text(surface_rows)
         args.tau1_tau3_surface_output.expanduser().resolve().write_text(
