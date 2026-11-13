@@ -111,6 +111,10 @@ The current Rust tests validate SI input handling, time arithmetic, exact passiv
 
 The Python scientific workflow now also replays the deposited pure-human Na_IV command protocol and its model-side composite-current fit: 25°C, 2-ms −120-mV hold, 19 test steps, 50-µs delayed joint waveform, and the source's preliminary/joint fit distinction. Its recorded per-voltage outputs are validated in CI. The replay uses normalized current because the original source call's absolute conductance/area scale is not reconstructed; it explicitly leaves the source's absolute-current selection threshold unresolved. These are model-equation and analysis-method regressions, not NEURON execution, raw current-trace fitting, or biological validation.
 
+A separate source-execution runner now compiles the deposited pure human na_human.mod unchanged and executes the original Na_IV, Na_IV_inact and Na_recovery routines with NEURON 9.0.2 and the built-in VClamp. It restores the fitting caller's cell setup and VClamp defaults, verifies the Dataverse source hashes, preserves the literal source inactivation denominator, and invokes the original current-recording and fit helpers. The recorded outputs include 19 Na_IV voltage steps (19/19 source current-density gate passes; 17/19 joint-fit R² passes), 30 inactivation conditioning voltages (Boltzmann Vhalf −68.251977 mV, slope 8.472251 mV), and 156 paired-pulse recovery runs (13/13 finite source apparent recovery taus). The per-protocol CSVs and CI validators are tracked under research/ and experiments/.
+
+This is execution of the deposited computational model and its analysis code, not empirical current-trace refitting. The inspected Dataverse v3.0 listing does not contain raw human NWB voltage-clamp current traces. The main Rust spike-capable single-compartment model remains exploratory; these source-protocol software checks do not satisfy biological validation or ADR-014 acceptance.
+
 
 
 ## 13. Intrinsic spike-initiation boundary — exploratory code, not scientific acceptance
