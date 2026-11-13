@@ -531,7 +531,7 @@ CI [43440747867](https://github.com/codexclai/HumanJS/actions/runs/43440747867) 
 
 ### 2026-11-13 — K_IV fit-start and profiled-objective sensitivity
 
-The source `get_tau_inact_double_fixedtau2` helper has four free parameters `(a1,tau1,a2,ss)`, fixed `tau2=450 ms`, source `tau1` bounds 0–300 ms, and an R²>0.95 acceptance gate. The source time-shifts by `x=x-x[0]`. Its initial vector places half a current-density difference into the `tau1` slot and `est1=30` into the `a2` amplitude slot. At −70 mV this means `tau1` starts at (3.14164\times10^{-5}) ms and `a2) at 30 mA/cm², approximately 59,965 times the observed peak.
+The source `get_tau_inact_double_fixedtau2` helper has four free parameters `(a1,tau1,a2,ss)`, fixed `tau2=450 ms`, source `tau1` bounds 0–300 ms, and an R²>0.95 acceptance gate. The source time-shifts by `x=x-x[0]`. Its initial vector places half a current-density difference into the `tau1` slot and `est1=30` into the `a2` amplitude slot. At −70 mV this means `tau1` starts at 3.14164 × 10⁻⁵ ms and `a2` starts at 30 mA/cm², approximately 59,965 times the observed peak.
 
 A six-start, same-waveform diagnostic produced 192 converged fits over 32 voltage commands. All six −70-mV fits pass R²>0.95, yet their fitted `tau1` values range 186.610–213.819 ms. Maximum accepted within-voltage spread is 111.420 ms at −85 mV. A profile that optimizes the three nonnegative linear parameters at each fixed `tau1` reaches the source 300-ms upper bound; extending the diagnostic beyond that source limit gives a best grid point of 338.237 ms. This is evidence of poor initialization and boundary sensitivity, not a biological kinetic estimate.
 

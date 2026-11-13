@@ -5,7 +5,7 @@
 
 ## Question and source identity
 
-The deposited K_IV replay reproduces the original human potassium mechanism and analysis helper, but repeated hosted runs returned different accepted fast-inactivation time constants at the same command voltage. This record investigates whether the difference is caused by the nonlinear optimizer's starting values and whether the fitted \\(\\tau_1\\) is well constrained by the deposited source waveform.
+The deposited K_IV replay reproduces the original human potassium mechanism and analysis helper, but repeated hosted runs returned different accepted fast-inactivation time constants at the same command voltage. This record investigates whether the difference is caused by the nonlinear optimizer's starting values and whether the fitted \(\tau_1\) is well constrained by the deposited source waveform.
 
 The source artifacts were retrieved from the CC0-1.0 DataverseNL v3.0 deposit (DOI [10.34894/L5J0SD](https://doi.org/10.34894/L5J0SD)):
 
@@ -19,11 +19,11 @@ The analysis follows the deposited helper used in the Wilbers human L2/L3 pyrami
 
 The released `get_tau_inact_double_fixedtau2(x, y, est1=30, tau2=450)` function fits
 
-\\[
-I(t)=a_1 e^{-t/\\tau_1}+a_2 e^{-t/450\\,\\mathrm{ms}}+s_s
-\\]
+\[
+I(t)=a_1 e^{-t/\tau_1}+a_2 e^{-t/450\,\mathrm{ms}}+s_s
+\]
 
-with free parameter order `(a1, tau1, a2, ss)`, nonnegative bounds on all four fitted parameters, \\(0 < \\tau_1 \\le 300\\) ms, fixed \\(\\tau_2=450\\) ms, and a source acceptance threshold \\(R^2>0.95\\). It first shifts the supplied time vector by `x = x - x[0]`.
+with free parameter order `(a1, tau1, a2, ss)`, nonnegative bounds on all four fitted parameters, \(0 < \tau_1 \le 300\) ms, fixed \(\tau_2=450\) ms, and a source acceptance threshold \(R^2>0.95\). It first shifts the supplied time vector by `x = x - x[0]`.
 
 The exact source initial vector is
 
@@ -38,44 +38,44 @@ This is four values for four free parameters; the fixed slow time constant is no
 
 There is, however, a striking parameter-scale mismatch in that initial vector under the source replay's current-density units. At −70 mV:
 
-- \\( (y_0-y_{end})/2 = 3.141640790281283\\times10^{-5}\\) mA/cm².
-- That current-density value is also passed as the initial \\(\\tau_1\\) in milliseconds: \\(3.141640790281283\\times10^{-5}\\) ms.
-- The default `est1=30` is passed into \\(a_2\\), i.e. an initial amplitude of 30 mA/cm².
-- The observed activation-current peak is 0.000500295140138606 mA/cm², so this initial \\(a_2\\) is about 59,965 times that peak.
+- \( (y_0-y_{end})/2 = 3.141640790281283\times10^{-5}\) mA/cm².
+- That current-density value is also passed as the initial \(\tau_1\) in milliseconds: \(3.141640790281283\times10^{-5}\) ms.
+- The default `est1=30` is passed into \(a_2\), i.e. an initial amplitude of 30 mA/cm².
+- The observed activation-current peak is 0.000500295140138606 mA/cm², so this initial \(a_2\) is about 59,965 times that peak.
 
 The source therefore seeds a time constant with a current-density difference and an amplitude with a value many orders above the observed current. This is a directly observed parameter-order/scale mismatch and a strong candidate for poor optimizer conditioning. It is not proof of the source author's intent, and the original helper has deliberately been left unchanged.
 
 ## Same-waveform multi-start experiment
 
-The runner now captures the exact post-peak NEURON samples passed to the original helper at each attempted K_IV voltage. On each unchanged waveform it runs the same equation, time shift, fixed \\(\\tau_2\\), bounds and R² gate from six initial vectors: the exact source vector and five controlled alternatives varying \\(\\tau_1\\) and the nonnegative amplitude split. Only the initial vector changes.
+The runner now captures the exact post-peak NEURON samples passed to the original helper at each attempted K_IV voltage. On each unchanged waveform it runs the same equation, time shift, fixed \(\tau_2\), bounds and R² gate from six initial vectors: the exact source vector and five controlled alternatives varying \(\tau_1\) and the nonnegative amplitude split. Only the initial vector changes.
 
-The result has 192 rows: six starts at each of 32 source-fit-attempted voltages. All 192 numerical optimizations converged. The source's (R^2>0.95) gate accepts 27/32 source-literal results; the five alternative starts are accepted at 32/32, 32/32, 30/32, 32/32 and 32/32 voltages, respectively.
+The result has 192 rows: six starts at each of 32 source-fit-attempted voltages. All 192 numerical optimizations converged. The source's R² > 0.95 gate accepts 27/32 source-literal results; the five alternative starts are accepted at 32/32, 32/32, 30/32, 32/32 and 32/32 voltages, respectively.
 
-At −70 mV, all six starts pass the source gate but converge to materially different fast time constants despite similarly high (R^2):
+At −70 mV, all six starts pass the source gate but converge to materially different fast time constants despite similarly high R²:
 
-| Initialisation | Fitted \\(\\tau_1\\) (ms) | (R^2) |
+| Initialisation | Fitted \(\tau_1\) (ms) | R² |
 |---|---:|---:|
 | Exact source vector | 213.8193 | 0.999994545 |
-| \\(\\tau_1\\)=30 ms, equal amplitudes | 196.0183 | 0.999991938 |
-| \\(\\tau_1\\)=100 ms, equal amplitudes | 186.6256 | 0.999990012 |
-| \\(\\tau_1\\)=200 ms, equal amplitudes | 212.8816 | 0.999994504 |
-| \\(\\tau_1\\)=100 ms, slow amplitude 25% | 200.1972 | 0.999992661 |
-| \\(\\tau_1\\)=100 ms, slow amplitude 75% | 186.6098 | 0.999990023 |
+| \(\tau_1\)=30 ms, equal amplitudes | 196.0183 | 0.999991938 |
+| \(\tau_1\)=100 ms, equal amplitudes | 186.6256 | 0.999990012 |
+| \(\tau_1\)=200 ms, equal amplitudes | 212.8816 | 0.999994504 |
+| \(\tau_1\)=100 ms, slow amplitude 25% | 200.1972 | 0.999992661 |
+| \(\tau_1\)=100 ms, slow amplitude 75% | 186.6098 | 0.999990023 |
 
-The accepted −70-mV spread is 27.2095 ms. Across all attempted voltages, the largest within-voltage spread is 111.4199 ms at −85 mV (five accepted starts). The result confirms that the fitted fast component is initialization-sensitive on a fixed waveform; the very high R² values alone do not establish a unique \\(\\tau_1\\).
+The accepted −70-mV spread is 27.2095 ms. Across all attempted voltages, the largest within-voltage spread is 111.4199 ms at −85 mV (five accepted starts). The result confirms that the fitted fast component is initialization-sensitive on a fixed waveform; the very high R² values alone do not establish a unique \(\tau_1\).
 
 ## Fixed-`tau1` profile
 
-A second diagnostic profiles the same −70-mV post-peak waveform over \\(\\tau_1\\). At each grid value, \\(a_1\\), \\(a_2\\), and \\(s_s\\) are solved by nonnegative bounded linear least squares. This exactly minimizes the linear subproblem for that fixed \\(\\tau_1\\); it is a diagnostic profile, not a replacement for the deposited `curve_fit`.
+A second diagnostic profiles the same −70-mV post-peak waveform over \(\tau_1\). At each grid value, \(a_1\), \(a_2\), and \(s_s\) are solved by nonnegative bounded linear least squares. This exactly minimizes the linear subproblem for that fixed \(\tau_1\); it is a diagnostic profile, not a replacement for the deposited `curve_fit`.
 
 Two grids were recorded:
 
-| Profile domain | Grid | Best sampled \\(\\tau_1\\) | Best (R^2) | RMSE (mA/cm²) |
+| Profile domain | Grid | Best sampled \(\tau_1\) | Best R² | RMSE (mA/cm²) |
 |---|---:|---:|---:|---:|
-| 0.05–300 ms (source bounds) | 601 points | 300 ms (upper bound) | 0.999999324534 | \\(1.47586\\times10^{-8}\\) |
-| 0.05–1200 ms (extended counterfactual) | 901 points | 338.2372 ms | 0.999999577007 | \\(1.16791\\times10^{-8}\\) |
+| 0.05–300 ms (source bounds) | 601 points | 300 ms (upper bound) | 0.999999324534 | \(1.47586\times10^{-8}\) |
+| 0.05–1200 ms (extended counterfactual) | 901 points | 338.2372 ms | 0.999999577007 | \(1.16791\times10^{-8}\) |
 
-Within the extended profile, the 1%-of-minimum-RMSE band spans approximately 334.468–345.904 ms (four grid points). The broader band within (10^{-6}) of the maximum (R^2) spans approximately 270.323–361.762 ms (27 points). The best sampled profile point is therefore outside the source's 300-ms upper bound, while the best point inside that bound lies exactly on its boundary.
+Within the extended profile, the 1%-of-minimum-RMSE band spans approximately 334.468–345.904 ms (four grid points). The broader band within 10⁻⁶ of the maximum R² spans approximately 270.323–361.762 ms (27 points). The best sampled profile point is therefore outside the source's 300-ms upper bound, while the best point inside that bound lies exactly on its boundary.
 
 This is evidence that the deposited fit is boundary-sensitive and that the source optimizer's accepted interior estimates do not identify a unique, well-conditioned kinetic target. The profile is computed from the deposited model's generated current, not from an experimental human trace. Values beyond 300 ms are explicitly counterfactual and must not be reported as source-model or biological parameters.
 
