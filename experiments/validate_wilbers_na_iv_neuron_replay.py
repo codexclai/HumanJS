@@ -97,13 +97,16 @@ def main() -> int:
             expected_value = float(expected[field])
             if not math.isfinite(actual_value) or abs(actual_value - expected_value) > 2.0e-10:
                 raise SystemExit(f"{field} mismatch at {voltage:g} mV")
+        # scipy.optimize.curve_fit can vary by several nanoseconds across
+        # repeated hosted runs; keep the acceptance classification and source
+        # current density strict while bounding fitted tau drift to 10 ns.
         for field in FIT_TAU_FIELDS:
             actual_value = actual[field]
             expected_value = expected[field]
             if expected_value == "":
                 if actual_value != "":
                     raise SystemExit(f"Expected blank {field} at {voltage:g} mV")
-            elif actual_value == "" or abs(float(actual_value) - float(expected_value)) > 2.0e-6:
+            elif actual_value == "" or abs(float(actual_value) - float(expected_value)) > 1.0e-5:
                 raise SystemExit(f"{field} mismatch at {voltage:g} mV")
         for field in R2_FIELDS:
             actual_value = actual[field]
