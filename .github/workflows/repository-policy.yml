@@ -125,7 +125,7 @@ jobs:
             --output /tmp/wilbers-k-iv-multivoltage-summary.csv \
             --emit-to-stdout
       - name: Validate adjacent-voltage K_IV residual summary
-        run: python3 experiments/validate_wilbers_k_iv_multivoltage.py --actual /tmp/wilbers-k-iv-multivoltage-summary.csv
+        run: python3 experiments/validate_wilbers_k_iv_multivoltage.py --actual /tmp/wilbers-k-iv-multivoltage-summary.csv --expected research/HUMAN-L23-WILBERS-K-IV-MULTIVOLTAGE-RESIDUAL-SUMMARY.csv
       - name: Validate non-source K_IV three-exponential residual counterfactual
         run: python3 experiments/validate_wilbers_k_iv_three_component.py
       - name: Validate repository policy
