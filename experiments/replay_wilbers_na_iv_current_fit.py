@@ -75,7 +75,7 @@ def _advance_gate(gate: float, steady_state: float, tau_ms: float, dt_ms: float)
     return steady_state + (gate - steady_state) * math.exp(-dt_ms / tau_ms)
 
 
-def simulate_normalized_sodium_current(test_voltage_mv: float) -> tuple[np.ndarray, np.ndarray]:
+def simulate_source_na_current_density(test_voltage_mv: float) -> tuple[np.ndarray, np.ndarray]:
     """Return command times and inward Na current density in mA/cm².
 
     The deposited fit script creates a 10-µm-diameter section, inserts
@@ -232,7 +232,7 @@ def replay_na_iv_current_fits() -> list[dict[str, Any]]:
     """Run all 19 Na_IV steps including the source absolute-current condition."""
     rows: list[dict[str, Any]] = []
     for voltage in TEST_VOLTAGES_MV:
-        times, current = simulate_normalized_sodium_current(voltage)
+        times, current = simulate_source_na_current_density(voltage)
         mask = (times > SAMPLE_MASK_START_MS) & (times < SAMPLE_MASK_END_MS)
         fit_times = times[mask]
         fit_current = current[mask]

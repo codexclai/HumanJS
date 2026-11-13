@@ -34,13 +34,15 @@ def main() -> None:
         raise SystemExit("Expected 19 Na_IV command-voltage rows")
 
     strict_fields = ("source_ina_min_ma_cm2", "gate_tau_m_ms", "gate_tau_h_ms")
-    fit_fields = (
+    fit_tau_fields = (
         "preliminary_tau_m_ms", "preliminary_tau_h_ms",
         "joint_tau_m_ms", "joint_tau_h_ms",
-        "preliminary_tau_m_r_squared", "preliminary_tau_h_r_squared",
         "source_mapped_tau_m_ms", "source_mapped_tau_h_ms",
     )
-    r_squared_field = "joint_r_squared"
+    r_squared_fields = (
+        "preliminary_tau_m_r_squared", "preliminary_tau_h_r_squared",
+        "joint_r_squared",
+    )
     for actual, reference in zip(records, expected, strict=True):
         voltage = float(actual["voltage_mv"])
         if voltage != reference["voltage_mv"]:
@@ -60,7 +62,7 @@ def main() -> None:
         # SciPy's bounded nonlinear fit can differ by sub-nanosecond amounts
         # across hosted runners/BLAS builds. Keep gate equations exact, but
         # bound fit-output drift to 2 ns (2e-6 ms) in absolute tau units.
-        for field in fit_fields:
+        for field in fit_tau_fields:
             value = actual[field]
             ref_value = reference.get(field)
             if ref_value is None or not math.isfinite(float(ref_value)):
@@ -69,13 +71,14 @@ def main() -> None:
             elif value == "" or abs(float(value) - float(ref_value)) > 2.0e-6:
                 raise SystemExit(f"{field} mismatch at {voltage:g} mV")
 
-        value = actual[r_squared_field]
-        ref_value = reference.get(r_squared_field)
-        if ref_value is None or not math.isfinite(float(ref_value)):
-            if value != "":
-                raise SystemExit(f"Expected blank {r_squared_field} at {voltage:g} mV")
-        elif value == "" or abs(float(value) - float(ref_value)) > 2.0e-8:
-            raise SystemExit(f"{r_squared_field} mismatch at {voltage:g} mV")
+        for field in r_squared_fields:
+            value = actual[field]
+            ref_value = reference.get(field)
+            if ref_value is None or not math.isfinite(float(ref_value)):
+                if value != "":
+                    raise SystemExit(f"Expected blank {field} at {voltage:g} mV")
+            elif value == "" or abs(float(value) - float(ref_value)) > 2.0e-8:
+                raise SystemExit(f"{field} mismatch at {voltage:g} mV")
         if actual["passed_joint_fit_r2"] != str(bool(reference["passed_joint_fit_r2"])):
             raise SystemExit(f"R-squared pass flag mismatch at {voltage:g} mV")
         if actual["joint_tau_h_at_upper_bound"] != str(bool(reference["joint_tau_h_at_upper_bound"])):

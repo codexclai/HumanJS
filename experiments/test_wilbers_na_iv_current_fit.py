@@ -16,7 +16,7 @@ class WilbersNaIvCurrentFitTests(unittest.TestCase):
             replay.TEST_VOLTAGES_MV,
             tuple(float(value) for value in range(-80, 11, 5)),
         )
-        times, current = replay.simulate_normalized_sodium_current(-35.0)
+        times, current = replay.simulate_source_na_current_density(-35.0)
         mask = (times > 2.02) & (times < 12.0)
         self.assertEqual(len(times), 1201)
         self.assertEqual(int(np.count_nonzero(mask)), 997)
@@ -36,7 +36,7 @@ class WilbersNaIvCurrentFitTests(unittest.TestCase):
         self.assertGreater(float(current[4]), float(current[3]))
 
     def test_current_amplitude_scaling_does_not_change_fit_time_constants(self) -> None:
-        times, current = replay.simulate_normalized_sodium_current(-45.0)
+        times, current = replay.simulate_source_na_current_density(-45.0)
         mask = (times > 2.02) & (times < 12.0)
         baseline = replay.fit_source_composite_current(times[mask], current[mask])
         scaled = replay.fit_source_composite_current(times[mask], current[mask] * 37.0)
@@ -55,6 +55,7 @@ class WilbersNaIvCurrentFitTests(unittest.TestCase):
         self.assertEqual([row["voltage_mv"] for row in rows], list(replay.TEST_VOLTAGES_MV))
         self.assertTrue(all(row["samples_fitted"] == 997 for row in rows))
         self.assertTrue(all(row["absolute_current_gate_passed"] for row in rows))
+        self.assertGreaterEqual(len(replay.SOURCE_NA_RATE_TABLE[0]), 200)
         accepted = [
             row["voltage_mv"] for row in rows if row["passed_joint_fit_r2"]
         ]
@@ -75,7 +76,7 @@ class WilbersNaIvCurrentFitTests(unittest.TestCase):
         self.assertGreater(row["preliminary_tau_m_r_squared"], 0.95)
         self.assertGreater(row["preliminary_tau_h_r_squared"], 0.95)
         self.assertGreater(abs(row["source_mapped_tau_h_ms"] - row["gate_tau_h_ms"]), 0.1)
-        self.assertTrue(row["joint_tau_h_at_upper_bound"])
+        self.assertFalse(row["joint_tau_h_at_upper_bound"])
 
     def test_low_r_squared_step_returns_nan_taus_as_source_does(self) -> None:
         row = replay.replay_na_iv_current_fits()[0]
