@@ -82,11 +82,11 @@ class KIVMultivoltageTests(unittest.TestCase):
             path = Path(temp_dir) / "waveforms.csv"
             with path.open("w", encoding="utf-8", newline="") as stream:
                 stream.write(
-                    "# DataverseNL v3.0; NEURON 9.0.2\n"
-                    "# channel_tools.py SHA-1 615595a270c6170987757cd35743f5d5b5b2af0e\n"
-                    "# k_human.mod SHA-1 d299b3430ecda7a94f6d1c37ac76b2878052c7d5\n"
+                    "# DataverseNL v3.0; NEURON 9.0.2\\n"
+                    "# channel_tools.py SHA-1 615595a270c6170987757cd35743f5d5b5b2af0e\\n"
+                    "# k_human.mod SHA-1 d299b3430ecda7a94f6d1c37ac76b2878052c7d5\\n"
                 )
-                writer = csv.writer(stream, lineterminator="\n")
+                writer = csv.writer(stream, lineterminator="\\n")
                 writer.writerow(
                     [
                         "voltage_mv",

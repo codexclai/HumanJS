@@ -124,8 +124,8 @@ jobs:
             --waveforms /tmp/wilbers-k-iv-postpeak-waveforms.csv \
             --output /tmp/wilbers-k-iv-multivoltage-summary.csv \
             --emit-to-stdout
-      - name: Validate finite-source-fit K_IV residual summary structure
-        run: python3 experiments/validate_wilbers_k_iv_multivoltage.py --actual /tmp/wilbers-k-iv-multivoltage-summary.csv
+      - name: Compare all 27 finite-source-fit K_IV residual rows with the committed reference
+        run: python3 experiments/validate_wilbers_k_iv_multivoltage.py --actual /tmp/wilbers-k-iv-multivoltage-summary.csv --expected research/HUMAN-L23-WILBERS-K-IV-MULTIVOLTAGE-RESIDUAL-SUMMARY.csv
       - name: Validate non-source K_IV three-exponential residual counterfactual
         run: python3 experiments/validate_wilbers_k_iv_three_component.py
       - name: Validate repository policy
