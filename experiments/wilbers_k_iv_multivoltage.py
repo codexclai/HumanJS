@@ -183,10 +183,16 @@ def tau3_profile_shape_csv_text(rows: list[dict[str, Any]]) -> str:
 
     output = io.StringIO()
     output.write(
-        "# Descriptive contiguous tau3 profile basins at 1%, 5%, and 10% increases in full-waveform RSS.\n"
+        "# Exact post-peak model-current waveforms from the unchanged DataverseNL v3.0 pure-human K source replay (NEURON 9.0.2/VClamp); not raw experimental current.\n"
     )
     output.write(
-        "# These objective-shape spans are deterministic grid diagnostics, not confidence intervals.\n"
+        "# At each tau3 grid point all coefficients are refit to the full waveform; per-command tau1 is fixed at its independently profiled value and source tau2=450 ms.\n"
+    )
+    output.write(
+        "# Basins are contiguous grid points around the selected minimum with relative full-waveform RSS increases <=1%, <=5%, and <=10%; local curvature is a normalized central second difference.\n"
+    )
+    output.write(
+        "# These deterministic objective-shape spans and curvature values are not statistical confidence intervals or biological uncertainty estimates.\n"
     )
     writer = csv.DictWriter(
         output,
