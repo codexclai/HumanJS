@@ -36,6 +36,20 @@ K_IV_FIT_DIAGNOSTIC_FIELDNAMES = (
     "fit_error_type",
 )
 
+
+K_IV_FIT_RESIDUAL_FIELDNAMES = (
+    "voltage_mv",
+    "profile_tau1_ms",
+    "profile_fast_amplitude_ma_cm2",
+    "profile_slow_amplitude_ma_cm2",
+    "profile_offset_ma_cm2",
+    "time_since_peak_ms",
+    "source_simulation_time_ms",
+    "observed_current_ma_cm2",
+    "fitted_current_ma_cm2",
+    "residual_current_ma_cm2",
+)
+
 K_IV_PROFILE_FIELDNAMES = (
     "voltage_mv",
     "tau1_ms",
@@ -221,8 +235,9 @@ def profile_k_iv_postpeak_tau(
 
     For each fixed fast tau1, the remaining (a1, a2, ss) parameters are
     estimated by bounded linear least squares. The default grid reproduces the
-    deposited tau1 upper bound with a positive numerical lower cutoff. Explicit local or extended windows are diagnostic bounds are diagnostic
-    counterfactuals only and do not change the source fit.
+    deposited tau1 upper bound with a positive numerical lower cutoff.
+    Explicit local or extended windows are diagnostic counterfactuals only and
+    do not change the source fit.
     """
     from scipy.optimize import lsq_linear
 
@@ -285,6 +300,71 @@ def profile_k_iv_postpeak_tau(
                 "residual_sum_squares": rss,
                 "solver_success": bool(solution.success),
                 "solver_optimality": float(solution.optimality),
+            }
+        )
+    return rows
+
+
+def fit_k_iv_profile_residuals(
+    voltage_mv: float,
+    times_ms: Any,
+    currents_ma_cm2: Any,
+    tau1_ms: float,
+) -> list[dict[str, float]]:
+    """Return observed, fitted, and residual currents at one fixed profiled tau1."""
+    from scipy.optimize import lsq_linear
+
+    times = np.asarray(times_ms, dtype=float)
+    currents = np.asarray(currents_ma_cm2, dtype=float)
+    if (
+        times.ndim != 1
+        or currents.ndim != 1
+        or times.shape != currents.shape
+        or len(times) < 5
+        or not np.isfinite(times).all()
+        or not np.isfinite(currents).all()
+        or np.any(np.diff(times) <= 0.0)
+    ):
+        raise ValueError("K_IV residual export requires matched, increasing finite samples")
+    if not math.isfinite(tau1_ms) or tau1_ms <= 0.0:
+        raise ValueError("K_IV residual export requires a finite positive tau1")
+
+    relative_times = times - times[0]
+    design = np.column_stack(
+        (
+            np.exp(-relative_times / tau1_ms),
+            np.exp(-relative_times / K_IV_FIXED_SLOW_TAU_MS),
+            np.ones_like(relative_times),
+        )
+    )
+    solution = lsq_linear(
+        design,
+        currents,
+        bounds=(0.0, np.inf),
+        method="trf",
+        tol=1.0e-12,
+        lsmr_tol="auto",
+        max_iter=300,
+    )
+    if not solution.success:
+        raise RuntimeError("K_IV fixed-tau residual least-squares solver did not converge")
+    parameters = np.asarray(solution.x, dtype=float)
+    fitted = design @ parameters
+    residual = currents - fitted
+    rows: list[dict[str, float]] = []
+    for index in range(len(times)):
+        rows.append(
+            {
+                "voltage_mv": float(voltage_mv),
+                "profile_tau1_ms": float(tau1_ms),
+                "profile_fast_amplitude_ma_cm2": float(parameters[0]),
+                "profile_slow_amplitude_ma_cm2": float(parameters[1]),
+                "profile_offset_ma_cm2": float(parameters[2]),
+                "time_since_peak_ms": float(relative_times[index]),
+                "source_simulation_time_ms": float(times[index]),
+                "observed_current_ma_cm2": float(currents[index]),
+                "fitted_current_ma_cm2": float(fitted[index]),
+                "residual_current_ma_cm2": float(residual[index]),
             }
         )
     return rows

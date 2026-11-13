@@ -25,7 +25,9 @@ from typing import Any
 from wilbers_k_iv_fit_diagnostics import (
     K_IV_FIT_DIAGNOSTIC_FIELDNAMES,
     K_IV_PROFILE_FIELDNAMES,
+    K_IV_FIT_RESIDUAL_FIELDNAMES,
     diagnose_k_iv_postpeak_fit,
+    fit_k_iv_profile_residuals,
     profile_k_iv_postpeak_tau,
 )
 
@@ -214,6 +216,7 @@ def run_k_iv(
     fit_profile: list[dict[str, Any]] = []
     fit_profile_extended: list[dict[str, Any]] = []
     fit_profile_local: list[dict[str, Any]] = []
+    fit_profile_residuals: list[dict[str, float]] = []
 
     for index, voltage in enumerate(K_IV_VOLTAGES_MV):
         amplitudes = [
@@ -345,6 +348,18 @@ def run_k_iv(
                                 grid_points=801,
                             )
                         )
+                        local_best = min(
+                            fit_profile_local,
+                            key=lambda row: row["fit_rmse_ma_cm2"],
+                        )
+                        fit_profile_residuals.extend(
+                            fit_k_iv_profile_residuals(
+                                voltage,
+                                postpeak_times,
+                                postpeak_current,
+                                float(local_best["tau1_ms"]),
+                            )
+                        )
                 except Exception as diagnostic_error:
                     raise ReproductionError(
                         f"K_IV fit-start diagnostic failed at {voltage:g} mV: "
@@ -428,6 +443,7 @@ def run_k_iv(
         "fit_profile": fit_profile,
         "fit_profile_extended": fit_profile_extended,
         "fit_profile_local": fit_profile_local,
+        "fit_profile_residuals": fit_profile_residuals,
         "boltzmann_vhalf_activation_mv": float(vhalf_activation),
         "boltzmann_slope_activation_mv": float(slope_activation),
         "boltzmann_vhalf_inactivation_mv": float(vhalf_inactivation),
@@ -856,6 +872,22 @@ def fit_local_profile_csv_text(result: dict[str, Any]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def fit_profile_residual_csv_text(result: dict[str, Any]) -> str:
+    source = result["source_files"]
+    env = result["environment"]
+    lines = [
+        "# Time-resolved K_IV residuals at the best sampled point of the 320..360 ms high-resolution local profile.",
+        f"# DataverseNL v{DATASET_VERSION}, DOI {DATASET_DOI}, CC0-1.0.",
+        f"# channel_tools.py SHA-1 {source['channel_tools.py']['sha1']}; k_human.mod SHA-1 {source['mod/k_human.mod']['sha1']}.",
+        f"# Environment: Python {env['python']}; NEURON {env['neuron']}; NumPy {env['numpy']}; SciPy {env['scipy']}.",
+        "# Same source post-peak current samples. Fitted model is a1*exp(-t/tau1)+a2*exp(-t/450 ms)+ss with nonnegative least-squares amplitudes.",
+        "# time_since_peak_ms is relative to the first sample passed to the source fit; source_simulation_time_ms preserves the original NEURON clock.",
+        "# Residual is observed minus fitted current. No measurement-noise model or biological trace is implied.",
+        _write_csv(result["iv"]["fit_profile_residuals"], K_IV_FIT_RESIDUAL_FIELDNAMES),
+    ]
+    return "\n".join(lines) + "\n"
+
+
 def recovery_csv_text(result: dict[str, Any]) -> str:
     env = result["environment"]
     source = result["source_files"]
@@ -884,6 +916,7 @@ def main() -> int:
     parser.add_argument("--fit-profile-output", type=Path, help="Optional K_IV profiled fast-tau objective CSV path")
     parser.add_argument("--fit-extended-profile-output", type=Path, help="Optional extended-bound K_IV fast-tau profile CSV path")
     parser.add_argument("--fit-local-profile-output", type=Path, help="Optional high-resolution local K_IV fast-tau profile CSV path")
+    parser.add_argument("--fit-profile-residual-output", type=Path, help="Optional time-resolved residual CSV at the best local-profile tau1")
     parser.add_argument(
         "--emit-to-stdout",
         action="store_true",
@@ -897,6 +930,7 @@ def main() -> int:
     fit_profile_content = fit_profile_csv_text(result)
     fit_extended_profile_content = fit_extended_profile_csv_text(result)
     fit_local_profile_content = fit_local_profile_csv_text(result)
+    fit_profile_residual_content = fit_profile_residual_csv_text(result)
     for output_path, content in (
         (args.iv_output, iv_content),
         (args.recovery_output, recovery_content),
@@ -904,6 +938,7 @@ def main() -> int:
         (args.fit_profile_output, fit_profile_content),
         (args.fit_extended_profile_output, fit_extended_profile_content),
         (args.fit_local_profile_output, fit_local_profile_content),
+        (args.fit_profile_residual_output, fit_profile_residual_content),
     ):
         if output_path:
             output_path.expanduser().resolve().write_text(content, encoding="utf-8")
@@ -927,6 +962,9 @@ def main() -> int:
         print("BEGIN_HUMANJS_K_IV_FIT_LOCAL_PROFILE_CSV")
         print(fit_local_profile_content, end="")
         print("END_HUMANJS_K_IV_FIT_LOCAL_PROFILE_CSV")
+        print("BEGIN_HUMANJS_K_IV_FIT_PROFILE_RESIDUAL_CSV")
+        print(fit_profile_residual_content, end="")
+        print("END_HUMANJS_K_IV_FIT_PROFILE_RESIDUAL_CSV")
 
     finite_act = sum(
         math.isfinite(row["source_tau_activation_ms"]) for row in result["iv"]["rows"]

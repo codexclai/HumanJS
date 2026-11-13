@@ -83,6 +83,7 @@ jobs:
             --fit-profile-output /tmp/wilbers-k-iv-fit-profile.csv \
             --fit-extended-profile-output /tmp/wilbers-k-iv-fit-profile-extended.csv \
             --fit-local-profile-output /tmp/wilbers-k-iv-fit-profile-local.csv \
+            --fit-profile-residual-output /tmp/wilbers-k-iv-fit-profile-residuals.csv \
             --emit-to-stdout
       - name: Validate original NEURON K_IV and K_recovery replays
         run: |
@@ -111,5 +112,10 @@ jobs:
             --lower-bound-ms 320 \
             --upper-bound-ms 360 \
             --expected-grid-size 801
+      - name: Validate time-resolved K_IV profile residuals
+        run: |
+          python3 experiments/validate_wilbers_k_iv_fit_residuals.py \
+            --actual /tmp/wilbers-k-iv-fit-profile-residuals.csv \
+            --profile /tmp/wilbers-k-iv-fit-profile-local.csv
       - name: Validate repository policy
         run: python3 .github/scripts/repository_policy.py
