@@ -24,7 +24,7 @@ def main() -> int:
     parser.add_argument(
         "--emit-to-stdout",
         action="store_true",
-        help="Print the compact three-row result table with explicit delimiters",
+        help="Print all 27 eligible-command result rows with explicit delimiters",
     )
     args = parser.parse_args()
     rows = analyze_postpeak_waveforms(

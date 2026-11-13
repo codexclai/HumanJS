@@ -21,7 +21,7 @@ from wilbers_k_iv_three_component import (
     profile_three_exponential_correction,
 )
 
-K_IV_MULTIVOLTAGE_TARGETS_MV = (-75.0, -70.0, -65.0)
+K_IV_MULTIVOLTAGE_TARGETS_MV = tuple(float(v) for v in range(-75, 60, 5))
 K_IV_MULTIVOLTAGE_FIELDNAMES = (
     "voltage_mv",
     "sample_count",
@@ -272,7 +272,8 @@ def read_postpeak_waveforms(
 
     if tuple(sorted(grouped)) != K_IV_MULTIVOLTAGE_TARGETS_MV:
         raise ValueError(
-            "K_IV post-peak waveform must contain exactly -75, -70 and -65 mV; "
+            "K_IV post-peak waveform must contain all 27 finite-positive source-fit "
+            "commands from -75 to +55 mV; "
             f"found {tuple(sorted(grouped))}"
         )
     result = {}
@@ -318,18 +319,26 @@ def summary_csv_text(rows: list[dict[str, Any]]) -> str:
 
     output = io.StringIO()
     output.write(
-        "# Non-source short-time residual correction tested across adjacent K_IV command voltages.\n"
+        "# Non-source short-time residual correction tested across all 27 finite-positive K_IV source-fit commands.\n"
     )
     output.write(
         "# Input consists of the exact source-model NEURON/VClamp post-peak samples; "
         "this is not raw human experimental current.\n"
     )
     output.write(
-        "# Long tau1 is profiled independently at each voltage (0.05..1200 ms coarse grid, "
+        "# Source K_IV selection: current threshold >1e-8 mA/cm2; 32 commands attempted "
+        "(-100..+55 mV), 27 finite-positive fast-fit results exported (-75..+55 mV).\n"
+    )
+    output.write(
+        "# Five attempted commands (-100,-95,-90,-85,-80 mV) returned non-finite fast fits; "
+        "-110 and -105 mV did not pass the source threshold. Neither group was silently dropped.\n"
+    )
+    output.write(
+        "# Long tau1 is profiled independently at each eligible voltage (0.05..1200 ms coarse grid, "
         "then 6% local refinement); source tau2 remains fixed at 450 ms.\n"
     )
     output.write(
-        "# Short tau3 is independently profiled at each voltage (0.6..2.0 ms); signed a3 "
+        "# Short tau3 is independently profiled at each eligible voltage (0.6..2.0 ms); signed a3 "
         "is a descriptive model-residual correction, not a channel kinetic parameter.\n"
     )
     writer = csv.DictWriter(
@@ -346,7 +355,7 @@ def summary_csv_text(rows: list[dict[str, Any]]) -> str:
 def validate_summary_rows(rows: list[dict[str, Any]]) -> None:
     """Check structural and numerical invariants without requiring improvement."""
     if tuple(row.get("voltage_mv") for row in rows) != K_IV_MULTIVOLTAGE_TARGETS_MV:
-        raise ValueError("K_IV multivoltage summary must preserve the three ordered commands")
+        raise ValueError("K_IV multivoltage summary must preserve all 27 ordered eligible commands")
     for row in rows:
         for name in K_IV_MULTIVOLTAGE_FIELDNAMES:
             value = row.get(name)

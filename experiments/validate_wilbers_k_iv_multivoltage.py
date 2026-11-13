@@ -109,11 +109,11 @@ def main() -> int:
             raise SystemExit(f"Invalid expected summary: {exc}") from exc
         compare_expected(actual, expected)
         print(
-            "K_IV multivoltage residual summary matches the committed "
-            "three-voltage source-model reference."
+            "K_IV residual summary matches the committed 27-command "
+            "finite-positive source-fit reference."
         )
     else:
-        print("K_IV multivoltage residual summary passed structural validation.")
+        print("K_IV 27-command finite-source-fit residual summary passed structural validation.")
     for row in actual:
         print(
             f"{row['voltage_mv']:g} mV: tau1={row['local_tau1_ms']:.6g} ms; "

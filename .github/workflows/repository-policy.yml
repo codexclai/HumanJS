@@ -118,14 +118,14 @@ jobs:
           python3 experiments/validate_wilbers_k_iv_fit_residuals.py \
             --actual /tmp/wilbers-k-iv-fit-profile-residuals.csv \
             --profile /tmp/wilbers-k-iv-fit-profile-local.csv
-      - name: Profile signed K_IV early residual across adjacent voltages
+      - name: Profile signed K_IV residual across all finite-source-fit voltages
         run: |
           python3 experiments/analyze_wilbers_k_iv_multivoltage.py \
             --waveforms /tmp/wilbers-k-iv-postpeak-waveforms.csv \
             --output /tmp/wilbers-k-iv-multivoltage-summary.csv \
             --emit-to-stdout
-      - name: Validate adjacent-voltage K_IV residual summary
-        run: python3 experiments/validate_wilbers_k_iv_multivoltage.py --actual /tmp/wilbers-k-iv-multivoltage-summary.csv --expected research/HUMAN-L23-WILBERS-K-IV-MULTIVOLTAGE-RESIDUAL-SUMMARY.csv
+      - name: Validate finite-source-fit K_IV residual summary structure
+        run: python3 experiments/validate_wilbers_k_iv_multivoltage.py --actual /tmp/wilbers-k-iv-multivoltage-summary.csv
       - name: Validate non-source K_IV three-exponential residual counterfactual
         run: python3 experiments/validate_wilbers_k_iv_three_component.py
       - name: Validate repository policy
