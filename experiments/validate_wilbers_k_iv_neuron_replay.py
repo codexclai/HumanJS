@@ -59,9 +59,6 @@ IV_TOLERANCES = {
     "activation_window_last_sample_ms": 1e-9,
     "inactivation_window_first_sample_ms": 1e-9,
     "inactivation_window_last_sample_ms": 1e-9,
-    "source_tau_activation_ms": 2e-2,
-    "source_tau_inactivation_fast_ms": 2e-2,
-    "source_tau_inactivation_fixed_slow_ms": 1e-9,
     "boltzmann_vhalf_activation_mv": 2e-5,
     "boltzmann_slope_activation_mv": 2e-5,
     "boltzmann_vhalf_inactivation_mv": 2e-5,
@@ -71,8 +68,6 @@ RECOVERY_TOLERANCES = {
     "test_window_first_sample_ms": 1e-8,
     "test_window_last_sample_ms": 1e-8,
     "second_test_peak_current_ma_cm2": 2e-8,
-    "source_double_exp_tau_fast_ms": 2e-2,
-    "source_double_exp_tau_slow_ms": 2e-2,
 }
 RECOVERY_INTERVALS_MS = (
     4.0, 144.0, 484.0, 1024.0, 1764.0,
@@ -142,8 +137,23 @@ def validate_iv(actual_path: Path):
         for field in ("source_tau_activation_ms", "source_tau_inactivation_fast_ms"):
             if (got[field] == "") != (ref[field] == ""):
                 raise SystemExit(f"K_IV fit availability mismatch for {field} at {voltage:g} mV")
-        activation_finite += got["source_tau_activation_ms"] != ""
-        inactivation_finite += got["source_tau_inactivation_fast_ms"] != ""
+        activation_value = got["source_tau_activation_ms"]
+        if activation_value != "" and (
+            not math.isfinite(float(activation_value)) or float(activation_value) <= 0.0
+        ):
+            raise SystemExit(f"K_IV source activation fit outside positive domain at {voltage:g} mV")
+        fast_value = got["source_tau_inactivation_fast_ms"]
+        slow_value = got["source_tau_inactivation_fixed_slow_ms"]
+        if fast_value != "":
+            fast_tau = float(fast_value)
+            if not math.isfinite(fast_tau) or not 0.0 < fast_tau <= 300.0:
+                raise SystemExit(f"K_IV source fast inactivation fit outside [0,300] ms at {voltage:g} mV")
+            if float(slow_value) != 450.0:
+                raise SystemExit(f"K_IV fixed slow inactivation component is not 450 ms at {voltage:g} mV")
+        elif slow_value != "":
+            raise SystemExit(f"K_IV fixed slow component present without accepted fast fit at {voltage:g} mV")
+        activation_finite += activation_value != ""
+        inactivation_finite += fast_value != ""
         current_boltzmann = tuple(float(got[field]) for field in boltzmann_fields)
         if boltzmann is None:
             boltzmann = current_boltzmann
@@ -181,10 +191,31 @@ def validate_recovery(actual_path: Path):
         for field in ("source_fast_tau_finite", "source_slow_tau_finite"):
             if got[field] != ref[field]:
                 raise SystemExit(f"K_recovery {field} mismatch at {voltage:g} mV / {interval:g} ms")
+        fast_value = got["source_double_exp_tau_fast_ms"]
+        slow_value = got["source_double_exp_tau_slow_ms"]
         if got["source_fast_tau_finite"] == "True":
+            fast_tau = float(fast_value)
+            if not math.isfinite(fast_tau) or not 0.0 < fast_tau < 1000.0:
+                raise SystemExit(f"K_recovery fast fit violates original (0,1000) ms bounds at {voltage:g} mV")
             fast_voltages.add(voltage)
+        elif fast_value != "":
+            raise SystemExit(f"K_recovery non-finite fast fit was serialized at {voltage:g} mV")
         if got["source_slow_tau_finite"] == "True":
+            slow_tau = float(slow_value)
+            if not math.isfinite(slow_tau) or not 1000.0 <= slow_tau <= 5000.0:
+                raise SystemExit(f"K_recovery slow fit violates original [1000,5000] ms bounds at {voltage:g} mV")
             slow_voltages.add(voltage)
+        elif slow_value != "":
+            raise SystemExit(f"K_recovery non-finite slow fit was serialized at {voltage:g} mV")
+        # Both fit parameters are repeated on every delay row for the same
+        # recovery voltage; retain the recorded value, but require a constant
+        # per-voltage fit throughout that ten-point recovery curve.
+        group_start = (index // 10) * 10
+        if index % 10:
+            prior = actual[group_start]
+            for field in ("source_double_exp_tau_fast_ms", "source_double_exp_tau_slow_ms"):
+                if got[field] != prior[field]:
+                    raise SystemExit(f"K_recovery {field} changes within {voltage:g} mV delay series")
 
     if len(fast_voltages) != 5 or len(slow_voltages) != 5:
         raise SystemExit("K_recovery expected finite fast/slow fits at all 5 voltages")
