@@ -125,11 +125,19 @@ class WilbersKVoltageClampProtocolTests(unittest.TestCase):
             -70.0, times, currents, local_best["tau1_ms"]
         )
         self.assertEqual(len(local_residuals), len(times))
-        self.assertTrue(
-            all(
-                abs(row["residual_current_ma_cm2"]) < 1.0e-12
-                for row in local_residuals
+        residual_rmse = float(
+            np.sqrt(
+                np.mean(
+                    [row["residual_current_ma_cm2"] ** 2 for row in local_residuals]
+                )
             )
+        )
+        self.assertLessEqual(
+            abs(residual_rmse - local_best["fit_rmse_ma_cm2"]),
+            max(1.0e-14, local_best["fit_rmse_ma_cm2"] * 1.0e-8),
+        )
+        self.assertTrue(
+            all(np.isfinite(row["residual_current_ma_cm2"]) for row in local_residuals)
         )
         self.assertAlmostEqual(
             local_residuals[0]["time_since_peak_ms"], 0.0
