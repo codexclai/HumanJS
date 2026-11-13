@@ -36,6 +36,39 @@ FIT_MASK_END_MS = 12.0
 SOURCE_MIN_INWARD_CURRENT_MA_CM2 = 1.0e-6
 FIT_R2_THRESHOLD = 0.95
 
+INACTIVATION_SAMPLE_INTERVAL_MS = 0.005
+INACTIVATION_INITIAL_VOLTAGE_MV = -70.0
+INACTIVATION_TEST_VOLTAGE_MV = -10.0
+INACTIVATION_CONDITIONING_VOLTAGES_MV = tuple(
+    float(v) for v in range(-105, -45, 2)
+)
+INACTIVATION_TEST_WINDOW_START_MS = 51.0
+INACTIVATION_TEST_WINDOW_END_MS = 55.0
+RECOVERY_SAMPLE_INTERVAL_MS = 0.02
+RECOVERY_VOLTAGES_MV = tuple(float(v) for v in range(-90, -65, 2))
+RECOVERY_INTERVALS_MS = tuple(float(v * v) for v in range(1, 13))
+RECOVERY_FIRST_TEST_VOLTAGE_MV = 0.0
+RECOVERY_SECOND_TEST_VOLTAGE_MV = 0.0
+INACTIVATION_FIELDNAMES = (
+    "conditioning_voltage_mv",
+    "samples_fitted",
+    "test_current_min_ma_cm2",
+    "test_current_max_ma_cm2",
+    "source_denominator",
+    "source_ggmax_value",
+    "normalized_ggmax",
+    "boltzmann_vhalf_mv",
+    "boltzmann_slope_mv",
+)
+RECOVERY_FIELDNAMES = (
+    "recovery_voltage_mv",
+    "recovery_interval_ms",
+    "samples_fitted",
+    "second_test_current_peak_magnitude_ma_cm2",
+    "apparent_recovery_tau_ms",
+    "source_returned_finite_tau",
+)
+
 SOURCE_FILES = {
     "channel_tools.py": (
         326242, 35609, "615595a270c6170987757cd35743f5d5b5b2af0e",
@@ -143,6 +176,243 @@ def import_channel_tools(path: Path) -> Any:
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+def replay_na_iv_inactivation(
+    channel_tools: Any, cell: Any, time_vector: Any, h: Any, np: Any
+) -> dict[str, Any]:
+    """Replay channel_tools.Na_IV_inact without plotting or changing its math."""
+    h.celsius = 25.0
+    h.dt = INACTIVATION_SAMPLE_INTERVAL_MS
+    durations = [1.0, 50.0, 10.0]
+    amplitudes = [
+        INACTIVATION_INITIAL_VOLTAGE_MV,
+        INACTIVATION_CONDITIONING_VOLTAGES_MV[0],
+        INACTIVATION_TEST_VOLTAGE_MV,
+    ]
+    ggmax = np.empty(len(INACTIVATION_CONDITIONING_VOLTAGES_MV), dtype=float)
+    provisional_rows: list[dict[str, Any]] = []
+    for index, voltage in enumerate(INACTIVATION_CONDITIONING_VOLTAGES_MV):
+        amplitudes[1] = voltage
+        current = np.asarray(channel_tools.runIna(cell, durations, amplitudes), dtype=float)
+        times = np.asarray(time_vector, dtype=float)
+        if (
+            current.ndim != 1
+            or times.shape != current.shape
+            or len(times) != round(61.0 / INACTIVATION_SAMPLE_INTERVAL_MS) + 1
+            or not np.isfinite(times).all()
+            or not np.isfinite(current).all()
+            or np.any(np.diff(times) <= 0.0)
+        ):
+            raise ReproductionError(
+                f"NEURON returned invalid Na_IV_inact samples at {voltage:g} mV"
+            )
+        if (
+            abs(float(times[0])) > 1.0e-12
+            or abs(float(times[-1]) - 61.0) > 1.0e-9
+            or not np.allclose(
+                np.diff(times),
+                INACTIVATION_SAMPLE_INTERVAL_MS,
+                atol=1.0e-12,
+                rtol=0.0,
+            )
+        ):
+            raise ReproductionError(
+                f"Na_IV_inact time grid differs from source 0.005-ms protocol at {voltage:g} mV"
+            )
+
+        mask = (
+            (times > INACTIVATION_TEST_WINDOW_START_MS)
+            & (times < INACTIVATION_TEST_WINDOW_END_MS)
+        )
+        sample_count = int(np.count_nonzero(mask))
+        if sample_count != 799:
+            raise ReproductionError(
+                f"Unexpected Na_IV_inact sample count {sample_count} at {voltage:g} mV"
+            )
+        # Preserve the deposited helper's literal denominator, including +1e10.
+        # It is a source-code convention and is not silently replaced by a
+        # physically dimensional conductance calculation.
+        source_denominator = (
+            float(amplitudes[1]) - float(cell.ena) + 1.0e10
+        )
+        source_g = -current[mask] / source_denominator
+        source_ggmax = float(np.max(source_g))
+        ggmax[index] = source_ggmax
+        provisional_rows.append(
+            {
+                "conditioning_voltage_mv": voltage,
+                "samples_fitted": sample_count,
+                "test_current_min_ma_cm2": float(np.min(current[mask])),
+                "test_current_max_ma_cm2": float(np.max(current[mask])),
+                "source_denominator": source_denominator,
+                "source_ggmax_value": source_ggmax,
+            }
+        )
+
+    if not np.isfinite(ggmax).all() or float(np.max(ggmax)) <= 0.0:
+        raise ReproductionError("Na_IV_inact produced an invalid peak-availability curve")
+    normalized = ggmax / float(np.max(ggmax))
+    vhalf, slope = channel_tools.fit_boltz_inact(
+        np.asarray(INACTIVATION_CONDITIONING_VOLTAGES_MV, dtype=float),
+        normalized.copy(),
+    )
+    rows = [
+        {
+            **row,
+            "normalized_ggmax": float(normalized[index]),
+            "boltzmann_vhalf_mv": float(vhalf),
+            "boltzmann_slope_mv": float(slope),
+        }
+        for index, row in enumerate(provisional_rows)
+    ]
+    return {
+        "rows": rows,
+        "boltzmann_vhalf_mv": float(vhalf),
+        "boltzmann_slope_mv": float(slope),
+    }
+
+
+def replay_na_inactivation_recovery(
+    channel_tools: Any, cell: Any, time_vector: Any, h: Any, np: Any
+) -> dict[str, Any]:
+    """Replay channel_tools.Na_recovery's paired-pulse protocol and tau fit."""
+    h.celsius = 25.0
+    h.dt = RECOVERY_SAMPLE_INTERVAL_MS
+    recovery_times = np.asarray(RECOVERY_INTERVALS_MS, dtype=float)
+    rows: list[dict[str, Any]] = []
+    for voltage in RECOVERY_VOLTAGES_MV:
+        pulse2 = np.empty(len(RECOVERY_INTERVALS_MS), dtype=float)
+        row_indices: list[int] = []
+        for index, recovery_time in enumerate(RECOVERY_INTERVALS_MS):
+            durations = [2.0, 10.0, recovery_time, 2.0]
+            amplitudes = [
+                HOLD_VOLTAGE_MV,
+                RECOVERY_FIRST_TEST_VOLTAGE_MV,
+                voltage,
+                RECOVERY_SECOND_TEST_VOLTAGE_MV,
+            ]
+            total_duration = sum(durations)
+            current = np.asarray(
+                channel_tools.runIna(cell, durations, amplitudes), dtype=float
+            )
+            times = np.asarray(time_vector, dtype=float)
+            expected_count = round(total_duration / RECOVERY_SAMPLE_INTERVAL_MS) + 1
+            if (
+                current.ndim != 1
+                or times.shape != current.shape
+                or len(times) != expected_count
+                or not np.isfinite(times).all()
+                or not np.isfinite(current).all()
+                or np.any(np.diff(times) <= 0.0)
+            ):
+                raise ReproductionError(
+                    f"NEURON returned invalid Na_recovery samples at {voltage:g} mV / {recovery_time:g} ms"
+                )
+            if (
+                abs(float(times[0])) > 1.0e-12
+                or abs(float(times[-1]) - total_duration) > 1.0e-9
+                or not np.allclose(
+                    np.diff(times),
+                    RECOVERY_SAMPLE_INTERVAL_MS,
+                    atol=1.0e-12,
+                    rtol=0.0,
+                )
+            ):
+                raise ReproductionError(
+                    f"Na_recovery time grid differs from source 0.02-ms protocol at {voltage:g} mV"
+                )
+
+            window_start = 12.0 + recovery_time
+            window_end = window_start + 2.0
+            mask = (times > window_start) & (times < window_end)
+            sample_count = int(np.count_nonzero(mask))
+            if sample_count != 99:
+                raise ReproductionError(
+                    f"Unexpected Na_recovery sample count {sample_count} at {voltage:g} mV / {recovery_time:g} ms"
+                )
+            # channel_tools.Na_recovery stores -I[mask].min() as pulse2.
+            pulse2[index] = -float(np.min(current[mask]))
+            rows.append(
+                {
+                    "recovery_voltage_mv": voltage,
+                    "recovery_interval_ms": recovery_time,
+                    "samples_fitted": sample_count,
+                    "second_test_current_peak_magnitude_ma_cm2": float(pulse2[index]),
+                }
+            )
+            row_indices.append(len(rows) - 1)
+
+        # Preserve the authors' exact get_tau_act call, initial estimate, and
+        # R² rejection behavior. The function returns NaN on an R² failure.
+        try:
+            apparent_tau = float(
+                channel_tools.get_tau_act(recovery_times, pulse2, est=15)
+            )
+        except Exception:
+            apparent_tau = math.nan
+        for row_index in row_indices:
+            rows[row_index]["apparent_recovery_tau_ms"] = apparent_tau
+            rows[row_index]["source_returned_finite_tau"] = math.isfinite(apparent_tau)
+
+    return {"rows": rows}
+
+
+def inactivation_csv_text(result: dict[str, Any]) -> str:
+    env = result["environment"]
+    source = result["source_files"]
+    clamp = env["vclamp"]
+    lines = [
+        "# Original Wilbers Na_IV_inact source protocol executed in NEURON 9.0.2 with the pure human na_human.mod.",
+        f"# DataverseNL v{DATASET_VERSION}, DOI {DATASET_DOI}, CC0-1.0.",
+        f"# channel_tools.py SHA-1 {source['channel_tools.py']['sha1']}; na_human.mod SHA-1 {source['mod/na_human.mod']['sha1']}; fit_na_hh_cma_human.py SHA-1 {source['fit_na_hh_cma_human.py']['sha1']}.",
+        f"# Environment: Python {env['python']}; NEURON {env['neuron']}; NumPy {env['numpy']}; SciPy {env['scipy']}; compiler {result['compiler']}.",
+        f"# Cell: diameter={env['cell_diameter_um']:g} um; default length={env['cell_length_um']:g} um; Ra={env['cell_axial_resistance_ohm_cm']:g}; cm={env['cell_capacitance_uF_cm2']:g}; ena={env['na_reversal_mV']:g} mV; default gbar={env['na_default_gbar_pS_um2']:g} pS/um2; vshift={env['na_voltage_shift_mV']:g} mV.",
+        f"# VClamp defaults: gain={clamp['gain']:g}; rstim={clamp['rstim_mohm']:g} MOhm; tau1={clamp['tau1_ms']:g} ms; tau2={clamp['tau2_ms']:g} ms; fac={clamp['fac']:g}.",
+        "# Protocol: 25 C; dt=0.005 ms; -70 mV initial segment for 1 ms; 30 conditioning voltages -105..-47 mV in 2-mV increments for 50 ms; -10 mV test for 10 ms.",
+        "# The original (t>51)&(t<55) test window has 799 samples. Source formula is g=-I/(conditioning_voltage-ena+1e10), followed by peak and max-normalization; this literal denominator is reproduced without dimensional reinterpretation.",
+        f"# Original fit_boltz_inact result: Vhalf={result['inactivation']['boltzmann_vhalf_mv']:.12g} mV; slope={result['inactivation']['boltzmann_slope_mv']:.12g} mV.",
+        "# These are pure-model source-code outputs, not experimental current measurements or biological validation; the inspected Dataverse release has no raw human NWB voltage-clamp traces.",
+        ",".join(INACTIVATION_FIELDNAMES),
+    ]
+    import io
+    output = io.StringIO()
+    writer = csv.DictWriter(
+        output, fieldnames=INACTIVATION_FIELDNAMES, extrasaction="ignore",
+        lineterminator="\n",
+    )
+    writer.writeheader()
+    writer.writerows(result["inactivation"]["rows"])
+    lines.append(output.getvalue().rstrip("\n"))
+    return "\n".join(lines) + "\n"
+
+
+def recovery_csv_text(result: dict[str, Any]) -> str:
+    env = result["environment"]
+    source = result["source_files"]
+    clamp = env["vclamp"]
+    lines = [
+        "# Original Wilbers Na_recovery paired-pulse source protocol executed in NEURON 9.0.2 with the pure human na_human.mod.",
+        f"# DataverseNL v{DATASET_VERSION}, DOI {DATASET_DOI}, CC0-1.0.",
+        f"# channel_tools.py SHA-1 {source['channel_tools.py']['sha1']}; na_human.mod SHA-1 {source['mod/na_human.mod']['sha1']}; fit_na_hh_cma_human.py SHA-1 {source['fit_na_hh_cma_human.py']['sha1']}.",
+        f"# Environment: Python {env['python']}; NEURON {env['neuron']}; NumPy {env['numpy']}; SciPy {env['scipy']}; compiler {result['compiler']}.",
+        f"# Cell: diameter={env['cell_diameter_um']:g} um; default length={env['cell_length_um']:g} um; Ra={env['cell_axial_resistance_ohm_cm']:g}; cm={env['cell_capacitance_uF_cm2']:g}; ena={env['na_reversal_mV']:g} mV; default gbar={env['na_default_gbar_pS_um2']:g} pS/um2; vshift={env['na_voltage_shift_mV']:g} mV.",
+        f"# VClamp defaults: gain={clamp['gain']:g}; rstim={clamp['rstim_mohm']:g} MOhm; tau1={clamp['tau1_ms']:g} ms; tau2={clamp['tau2_ms']:g} ms; fac={clamp['fac']:g}.",
+        "# Protocol: 25 C; dt=0.02 ms; 2 ms at -120 mV; 10 ms at 0 mV first test; recovery intervals 1^2..12^2 ms at -90..-66 mV in 2-mV increments; final 2-ms test at 0 mV.",
+        "# For each test pulse the source takes -min(I) in the open interval (12+recovery_time, 14+recovery_time), yielding 99 samples. Its fit is channel_tools.get_tau_act(rectimes,pulse2,est=15); the source labels the plotted current nA although runIna returns local ina density (mA/cm2).",
+        "# Returned recovery taus are source apparent-current fit values, not microscopic h-gate taus. These model outputs are not experimental data or biological validation.",
+        ",".join(RECOVERY_FIELDNAMES),
+    ]
+    import io
+    output = io.StringIO()
+    writer = csv.DictWriter(
+        output, fieldnames=RECOVERY_FIELDNAMES, extrasaction="ignore",
+        lineterminator="\n",
+    )
+    writer.writeheader()
+    writer.writerows(result["recovery"]["rows"])
+    lines.append(output.getvalue().rstrip("\n"))
+    return "\n".join(lines) + "\n"
 
 
 def run_protocol() -> dict[str, Any]:
@@ -375,6 +645,20 @@ def run_protocol() -> dict[str, Any]:
 
             if len(rows) != len(TEST_VOLTAGES_MV):
                 raise ReproductionError("Did not produce all 19 Na_IV voltage rows")
+
+            # Na_IV itself calls Na_IV_inact and Na_recovery in this order.
+            # Keep their distinct sample intervals and original source helpers.
+            inactivation = replay_na_iv_inactivation(
+                channel_tools, cell, time_vector, h, np
+            )
+            recovery = replay_na_inactivation_recovery(
+                channel_tools, cell, time_vector, h, np
+            )
+            if len(inactivation["rows"]) != 30:
+                raise ReproductionError("Did not produce all 30 Na_IV_inact rows")
+            if len(recovery["rows"]) != 156:
+                raise ReproductionError("Did not produce all 156 Na_recovery rows")
+
             return {
                 "environment": {
                     "python": platform.python_version(),
@@ -382,8 +666,8 @@ def run_protocol() -> dict[str, Any]:
                     "numpy": np.__version__,
                     "scipy": __import__("scipy").__version__,
                     "secondorder": secondorder,
-                    "temperature_celsius": float(h.celsius),
-                    "dt_ms": float(h.dt),
+                    "temperature_celsius": 25.0,
+                    "dt_ms": SAMPLE_INTERVAL_MS,
                     "cell_diameter_um": float(cell.diam),
                     "cell_length_um": float(cell.L),
                     "cell_axial_resistance_ohm_cm": float(cell.Ra),
@@ -397,6 +681,8 @@ def run_protocol() -> dict[str, Any]:
                 "compiler": shutil.which("g++") or "unavailable",
                 "compile_log_tail": (build_log[-3000:] if build_log else ""),
                 "rows": rows,
+                "inactivation": inactivation,
+                "recovery": recovery,
             }
     finally:
         os.chdir(original_cwd)
@@ -441,18 +727,44 @@ def csv_text(result: dict[str, Any]) -> str:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--output", type=Path, help="Optional output CSV path")
+    parser.add_argument("--output", type=Path, help="Optional Na_IV current-fit CSV path")
+    parser.add_argument("--inactivation-output", type=Path, help="Optional Na_IV_inact CSV path")
+    parser.add_argument("--recovery-output", type=Path, help="Optional Na_recovery CSV path")
     args = parser.parse_args()
     result = run_protocol()
     content = csv_text(result)
-    if args.output:
-        args.output.expanduser().resolve().write_text(content, encoding="utf-8")
+    inactivation_content = inactivation_csv_text(result)
+    recovery_content = recovery_csv_text(result)
+    for output_path, output_content in (
+        (args.output, content),
+        (args.inactivation_output, inactivation_content),
+        (args.recovery_output, recovery_content),
+    ):
+        if output_path:
+            output_path.expanduser().resolve().write_text(
+                output_content, encoding="utf-8"
+            )
     print(content, end="")
     passed = sum(bool(row["passed_joint_fit_r2"]) for row in result["rows"])
     density_gate = sum(bool(row["source_current_density_gate_passed"]) for row in result["rows"])
+    recovery_finite = sum(
+        bool(row["source_returned_finite_tau"])
+        for row in result["recovery"]["rows"][::len(RECOVERY_INTERVALS_MS)]
+    )
     print(
-        f"# NEURON VClamp replay: {density_gate}/19 pass current-density selection; "
+        f"# NEURON VClamp Na_IV replay: {density_gate}/19 pass current-density selection; "
         f"{passed}/19 pass joint-fit R² > {FIT_R2_THRESHOLD:.2f}.",
+        file=sys.stderr,
+    )
+    print(
+        f"# Na_IV_inact replay: {len(result['inactivation']['rows'])}/30 conditioning voltages; "
+        f"Boltzmann Vhalf={result['inactivation']['boltzmann_vhalf_mv']:.6g} mV, "
+        f"slope={result['inactivation']['boltzmann_slope_mv']:.6g} mV.",
+        file=sys.stderr,
+    )
+    print(
+        f"# Na_recovery replay: {len(result['recovery']['rows'])}/156 paired-pulse traces; "
+        f"{recovery_finite}/13 finite source recovery taus.",
         file=sys.stderr,
     )
     return 0
