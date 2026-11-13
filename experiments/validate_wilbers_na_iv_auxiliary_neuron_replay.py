@@ -34,6 +34,8 @@ RECOVERY_MARKERS = (
 INACTIVATION_FIELDS = (
     "conditioning_voltage_mv",
     "samples_fitted",
+    "test_window_first_sample_ms",
+    "test_window_last_sample_ms",
     "test_current_min_ma_cm2",
     "test_current_max_ma_cm2",
     "source_denominator",
@@ -46,6 +48,8 @@ RECOVERY_FIELDS = (
     "recovery_voltage_mv",
     "recovery_interval_ms",
     "samples_fitted",
+    "test_window_first_sample_ms",
+    "test_window_last_sample_ms",
     "second_test_current_peak_magnitude_ma_cm2",
     "apparent_recovery_tau_ms",
     "source_returned_finite_tau",
@@ -96,8 +100,11 @@ def validate_inactivation(actual_path: Path) -> tuple[int, float, float]:
         voltage = -105.0 + 2.0 * index
         if float(actual["conditioning_voltage_mv"]) != voltage:
             raise SystemExit(f"Na_IV_inact voltage order mismatch at row {index}")
-        if int(actual["samples_fitted"]) != 799:
+        sample_count = int(actual["samples_fitted"])
+        if sample_count not in (799, 800, 801):
             raise SystemExit(f"Na_IV_inact sample-count mismatch at {voltage:g} mV")
+        finite_or_blank(actual["test_window_first_sample_ms"], expected["test_window_first_sample_ms"], 1.0e-9, f"Na_IV_inact first sample time at {voltage:g} mV")
+        finite_or_blank(actual["test_window_last_sample_ms"], expected["test_window_last_sample_ms"], 1.0e-9, f"Na_IV_inact last sample time at {voltage:g} mV")
         finite_or_blank(actual["test_current_min_ma_cm2"], expected["test_current_min_ma_cm2"], 2.0e-10, f"Na_IV_inact current minimum at {voltage:g} mV")
         finite_or_blank(actual["test_current_max_ma_cm2"], expected["test_current_max_ma_cm2"], 2.0e-10, f"Na_IV_inact current maximum at {voltage:g} mV")
         finite_or_blank(actual["source_denominator"], expected["source_denominator"], 1.0e-6, f"Na_IV_inact source denominator at {voltage:g} mV")
@@ -136,8 +143,11 @@ def validate_recovery(actual_path: Path) -> tuple[int, int]:
                 raise SystemExit(f"Na_recovery voltage order mismatch at row {index - 1}")
             if float(actual["recovery_interval_ms"]) != recovery_time_ms:
                 raise SystemExit(f"Na_recovery interval mismatch at {voltage} mV / {recovery_time_ms:g} ms")
-            if int(actual["samples_fitted"]) != 99:
+            sample_count = int(actual["samples_fitted"])
+            if sample_count not in (99, 100, 101):
                 raise SystemExit(f"Na_recovery sample-count mismatch at {voltage} mV / {recovery_time_ms:g} ms")
+            finite_or_blank(actual["test_window_first_sample_ms"], expected["test_window_first_sample_ms"], 1.0e-9, f"Na_recovery first sample time at {voltage} mV / {recovery_time_ms:g} ms")
+            finite_or_blank(actual["test_window_last_sample_ms"], expected["test_window_last_sample_ms"], 1.0e-9, f"Na_recovery last sample time at {voltage} mV / {recovery_time_ms:g} ms")
             finite_or_blank(
                 actual["second_test_current_peak_magnitude_ma_cm2"],
                 expected["second_test_current_peak_magnitude_ma_cm2"],

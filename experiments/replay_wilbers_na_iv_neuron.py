@@ -52,6 +52,8 @@ RECOVERY_SECOND_TEST_VOLTAGE_MV = 0.0
 INACTIVATION_FIELDNAMES = (
     "conditioning_voltage_mv",
     "samples_fitted",
+    "test_window_first_sample_ms",
+    "test_window_last_sample_ms",
     "test_current_min_ma_cm2",
     "test_current_max_ma_cm2",
     "source_denominator",
@@ -64,6 +66,8 @@ RECOVERY_FIELDNAMES = (
     "recovery_voltage_mv",
     "recovery_interval_ms",
     "samples_fitted",
+    "test_window_first_sample_ms",
+    "test_window_last_sample_ms",
     "second_test_current_peak_magnitude_ma_cm2",
     "apparent_recovery_tau_ms",
     "source_returned_finite_tau",
@@ -226,7 +230,7 @@ def replay_na_iv_inactivation(
             & (times < INACTIVATION_TEST_WINDOW_END_MS)
         )
         sample_count = int(np.count_nonzero(mask))
-        if sample_count != 799:
+        if sample_count not in (799, 800, 801):
             raise ReproductionError(
                 f"Unexpected Na_IV_inact sample count {sample_count} at {voltage:g} mV"
             )
@@ -243,6 +247,8 @@ def replay_na_iv_inactivation(
             {
                 "conditioning_voltage_mv": voltage,
                 "samples_fitted": sample_count,
+                "test_window_first_sample_ms": float(times[mask][0]),
+                "test_window_last_sample_ms": float(times[mask][-1]),
                 "test_current_min_ma_cm2": float(np.min(current[mask])),
                 "test_current_max_ma_cm2": float(np.max(current[mask])),
                 "source_denominator": source_denominator,
@@ -327,7 +333,7 @@ def replay_na_inactivation_recovery(
             window_end = window_start + 2.0
             mask = (times > window_start) & (times < window_end)
             sample_count = int(np.count_nonzero(mask))
-            if sample_count != 99:
+            if sample_count not in (99, 100, 101):
                 raise ReproductionError(
                     f"Unexpected Na_recovery sample count {sample_count} at {voltage:g} mV / {recovery_time:g} ms"
                 )
@@ -338,6 +344,8 @@ def replay_na_inactivation_recovery(
                     "recovery_voltage_mv": voltage,
                     "recovery_interval_ms": recovery_time,
                     "samples_fitted": sample_count,
+                    "test_window_first_sample_ms": float(times[mask][0]),
+                    "test_window_last_sample_ms": float(times[mask][-1]),
                     "second_test_current_peak_magnitude_ma_cm2": float(pulse2[index]),
                 }
             )
@@ -370,7 +378,7 @@ def inactivation_csv_text(result: dict[str, Any]) -> str:
         f"# Cell: diameter={env['cell_diameter_um']:g} um; default length={env['cell_length_um']:g} um; Ra={env['cell_axial_resistance_ohm_cm']:g}; cm={env['cell_capacitance_uF_cm2']:g}; ena={env['na_reversal_mV']:g} mV; default gbar={env['na_default_gbar_pS_um2']:g} pS/um2; vshift={env['na_voltage_shift_mV']:g} mV.",
         f"# VClamp defaults: gain={clamp['gain']:g}; rstim={clamp['rstim_mohm']:g} MOhm; tau1={clamp['tau1_ms']:g} ms; tau2={clamp['tau2_ms']:g} ms; fac={clamp['fac']:g}.",
         "# Protocol: 25 C; dt=0.005 ms; -70 mV initial segment for 1 ms; 30 conditioning voltages -105..-47 mV in 2-mV increments for 50 ms; -10 mV test for 10 ms.",
-        "# The original (t>51)&(t<55) test window has 799 samples. Source formula is g=-I/(conditioning_voltage-ena+1e10), followed by peak and max-normalization; this literal denominator is reproduced without dimensional reinterpretation.",
+        "# The original (t>51)&(t<55) test window is evaluated against NEURON's recorded floating-point time vector. Per-row sample count and first/last included samples are retained; tiny boundary roundoff can add a boundary sample. Source formula is g=-I/(conditioning_voltage-ena+1e10), followed by peak and max-normalization; this literal denominator is reproduced without dimensional reinterpretation.",
         f"# Original fit_boltz_inact result: Vhalf={result['inactivation']['boltzmann_vhalf_mv']:.12g} mV; slope={result['inactivation']['boltzmann_slope_mv']:.12g} mV.",
         "# These are pure-model source-code outputs, not experimental current measurements or biological validation; the inspected Dataverse release has no raw human NWB voltage-clamp traces.",
         # CSV column names are emitted once by DictWriter below.
@@ -403,7 +411,7 @@ def recovery_csv_text(result: dict[str, Any]) -> str:
         f"# Cell: diameter={env['cell_diameter_um']:g} um; default length={env['cell_length_um']:g} um; Ra={env['cell_axial_resistance_ohm_cm']:g}; cm={env['cell_capacitance_uF_cm2']:g}; ena={env['na_reversal_mV']:g} mV; default gbar={env['na_default_gbar_pS_um2']:g} pS/um2; vshift={env['na_voltage_shift_mV']:g} mV.",
         f"# VClamp defaults: gain={clamp['gain']:g}; rstim={clamp['rstim_mohm']:g} MOhm; tau1={clamp['tau1_ms']:g} ms; tau2={clamp['tau2_ms']:g} ms; fac={clamp['fac']:g}.",
         "# Protocol: 25 C; dt=0.02 ms; 2 ms at -120 mV; 10 ms at 0 mV first test; recovery intervals 1^2..12^2 ms at -90..-66 mV in 2-mV increments; final 2-ms test at 0 mV.",
-        "# For each test pulse the source takes -min(I) in the open interval (12+recovery_time, 14+recovery_time), yielding 99 samples. Its fit is channel_tools.get_tau_act(rectimes,pulse2,est=15); the source labels the plotted current nA although runIna returns local ina density (mA/cm2).",
+        "# For each test pulse the source takes -min(I) in the open interval (12+recovery_time, 14+recovery_time). Sample count and first/last included times are recorded because NEURON's floating-point clock may include a boundary point. Its fit is channel_tools.get_tau_act(rectimes,pulse2,est=15); the source labels the plotted current nA although runIna returns local ina density (mA/cm2).",
         "# Returned recovery taus are source apparent-current fit values, not microscopic h-gate taus. These model outputs are not experimental data or biological validation.",
         # CSV column names are emitted once by DictWriter below.
     ]
