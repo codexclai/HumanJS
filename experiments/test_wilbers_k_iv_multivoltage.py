@@ -76,8 +76,12 @@ class KIVMultivoltageTests(unittest.TestCase):
     def test_rejects_clock_misalignment_and_nonmonotone_time(self) -> None:
         times = np.arange(0.0, 120.0, 0.1)
         currents = 4.0e-4 + 1.0e-5 * np.exp(-times / 20.0)
+        misaligned_source_times = times + 31.0
+        misaligned_source_times[50] += 0.01
         with self.assertRaises(ValueError):
-            analyze_k_iv_waveform(-70.0, times, times + 31.0, currents)
+            analyze_k_iv_waveform(
+                -70.0, times, misaligned_source_times, currents
+            )
         invalid_times = times.copy()
         invalid_times[40] = invalid_times[39]
         with self.assertRaises(ValueError):
