@@ -828,3 +828,69 @@ The first profile-shape run was superseded before final verification while CSV l
 ### Next concrete step
 
 Test the conditional tau3 objective shape's dependence on tau1. Use a predeclared three-voltage subset that spans the observed breadth (-30, -60, and +55 mV), vary tau1 only inside each already measured local 6% refinement neighborhood, and jointly refit the full-waveform coefficients over the same 0.1–5.0-ms tau3 grid. Preserve the full/early/late diagnostics and explicitly call this a numerical model-output sensitivity surface, not a confidence region or biological uncertainty.
+
+
+## Latest handoff — conditional K_IV tau1–tau3 surface (2026-11-14)
+
+### Verified state before this documentation refresh
+
+- Repository: `codexclai/HumanJS`; default branch and only branch: `main`.
+- Code/data HEAD: `5e41b681bcb6307921f466c90b4fbe680d1f2681`; complete non-truncated recursive tree: 116 entries; zero open issues and zero open PRs.
+- GitHub Actions [43500401868](https://github.com/codexclai/HumanJS/actions/runs/43500401868) passed on exact SHA `5e41b681bcb6307921f466c90b4fbe680d1f2681`, all 34 workflow steps successful.
+
+### Work completed
+
+Added a reproducible conditional tau1–tau3 sensitivity surface to the existing source-replay analysis. The voltage subset (-30, -60, +55 mV) was predeclared from the broadest, median and narrowest single-tau1 profile basins. Nine tau1 nodes span each command's pre-existing local 6% refinement interval. At each node, tau3 is profiled over 0.1–10.0 ms at 5,601 points, and all coefficients are refit against the full waveform RSS, retaining the signed added amplitude and source tau2=450 ms. Early/late RMSE partitions remain diagnostics.
+
+The strict expected result is `research/HUMAN-L23-WILBERS-K-IV-TAU1-TAU3-SURFACE-SUMMARY.csv`, with 27 rows × 44 columns. CI reproduces the surface from the same exact temporary NEURON waveform export and compares every field against the committed reference.
+
+### Results
+
+| Command | Existing local tau1 (ms) | Existing single-tau1 tau3 (ms) | Tau1 local window (ms) | Conditional tau3 minima over the window (ms) | Best sampled surface tau1 / tau3 (ms) | Full-RSS reduction vs center tau1 slice |
+|---:|---:|---:|---:|---:|---:|---:|
+| -30 mV | 112.958 | 2.9805 | 106.021–119.556 | 2.057–5.092 | 107.755 / 4.339 | 96.276% |
+| -60 mV | 251.949 | 1.56825 | 237.580–267.909 | 1.224–2.140 | 244.764 / 1.802 | 96.955% |
+| +55 mV | 17.195 | 0.49725 | 16.134–18.194 | 0.498–10.000 | 17.195 / 0.498 | 0% |
+
+At -30 and -60 mV all nine conditional tau3 minima are interior to the 0.1–10-ms grid. Allowing tau1 to move within its existing local interval materially shifts the sampled full-RSS minimum: the -30-mV minimum is at tau1 107.755 ms/tau3 4.339 ms, while the -60-mV minimum is at 244.764 ms/1.802 ms. Relative to the center tau1 slice, their full-waveform RSS falls by 96.276% and 96.955%, respectively. These are reductions in the objective RSS, not RMSE percentages.
+
+The +55-mV surface behaves differently. Six of its nine tau1 slices select tau3 at the expanded 10-ms upper boundary. Its best sampled surface point remains at the center tau1 (17.195 ms) and tau3 0.49777 ms, so the global full-RSS objective does not improve relative to that center slice. The signed extra amplitude is negative at tau1 indices 0–4 but positive at indices 5–8. Thus, the sign and fitted short component are sensitive to the allowed tau1 change at this depolarized command, and the 10-ms upper limit still fails to localize several conditional minima.
+
+At the center tau1 node, the contiguous 1%/5%/10% objective-basin spans are 0.4561/1.0254/1.4620 ms at -30 mV, 0.1485/0.3359/0.4756 ms at -60 mV, and 0.06541/0.14673/0.21037 ms at +55 mV. These widths are conditional slices through a discrete, deterministic objective surface; they are not statistical uncertainty intervals.
+
+This surface demonstrates that the previously reported tau3 curvature and basin width conditional on fixed tau1 do not capture all tau1–tau3 coupling. The strong objective reductions at -30 and -60 mV arise from shifting tau1 inside the existing 6% local window while refitting the signed short component. At +55 mV, both the tau3 boundary and a sign reversal in the added coefficient show that the correction is not stable under tau1 variation. The 0.1–10-ms range therefore does not resolve all +55-mV conditional profiles.
+
+All inputs are deterministic NEURON 9.0.2/VClamp outputs from the deposited pure-human K model, not raw human experimental K-current recordings. Raw human K voltage-clamp NWB traces and individual kinetic target CSVs remain absent from the inspected DataverseNL v3.0 inventory. No noise model was fitted; do not interpret the basin widths as confidence intervals, measurement uncertainty, biological uncertainty, or human channel kinetics. The deposited helper/caller/NMODL, HumanJS Rust equations, and channel parameters remain unchanged. Do not transfer tau3 or the signed correction into Rust. ADR-014 remains open and the single-compartment spike-capable model remains exploratory and biologically unvalidated.
+
+The surface shows that fixed-tau1 objective basin widths are conditional. The large RSS reductions at -30/-60 mV arise after tau1 shifts within the already declared local window, while the +55-mV surface retains six upper-edge tau3 slices and an amplitude sign reversal. This is a numerical sensitivity diagnostic on deterministic model output only. It does not fit raw human currents, establish a biological kinetic law, or justify a HumanJS channel parameter. No source routine, caller, NMODL or Rust model parameter changed; ADR-014 remains open. No author or researcher was contacted.
+
+### Changed paths in this continuation
+
+- `.github/workflows/repository-policy.yml`
+- `experiments/wilbers_k_iv_multivoltage.py`
+- `experiments/analyze_wilbers_k_iv_multivoltage.py`
+- `experiments/test_wilbers_k_iv_multivoltage.py`
+- `experiments/validate_wilbers_k_iv_tau1_tau3_surface.py`
+- `research/HUMAN-L23-WILBERS-K-IV-TAU1-TAU3-SURFACE-SUMMARY.csv`
+- `docs/BOOT.md`
+- `docs/decisions/DECISIONS.md`
+- `docs/roadmap/MASTER-ROADMAP.md`
+- `docs/status/STATUS.md`
+- `docs/status/SESSION-HANDOFF.md`
+- `research/HUMAN-L23-WILBERS-K-IV-FIT-SENSITIVITY.md`
+
+### Commits and verification
+
+- `1ef6f195bf0a9abbe44a735b4dfeb121900fe391` — initial tau1–tau3 conditional surface integration.
+- `50ff5e015f1eaefee2686fda4cd3f657063f3644` — add the surface validator and temporarily use structural validation while capturing results.
+- `10c38698a301b33656672305ae4b1588c73a5808` — correct CSV preamble newline serialization.
+- `aa978b7c7eced573ac029e8d252c22e516fcc6a2` — align the synthetic fixture's baseline tau3 to the same waveform.
+- `383d59bf3af31428d5e782b8f2d942da6fc1980b` — expand the surface-only tau3 interval to 0.1–10 ms (5,601 points).
+- `75db6c275139539cb4b153e85e24fd659674232c` — allow the wider surface's selected center-slice tau3 to differ from the narrower baseline reference.
+- `5e41b681bcb6307921f466c90b4fbe680d1f2681` — commit the 27-row/44-column surface CSV and restore strict CI comparison.
+
+Workflow [43500401868](https://github.com/codexclai/HumanJS/actions/runs/43500401868) passed on exact `5e41b68`: 41 Rust core unit, 3 synapse integration and 6 passive-membrane integration tests; rustfmt/Clippy; 30 Python experiment scripts parsed; 48 Python tests; original Wilbers Na/K NEURON source replays and validators; strict comparisons of the baseline 27-row tau3 profile, expanded 27-row tau3 profile, 27-row/26-column fixed-tau1 shape reference, and new 27-row/44-column tau1–tau3 surface; three-exponential residual validator; repository policy. No local clone or local Rust/NEURON run was performed; verification was in hosted GitHub Actions.
+
+### Next concrete step
+
+Inspect the +55-mV upper-bound slices with a wider tau3 domain while retaining the same nine tau1 nodes and full-waveform objective. Determine whether conditional minima move inside the wider domain and whether the positive a3 values at the high-tau1 slices persist away from the current 10-ms edge. Keep it bounded to this representative command and report any remaining boundary limitation; do not infer biology or transfer the term into Rust.
