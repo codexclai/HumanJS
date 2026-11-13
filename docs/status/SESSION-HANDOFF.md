@@ -2,15 +2,15 @@
 
 **Updated:** 2026-11-13
 **Canonical repository:** `codexclai/HumanJS`, branch `main` only.
-**Latest verified base before the 12,800-node Na TABLE extension:** `3846ad55228c789d3c5768f537c0fff327c8515a` (high-resolution K trap0 counterfactual; Actions run `43413763179` passed).
+**Latest verified base before the Human K activation trap0 regression:** `cab3ccf5a8f63c5f665aaea847c808366e76159b` (12,800-node Na TABLE extension; Actions run `43415126545` passed).
 **Previous evidence availability cross-check:** `30dcee632b9ad5a64e4d6c1f496b9f00e03d3c64` (bounded public-archive search).
-**Re-fetch the current main HEAD and newest workflow before relying on this handoff; the 12,800-node Na TABLE extension and Rust trap0 cross-check are being recorded directly on main.**
+**Re-fetch the current main HEAD and newest workflow before relying on this handoff; the K activation trap0 regression is being recorded directly on main.**
 Verify the live HEAD and newest workflow before relying on this handoff.
 
 ## Verified repository state at handoff
 
-- Public repository; default branch `main`; live parent HEAD before this update: `3846ad55228c789d3c5768f537c0fff327c8515a`; recursive tree 75 entries, not truncated; exactly one branch (`main`); no open issues and no open pull requests.
-- GitHub Actions run `43413763179` passed on that exact parent HEAD: https://github.com/codexclai/HumanJS/actions/runs/43413763179. It passed formatting, Clippy, Rust workspace tests, Python experiment syntax/unit tests, both Wilbers validators, and repository policy. Numerical source/model results are not biological validation.
+- Public repository; default branch `main`; live parent HEAD before this update: `cab3ccf5a8f63c5f665aaea847c808366e76159b`; recursive tree 75 entries, not truncated; exactly one branch (`main`); no open issues and no open pull requests.
+- GitHub Actions run `43415126545` passed on that exact parent HEAD: https://github.com/codexclai/HumanJS/actions/runs/43415126545. It passed formatting, Clippy, Rust workspace tests, Python experiment syntax/unit tests, both Wilbers validators, and repository policy. Numerical source/model results are not biological validation.
 - Fresh independent NEURON 9.0.2 `modlunit` invocation on unmodified `k_human.mod` and `k_mouse.mod` again failed at the untyped `trates(v+vshift)` call, line 82. Both species' repeated diagnostics are now recorded in `research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md`. The original files still compile with `nrnivmodl`; see ADR-014 for the temporary typed-probe findings. No source file was changed. The same research record clarifies that the article's public Dataverse data statement is satisfied by deposited summary/model files; it does not mean the missing per-cell K kinetic CSVs or raw voltage-clamp traces occur in the inspected 65-file v3.0 inventory.
 - On a clean clone of the parent commit, `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets --all-features -- -D warnings`, and `cargo test --workspace --locked` passed (31 unit tests, 3 synapse integration tests, 6 passive-membrane integration tests). All five experiment scripts parsed, both Wilbers validators passed, and repository policy passed. HumanJS 20-µs and 1-µs examples emitted the expected 1,450 and 29,000 post-step samples; the optional gate CSVs contain matching row counts.
 - The NEURON 9.0.2 source baseline was independently rerun and the diagnostic passed end-to-end with pinned Python dependencies. Temporary counters recorded zero entries into the flawed `trap0` fallback; its instrumented and unmodified source traces were identical. The new gate comparison records five NMODL states and confirms that the biggest internal-state errors are in the fast gates during the AP upstroke.
@@ -353,7 +353,7 @@ These are deterministic software tests of the counterfactual implementation, not
 
 ## Next concrete research action
 
-The source-order and CN replays now reproduce their NEURON variants within about 0.00056 mV. At 250 ns, actual CN midpoint and HumanJS RK4 current balances close; the actual source/HumanJS voltage-residual derivative is accounted for by their current difference. Next, compare the prescribed-path CN midpoint/left-gate current with fully evolved source/HumanJS current paths across timestep refinement and Na TABLE modes.
+Run a bounded voltage-grid comparison of the original human K activation rate equation against HumanJS Rust potassium_rates, applying the -10-mV channel shift explicitly. Compare each rate component and activation time constant across the source voltage range, preserve the deposited parameter values, and distinguish direct rate agreement from membrane-trajectory differences. This remains software/source-equation verification, not biological validation.
 
 
 ## 2026-11-12 paired source/HumanJS voltage-path gate attribution
@@ -515,3 +515,8 @@ The corrected-K source CN replay matches NEURON within about 0.000557 mV; its ag
 The corrected-K 250-ns counterfactual was extended to 12,800 Na-table nodes. TABLE-on voltage/current RMSEs are 0.00147610 mV and 1.78514e-5 A/m², versus 0.00147738 mV and 1.74232e-5 A/m² for the matched direct-rate control. The current mismatch is now 1.0246× the direct-rate residual (1.0967× at 6,400; 1.4266× at 3,200). Shared-path Na gate error is 9.22e-9; source TABLE-on/off trajectory delta is 7.19e-6 mV RMSE. Doubling 6,400→12,800 lowers the shared-path gate error 4.00× and the trajectory delta 3.79×. Current identities remain closed at approximately 1e-13 A/m².
 
 The current Rust implementation's trap0 helper already uses the correct v-th offset, analytic prefactor×slope limit, exp_m1 and asymptotic branches; its existing continuity unit test passed. No HumanJS code change was needed. Temporary corrected-K/12,800-node NMODL files and outputs remained outside Git. This remains a numerical counterfactual, not biological validation or a replacement for the author's 200-node baseline.
+
+
+### 2026-11-13 — Human K activation trap0 regression
+
+Added `human_potassium_activation_rate_is_continuous_at_both_trap0_voltage_landmarks` in `crates/humanjs-core/src/ion_channels.rs`. It compares HumanJS K activation tau with an independent `exp_m1)-based source-equation evaluation at the former wrong-sign guard (v=-theta), both guard edges, the true denominator singularity (v=theta), and nearby points. The tested discrepancy tolerance is 1e-12 ms. The targeted test and full Rust suite pass. No biological parameter or runtime implementation changed; this is a software regression only.

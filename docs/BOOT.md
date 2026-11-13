@@ -41,7 +41,7 @@ Do not search for or request old uploads or copied source snapshots. If evidence
 
 `main` is the only branch to use, permanently. Never create, check out, update, merge, or otherwise use another branch. Make authorized changes directly on `main`. Do not create branches, PRs, or automation that opens non-main update branches. No branch protection, rulesets, or deletion-prevention settings are required. Force pushes are permitted but exceptional and must be inspected and verified.
 
-The live repository check immediately before the 2026-11-13 12,800-node Na TABLE extension verified default branch `main`, HEAD `3846ad55228c789d3c5768f537c0fff327c8515a`, a complete non-truncated 75-entry tree, exactly one branch (`main`), no open issues and no open pull requests. GitHub Actions run `43413763179` completed successfully on that exact HEAD. Re-fetch the live main HEAD and newest workflow at every session start; do not rely on a stored SHA as current.
+The live repository check immediately before the 2026-11-13 Human K activation trap0 regression verified default branch `main`, HEAD `cab3ccf5a8f63c5f665aaea847c808366e76159b`, a complete non-truncated 75-entry tree, exactly one branch (`main`), no open issues and no open pull requests. GitHub Actions run `43415126545` completed successfully on that exact HEAD. Re-fetch the live main HEAD and newest workflow at every session start; do not rely on a stored SHA as current.
 
 ## Session procedure
 
@@ -442,3 +442,8 @@ The corrected-K source CN replay matches NEURON within about 0.000557 mV; its ag
 The corrected-K 250-ns counterfactual was extended to 12,800 Na-table nodes. TABLE-on voltage/current RMSEs are 0.00147610 mV and 1.78514e-5 A/m², versus 0.00147738 mV and 1.74232e-5 A/m² for the matched direct-rate control. The current mismatch is now 1.0246× the direct-rate residual (1.0967× at 6,400; 1.4266× at 3,200). Shared-path Na gate error is 9.22e-9; source TABLE-on/off trajectory delta is 7.19e-6 mV RMSE. Doubling 6,400→12,800 lowers the shared-path gate error 4.00× and the trajectory delta 3.79×. Current identities remain closed at approximately 1e-13 A/m².
 
 The current Rust implementation's trap0 helper already uses the correct v-th offset, analytic prefactor×slope limit, exp_m1 and asymptotic branches; its existing continuity unit test passed. No HumanJS code change was needed. Temporary corrected-K/12,800-node NMODL files and outputs remained outside Git. This remains a numerical counterfactual, not biological validation or a replacement for the author's 200-node baseline.
+
+
+### 2026-11-13 — Human K activation trap0 regression
+
+Added `human_potassium_activation_rate_is_continuous_at_both_trap0_voltage_landmarks` in `crates/humanjs-core/src/ion_channels.rs`. It compares HumanJS K activation tau with an independent `exp_m1)-based source-equation evaluation at the former wrong-sign guard (v=-theta), both guard edges, the true denominator singularity (v=theta), and nearby points. The tested discrepancy tolerance is 1e-12 ms. The targeted test and full Rust suite pass. No biological parameter or runtime implementation changed; this is a software regression only.

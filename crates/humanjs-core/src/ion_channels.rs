@@ -2087,6 +2087,75 @@ mod tests {
     }
 
     #[test]
+    fn human_potassium_activation_rate_is_continuous_at_both_trap0_voltage_landmarks() {
+        let model = wilbers_model();
+        let parameters = model.potassium;
+        let temperature_factor = model.potassium_temperature_factor().unwrap();
+
+        // Independently evaluate the deposited rate equation using exp_m1.
+        // This specifically distinguishes the true denominator singularity
+        // (v=th) from the source's former wrong-sign guard (v=-th).
+        let source_rate = |voltage_mv: f64, half_voltage_mv: f64| {
+            let x = (voltage_mv - half_voltage_mv) / parameters.activation_rate_slope_mv;
+            let scale = parameters.activation_rate.per_millivolt_per_ms
+                * parameters.activation_rate_slope_mv;
+            if x == 0.0 {
+                scale
+            } else {
+                scale * x / -(-x).exp_m1()
+            }
+        };
+        let expected_activation_tau = |effective_voltage_mv: f64| {
+            let alpha = source_rate(
+                effective_voltage_mv,
+                parameters.activation_rate_half_voltage_mv,
+            );
+            let beta = source_rate(
+                -effective_voltage_mv,
+                -parameters.activation_rate_half_voltage_mv,
+            );
+            1.0 / (temperature_factor * (alpha + beta))
+        };
+
+        // The old NMODL guard incorrectly switched branches around v=-th.
+        // Keep this point and both sides covered so a sign regression cannot
+        // reintroduce a discontinuity that a generic trap0 test would miss.
+        let former_false_guard_mv = -parameters.activation_rate_half_voltage_mv;
+        for offset_mv in [-6.60e-6, -6.59e-6, 0.0, 6.59e-6, 6.60e-6] {
+            let effective_voltage_mv = former_false_guard_mv + offset_mv;
+            let membrane_voltage_mv = effective_voltage_mv - model.voltage_shift_mv;
+            let observed = model
+                .potassium_rates(membrane_voltage_mv, 0.5)
+                .unwrap()
+                .activation
+                .time_constant_ms;
+            let expected = expected_activation_tau(effective_voltage_mv);
+            assert!(
+                (observed - expected).abs() < 1.0e-12,
+                "K activation tau mismatch near former wrong-sign guard at offset {offset_mv} mV: {observed} vs {expected} ms"
+            );
+        }
+
+        // The actual a*(v-th)/(1-exp(-(v-th)/q)) denominator singularity is
+        // at v=th; check its analytic limit and nearby values as well.
+        let true_singularity_mv = parameters.activation_rate_half_voltage_mv;
+        for offset_mv in [-1.0e-6, 0.0, 1.0e-6] {
+            let effective_voltage_mv = true_singularity_mv + offset_mv;
+            let membrane_voltage_mv = effective_voltage_mv - model.voltage_shift_mv;
+            let observed = model
+                .potassium_rates(membrane_voltage_mv, 0.5)
+                .unwrap()
+                .activation
+                .time_constant_ms;
+            let expected = expected_activation_tau(effective_voltage_mv);
+            assert!(
+                (observed - expected).abs() < 1.0e-12,
+                "K activation tau mismatch near true trap0 singularity at offset {offset_mv} mV: {observed} vs {expected} ms"
+            );
+        }
+    }
+
+    #[test]
     fn potassium_slow_inactivation_uses_distinct_inactivation_and_recovery_constants() {
         let model = wilbers_model();
         let depolarized = model.potassium_rates(30.0, 0.5).unwrap();

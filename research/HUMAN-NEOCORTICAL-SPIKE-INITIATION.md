@@ -1093,3 +1093,12 @@ The independent source CN replay remains close to actual NEURON (0.000557256 mV 
 A cross-check of the current HumanJS Rust implementation confirms this K trap0 issue is not present in its corresponding rate helper. crates/humanjs-core/src/ion_channels.rs implements the rate using x=(voltage-half_voltage)/slope, a small-x analytic series, exp_m1 for the regular range, and large-argument asymptotics; it multiplies the ratio by prefactor×slope. The existing unit test ion_channels::tests::trap0_uses_the_analytic_limit_and_is_continuous passes in the full current Rust test suite. Therefore the observed v+th fallback defect belongs to the deposited Wilbers NMODL source; no HumanJS code patch was necessary or made.
 
 The temporary corrected-K/table variants, their compiled libraries, helper wrappers, CSV traces and JSON outputs remained outside Git. Counterfactual baseline fields that would have re-run the author helper against modified mechanisms were excluded from interpretation. These data do not replace the author's 200-node/20-µs/secondorder=0/TABLE-on reference and do not establish biological validity.
+
+
+### 2026-11-13 — Human K activation trap0 regression
+
+The current Rust K-rate implementation now has a channel-specific regression in `crates/humanjs-core/src/ion_channels.rs`: `human_potassium_activation_rate_is_continuous_at_both_trap0_voltage_landmarks`.
+
+The test independently evaluates the deposited analytic transition-rate equation using `exp_m1`, then compares it with the actual `HumanL23SingleCompartmentModel::potassium_rates` activation time constant after applying the model's -10-mV channel shift. It samples the exact former wrong-sign guard point (v=-theta) and offsets of ±6.59/6.60e-6 mV, where the original NMODL predicate used to enter its faulty fallback. It also checks the true denominator singularity (v=theta) and ±1e-6 mV around the analytic limit. Every observed activation tau agrees with the independent equation to within 1e-12 ms.
+
+This adds regression protection at the actual Human L2/L3 K activation parameter set rather than relying only on the generic `trap0` helper's synthetic test. It confirms that the defect characterized in the deposited NMODL source is absent from the current Rust implementation. No model parameters, rate equations, or runtime behavior were changed; this is a test-only change. It establishes software-level numerical agreement with the analytic expression at selected voltages, not biological validity or full protocol validation.
