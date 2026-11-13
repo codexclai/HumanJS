@@ -2,13 +2,13 @@
 
 **Updated:** 2026-11-13
 **Canonical repository:** codexclai/HumanJS, branch main only.
-**Latest verified repository HEAD before this final handoff refresh:** 7fabfd55988aaf731d01d5f0359c1ca907ab5065; GitHub Actions run 43454273713 passed on that exact documentation commit.
+**Latest live repository HEAD before this handoff refresh:** 85093a42d53d498be76c8eac12785b42f2a23db9 (99-entry non-truncated tree, main only, no open issues or PRs). The latest full code workflow, [43458532278](https://github.com/codexclai/HumanJS/actions/runs/43458532278), passed on exact code HEAD `f2df2e2e27b5b53a97a84f7c6b472f503c8f504d`; the subsequent main commit preserves the run's extended-profile CSV output.
 **Next session:** refresh metadata, read live docs/BOOT.md, and recheck HEAD/tree/workflow/issues/PRs/branch refs before relying on this handoff.
 
 ## Verified repository state at handoff
 
-- Public repository; default branch main; latest verified repository HEAD before this final handoff refresh: 7fabfd55988aaf731d01d5f0359c1ca907ab5065; recursive tree has 93 entries and is not truncated; exactly one branch (main); zero open issues and zero open pull requests.
-- Workflow [43454273713](https://github.com/codexclai/HumanJS/actions/runs/43454273713) passed on exact documentation commit 7fabfd55988aaf731d01d5f0359c1ca907ab5065: rustfmt, Clippy, 41 Rust unit tests, 3 synapse integration tests, 6 passive-membrane integration tests, Python syntax for 17 experiment scripts, 34 Python experiment tests, all existing Wilbers validators, the ideal-command and original NEURON/VClamp Na_IV source runs, Na_IV_inact, Na_recovery, K_IV and K_recovery source runs and their result validators, and repository policy.
+- Public repository; default branch main; live HEAD at this handoff snapshot: 85093a42d53d498be76c8eac12785b42f2a23db9; recursive tree has 99 entries and is not truncated; exactly one branch (main); zero open issues and zero open pull requests.
+- Workflow [43458532278](https://github.com/codexclai/HumanJS/actions/runs/43458532278) passed on exact code HEAD `f2df2e2e27b5b53a97a84f7c6b472f503c8f504d`: rustfmt, Clippy, 41 Rust unit tests, 3 synapse integration tests, 6 passive-membrane integration tests, Python syntax for 20 experiment scripts, 37 Python tests, the five original NEURON/VClamp Na/K source replays and result validators, the 192-row K_IV six-start diagnostic, 601-point source-bound tau profile, 901-point extended profile, and repository policy.
 - The direct NEURON runner verifies and executes the pure human sodium NMODL mechanism plus the original Dataverse channel_tools.py source helpers under the source fitting caller's cell configuration. Main Na_IV passes current-density selection at 19/19 voltages and joint-fit R² at 17/19; Na_IV_inact produces 30 conditioning points and Boltzmann Vhalf/slope −68.251977/8.472251 mV; Na_recovery records 156 paired-pulse traces and 13/13 finite apparent recovery taus.
 - The raw result records are research/HUMAN-L23-WILBERS-NA-IV-NEURON-REPLAY.csv, research/HUMAN-L23-WILBERS-NA-IV-INACT-NEURON-REPLAY.csv, and research/HUMAN-L23-WILBERS-NA-RECOVERY-NEURON-REPLAY.csv. Validators compare CI reruns with these per-protocol records. Actual NEURON timer masks can include a boundary sample because the helper compares recorded floating-point timestamps strictly; first/last times and counts are preserved rather than imposing ideal counts.
 - The separate ideal-command Na_IV equation replay remains an approximation; its apparent tau outputs are not substituted for finite-feedback NEURON results. Neither source execution uses raw experimental NWB voltage-clamp records. No raw-trace refit or biological validation is claimed.
@@ -618,3 +618,18 @@ The earlier source-helper defect claim is retracted: exact `get_tau_inact_double
 No raw human K NWB recordings or individual K tau data CSVs were included in the inspected 65-file Dataverse release. No biological validation, raw-trace refit, human-only reparameterization, or acceptance of the exploratory spike model is claimed. No authors or researchers are to be contacted.
 
 **Next work item if resumed:** investigate the K_IV fast-inactivation optimizer sensitivity under the pinned NEURON/NumPy/SciPy environment and preserve each independently reproduced fit outcome. Keep empirical K validation blocked until raw/per-cell human data are publicly available.
+
+
+### Latest handoff — K_IV fast-inactivation optimizer/profile diagnosis (2026-11-13)
+
+**Live repository snapshot:** main HEAD `85093a42d53d498be76c8eac12785b42f2a23db9`, complete 99-entry tree, exactly one branch (`main`), zero open issues and zero open PRs. The full code workflow [43458532278](https://github.com/codexclai/HumanJS/actions/runs/43458532278) passed on exact code HEAD `f2df2e2e27b5b53a97a84f7c6b472f503c8f504d`.
+
+The K_IV source helper was verified directly again: it shifts (x) by (x[0]), fits (a_1 e^{-t/\tau_1}+a_2 e^{-t/450}+s_s), uses source `p0=((y0-yend)/2,(y0-yend)/2,30,y0/10)`, bounds (0<\tau_1\le300) ms, and accepts R²>0.95. Its second initial value is a current-density difference placed in the `tau1` slot; its default 30 is placed in the `a2` amplitude slot. At −70 mV those starts are (3.14164\times10^{-5}) ms and 30 mA/cm², the latter about 59,965 times the observed peak current density.
+
+The integrated runner uses exactly the same post-peak samples and source time shift for six initializations at each of 32 fit-attempted voltages (192 fits total). At −70 mV, all six pass R²>0.95 but yield 186.610–213.819 ms; at −85 mV the maximum accepted within-voltage spread is 111.420 ms. The fixed-`tau1` profile puts the best point at the 300-ms source upper bound. An explicitly out-of-source-bound extension to 1200 ms finds its best grid point at 338.237 ms, with a near-best R² range from 270.323 to 361.762 ms.
+
+**Canonical records:** `research/HUMAN-L23-WILBERS-K-IV-FIT-SENSITIVITY.md`; `research/HUMAN-L23-WILBERS-K-IV-FIT-START-DIAGNOSTICS.csv`; `research/HUMAN-L23-WILBERS-K-IV-FIT-PROFILE.csv`; `research/HUMAN-L23-WILBERS-K-IV-FIT-PROFILE-EXTENDED.csv`. Implementation is in `experiments/wilbers_k_iv_fit_diagnostics.py`, integrated by `experiments/replay_wilbers_k_iv_neuron.py`; the related validators and tests are under `experiments/`, and CI runs them from `.github/workflows/repository-policy.yml`.
+
+This resolves the optimizer-sensitivity audit only. These are fits/profiles of model-generated source currents, not raw experimental human current traces, microscopic gate taus, or biological validation. The inspected 65-file Dataverse release still lacks raw K NWB voltage-clamp currents and individual K kinetic CSVs. The HumanJS single-compartment spike model remains exploratory and unaccepted; ADR-014 remains open.
+
+**Next concrete step:** examine the amplitude/offset trade-off around the profiled 338-ms minimum and determine whether the source 300-ms bound and initial-vector scale explain the source helper's interior local minima. Do not change the deposited helper or NMODL, do not promote the resulting tau to a human biological target, and do not contact authors or researchers.
