@@ -2,15 +2,15 @@
 
 **Updated:** 2026-11-13
 **Canonical repository:** `codexclai/HumanJS`, branch `main` only.
-**Latest verified base before the direct sodium trap0 probe:** `048b9723ae3654f655d8c4ad77e76cb5453bbd99` (K activation and fast-inactivation trap0 regressions; Actions run `43417388932` passed).
+**Latest verified main before this handoff correction:** `b9aebdd833172c049e52628191f74d472893c0cd` (sodium trap0 direct-rate and AP1 trajectory-proximity research; Actions run `43423674648` passed).
 **Previous evidence availability cross-check:** `30dcee632b9ad5a64e4d6c1f496b9f00e03d3c64` (bounded public-archive search).
-**Re-fetch the current main HEAD and newest workflow before relying on this handoff; the direct sodium trap0 probe is being recorded directly on main.**
+**Re-fetch the current main HEAD and newest workflow before relying on this handoff; direct Na/K trap0 probes and AP1 trajectory checks are now recorded in the canonical research/experiment records.**
 Verify the live HEAD and newest workflow before relying on this handoff.
 
 ## Verified repository state at handoff
 
-- Public repository; default branch `main`; live parent HEAD before this update: `048b9723ae3654f655d8c4ad77e76cb5453bbd99`; recursive tree 75 entries, not truncated; exactly one branch (`main`); no open issues and no open pull requests.
-- GitHub Actions run `43417388932` passed on that exact parent HEAD: https://github.com/codexclai/HumanJS/actions/runs/43417388932. It passed formatting, Clippy, Rust workspace tests, Python experiment syntax/unit tests, both Wilbers validators, and repository policy. Numerical source/model results are not biological validation.
+- Public repository; default branch `main`; live parent HEAD before this update: `b9aebdd833172c049e52628191f74d472893c0cd`; recursive tree 75 entries, not truncated; exactly one branch (`main`); no open issues and no open pull requests.
+- GitHub Actions run `43423674648` passed on that exact parent HEAD: https://github.com/codexclai/HumanJS/actions/runs/43423674648. It passed formatting, Clippy, Rust workspace tests, Python experiment syntax/unit tests, both Wilbers validators, and repository policy. Numerical source/model results are not biological validation.
 - Fresh independent NEURON 9.0.2 `modlunit` invocation on unmodified `k_human.mod` and `k_mouse.mod` again failed at the untyped `trates(v+vshift)` call, line 82. Both species' repeated diagnostics are now recorded in `research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md`. The original files still compile with `nrnivmodl`; see ADR-014 for the temporary typed-probe findings. No source file was changed. The same research record clarifies that the article's public Dataverse data statement is satisfied by deposited summary/model files; it does not mean the missing per-cell K kinetic CSVs or raw voltage-clamp traces occur in the inspected 65-file v3.0 inventory.
 - On a clean clone of the parent commit, `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets --all-features -- -D warnings`, and `cargo test --workspace --locked` passed (31 unit tests, 3 synapse integration tests, 6 passive-membrane integration tests). All five experiment scripts parsed, both Wilbers validators passed, and repository policy passed. HumanJS 20-µs and 1-µs examples emitted the expected 1,450 and 29,000 post-step samples; the optional gate CSVs contain matching row counts.
 - The NEURON 9.0.2 source baseline was independently rerun and the diagnostic passed end-to-end with pinned Python dependencies. Temporary counters recorded zero entries into the flawed `trap0` fallback; its instrumented and unmodified source traces were identical. The new gate comparison records five NMODL states and confirms that the biggest internal-state errors are in the fast gates during the AP upstroke.
