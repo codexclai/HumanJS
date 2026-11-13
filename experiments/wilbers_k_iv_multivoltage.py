@@ -67,6 +67,182 @@ K_IV_MULTIVOLTAGE_FIELDNAMES = (
     "tau3_profile_at_boundary",
 )
 
+K_IV_TAU3_PROFILE_SHAPE_FIELDNAMES = (
+    "voltage_mv",
+    "tau1_ms",
+    "selected_tau3_ms",
+    "profile_grid_min_ms",
+    "profile_grid_max_ms",
+    "profile_grid_points",
+    "profile_grid_step_ms",
+    "minimum_at_grid_boundary",
+    "profile_objective_normalized_curvature_per_ms2",
+    "left_neighbor_delta_rss_pct",
+    "right_neighbor_delta_rss_pct",
+    "near_minimum_1pct_objective_lower_ms",
+    "near_minimum_1pct_objective_upper_ms",
+    "near_minimum_1pct_objective_span_ms",
+    "near_minimum_1pct_objective_point_count",
+    "near_minimum_1pct_touches_grid_edge",
+    "near_minimum_5pct_objective_lower_ms",
+    "near_minimum_5pct_objective_upper_ms",
+    "near_minimum_5pct_objective_span_ms",
+    "near_minimum_5pct_objective_point_count",
+    "near_minimum_5pct_touches_grid_edge",
+    "near_minimum_10pct_objective_lower_ms",
+    "near_minimum_10pct_objective_upper_ms",
+    "near_minimum_10pct_objective_span_ms",
+    "near_minimum_10pct_objective_point_count",
+    "near_minimum_10pct_touches_grid_edge",
+)
+
+K_IV_TAU3_PROFILE_SHAPE_INT_FIELDS = frozenset(["profile_grid_points","near_minimum_1pct_objective_point_count","near_minimum_5pct_objective_point_count","near_minimum_10pct_objective_point_count"])
+K_IV_TAU3_PROFILE_SHAPE_BOOL_FIELDS = frozenset(["minimum_at_grid_boundary","near_minimum_1pct_touches_grid_edge","near_minimum_5pct_touches_grid_edge","near_minimum_10pct_touches_grid_edge"])
+
+
+def summarize_tau3_profile_shape(
+    voltage_mv: float,
+    tau1_ms: float,
+    profile: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Describe the local full-waveform RSS profile around its selected tau3.
+
+    Threshold spans are contiguous grid basins around the selected minimum.
+    They are descriptive objective-shape summaries, not confidence intervals.
+    """
+    if len(profile) < 3:
+        raise ValueError("K_IV tau3 profile shape requires at least three grid points")
+    tau = np.asarray([float(row["tau3_ms"]) for row in profile], dtype=float)
+    rss = np.asarray([float(row["rss_full"]) for row in profile], dtype=float)
+    if not np.isfinite(tau).all() or not np.isfinite(rss).all() or np.any(rss <= 0.0):
+        raise ValueError("K_IV tau3 profile shape requires finite positive RSS values")
+    steps = np.diff(tau)
+    if np.any(steps <= 0.0) or not np.allclose(
+        steps, steps[0], rtol=1.0e-10, atol=1.0e-14
+    ):
+        raise ValueError("K_IV tau3 profile shape requires an increasing uniform grid")
+    best_index = int(np.argmin(rss))
+    best_rss = float(rss[best_index])
+    normalized_delta = rss / best_rss - 1.0
+    step_ms = float(steps[0])
+    at_boundary = best_index in (0, len(profile) - 1)
+    if at_boundary:
+        curvature = math.nan
+        left_delta = math.nan
+        right_delta = math.nan
+    else:
+        curvature = float(
+            (
+                normalized_delta[best_index - 1]
+                - 2.0 * normalized_delta[best_index]
+                + normalized_delta[best_index + 1]
+            )
+            / (step_ms * step_ms)
+        )
+        left_delta = 100.0 * float(normalized_delta[best_index - 1])
+        right_delta = 100.0 * float(normalized_delta[best_index + 1])
+
+    result: dict[str, Any] = {
+        "voltage_mv": float(voltage_mv),
+        "tau1_ms": float(tau1_ms),
+        "selected_tau3_ms": float(tau[best_index]),
+        "profile_grid_min_ms": float(tau[0]),
+        "profile_grid_max_ms": float(tau[-1]),
+        "profile_grid_points": int(len(profile)),
+        "profile_grid_step_ms": step_ms,
+        "minimum_at_grid_boundary": bool(at_boundary),
+        "profile_objective_normalized_curvature_per_ms2": curvature,
+        "left_neighbor_delta_rss_pct": left_delta,
+        "right_neighbor_delta_rss_pct": right_delta,
+    }
+    for threshold_pct in (1, 5, 10):
+        threshold = threshold_pct / 100.0
+        left = best_index
+        right = best_index
+        while left > 0 and normalized_delta[left - 1] <= threshold:
+            left -= 1
+        while right < len(profile) - 1 and normalized_delta[right + 1] <= threshold:
+            right += 1
+        lower = float(tau[left])
+        upper = float(tau[right])
+        result.update({
+            f"near_minimum_{threshold_pct}pct_objective_lower_ms": lower,
+            f"near_minimum_{threshold_pct}pct_objective_upper_ms": upper,
+            f"near_minimum_{threshold_pct}pct_objective_span_ms": upper - lower,
+            f"near_minimum_{threshold_pct}pct_objective_point_count": right - left + 1,
+            f"near_minimum_{threshold_pct}pct_touches_grid_edge": bool(
+                left == 0 or right == len(profile) - 1
+            ),
+        })
+    return result
+
+
+def tau3_profile_shape_csv_text(rows: list[dict[str, Any]]) -> str:
+    """Serialize compact per-voltage near-minimum objective-shape diagnostics."""
+    import io
+
+    output = io.StringIO()
+    output.write(
+        "# Descriptive contiguous tau3 profile basins at 1%, 5%, and 10% increases in full-waveform RSS.\\n"
+    )
+    output.write(
+        "# These objective-shape spans are deterministic grid diagnostics, not confidence intervals.\\n"
+    )
+    writer = csv.DictWriter(
+        output,
+        fieldnames=K_IV_TAU3_PROFILE_SHAPE_FIELDNAMES,
+        extrasaction="raise",
+        lineterminator="\\n",
+    )
+    writer.writeheader()
+    writer.writerows(rows)
+    return output.getvalue()
+
+
+def validate_tau3_profile_shape_rows(rows: list[dict[str, Any]]) -> None:
+    """Validate per-command local objective-shape summaries and nested basins."""
+    if tuple(row.get("voltage_mv") for row in rows) != K_IV_MULTIVOLTAGE_TARGETS_MV:
+        raise ValueError("K_IV tau3 profile-shape summary must preserve all 27 ordered commands")
+    for row in rows:
+        for field in K_IV_TAU3_PROFILE_SHAPE_FIELDNAMES:
+            value = row.get(field)
+            if field in K_IV_TAU3_PROFILE_SHAPE_INT_FIELDS | K_IV_TAU3_PROFILE_SHAPE_BOOL_FIELDS:
+                continue
+            if not isinstance(value, (int, float)) or not math.isfinite(float(value)):
+                raise ValueError(f"K_IV tau3 profile-shape field is non-finite: {field}")
+        if row["profile_grid_points"] < 3 or row["profile_grid_step_ms"] <= 0.0:
+            raise ValueError("K_IV tau3 profile-shape grid is underspecified")
+        if row["minimum_at_grid_boundary"]:
+            raise ValueError("K_IV extended tau3 minimum remains on a profile boundary")
+        selected = row["selected_tau3_ms"]
+        if not (row["profile_grid_min_ms"] < selected < row["profile_grid_max_ms"]):
+            raise ValueError("K_IV tau3 selected minimum is not interior to its declared grid")
+        if row["profile_objective_normalized_curvature_per_ms2"] < -1.0e-8:
+            raise ValueError("K_IV tau3 selected minimum has negative local RSS curvature")
+        if row["left_neighbor_delta_rss_pct"] < -1.0e-8 or row["right_neighbor_delta_rss_pct"] < -1.0e-8:
+            raise ValueError("K_IV tau3 neighboring objective is below the selected minimum")
+        previous_lower = row["profile_grid_min_ms"]
+        previous_upper = row["profile_grid_max_ms"]
+        previous_count = row["profile_grid_points"]
+        for threshold_pct in (1, 5, 10):
+            lower = row[f"near_minimum_{threshold_pct}pct_objective_lower_ms"]
+            upper = row[f"near_minimum_{threshold_pct}pct_objective_upper_ms"]
+            span = row[f"near_minimum_{threshold_pct}pct_objective_span_ms"]
+            count = row[f"near_minimum_{threshold_pct}pct_objective_point_count"]
+            touches_edge = row[f"near_minimum_{threshold_pct}pct_touches_grid_edge"]
+            if not lower <= selected <= upper or upper < lower:
+                raise ValueError("K_IV tau3 near-minimum basin does not contain its selected minimum")
+            if not math.isclose(span, upper - lower, rel_tol=0.0, abs_tol=1.0e-12):
+                raise ValueError("K_IV tau3 near-minimum basin span is inconsistent")
+            if count < 1 or count > previous_count:
+                raise ValueError("K_IV tau3 near-minimum basin grid-point count is invalid")
+            if lower < previous_lower - 1.0e-12 or upper > previous_upper + 1.0e-12:
+                raise ValueError("K_IV tau3 near-minimum basins are not nested")
+            if not isinstance(touches_edge, bool):
+                raise ValueError("K_IV tau3 near-minimum grid-edge flag is not boolean")
+            previous_lower, previous_upper, previous_count = lower, upper, count
+
+
 
 def _finite_vector(values: Any, field: str) -> np.ndarray:
     vector = np.asarray(values, dtype=float)
@@ -236,6 +412,9 @@ def analyze_k_iv_waveform(
         "tau3_profile_at_boundary": bool(
             math.isclose(signed["tau3_ms"], tau3_min_ms, rel_tol=0.0, abs_tol=1.0e-12)
             or math.isclose(signed["tau3_ms"], tau3_max_ms, rel_tol=0.0, abs_tol=1.0e-12)
+        ),
+        "tau3_profile_shape": summarize_tau3_profile_shape(
+            voltage_mv, tau1, three["profile"]
         ),
     }
 

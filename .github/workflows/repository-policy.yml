@@ -131,10 +131,15 @@ jobs:
           python3 experiments/analyze_wilbers_k_iv_multivoltage.py \
             --waveforms /tmp/wilbers-k-iv-postpeak-waveforms.csv \
             --output /tmp/wilbers-k-iv-multivoltage-extended-tau3-summary.csv \
+            --profile-shape-output /tmp/wilbers-k-iv-tau3-profile-shape.csv \
             --tau3-min-ms 0.1 \
             --tau3-max-ms 5.0 \
             --short-profile-points 2801 \
             --emit-to-stdout
+      - name: Validate local K_IV tau3 full-waveform objective shape
+        run: |
+          python3 experiments/validate_wilbers_k_iv_tau3_profile_shape.py \
+            --actual /tmp/wilbers-k-iv-tau3-profile-shape.csv
       - name: Compare extended K_IV tau3 profile with the committed reference
         run: |
           python3 experiments/validate_wilbers_k_iv_multivoltage.py \

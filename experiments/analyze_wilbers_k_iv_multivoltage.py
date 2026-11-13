@@ -10,7 +10,9 @@ from pathlib import Path
 from wilbers_k_iv_multivoltage import (
     analyze_postpeak_waveforms,
     summary_csv_text,
+    tau3_profile_shape_csv_text,
     validate_summary_rows,
+    validate_tau3_profile_shape_rows,
 )
 
 
@@ -23,6 +25,7 @@ def main() -> int:
     parser.add_argument("--short-profile-points", type=int, default=801)
     parser.add_argument("--tau3-min-ms", type=float, default=0.6)
     parser.add_argument("--tau3-max-ms", type=float, default=2.0)
+    parser.add_argument("--profile-shape-output", type=Path)
     parser.add_argument(
         "--emit-to-stdout",
         action="store_true",
@@ -42,10 +45,23 @@ def main() -> int:
     )
     content = summary_csv_text(rows)
     args.output.expanduser().resolve().write_text(content, encoding="utf-8")
+    if args.profile_shape_output:
+        shape_rows = [row["tau3_profile_shape"] for row in rows]
+        validate_tau3_profile_shape_rows(shape_rows)
+        shape_content = tau3_profile_shape_csv_text(shape_rows)
+        args.profile_shape_output.expanduser().resolve().write_text(
+            shape_content, encoding="utf-8"
+        )
+    else:
+        shape_content = ""
     if args.emit_to_stdout:
         print("BEGIN_HUMANJS_K_IV_MULTIVOLTAGE_SUMMARY")
         print(content, end="")
         print("END_HUMANJS_K_IV_MULTIVOLTAGE_SUMMARY")
+        if args.profile_shape_output:
+            print("BEGIN_HUMANJS_K_IV_TAU3_PROFILE_SHAPE")
+            print(shape_content, end="")
+            print("END_HUMANJS_K_IV_TAU3_PROFILE_SHAPE")
     for row in rows:
         print(
             f"{row['voltage_mv']:g} mV: tau1={row['local_tau1_ms']:.6g} ms, "
@@ -55,7 +71,11 @@ def main() -> int:
             f"{row['first_10ms_improvement_pct']:.2f}%/"
             f"{row['after_10ms_improvement_pct']:.2f}%, "
             f"positive control collapsed={row['nonnegative_control_collapsed']}, "
-            f"tau3 boundary={row['tau3_profile_at_boundary']}"
+            f"tau3 boundary={row['tau3_profile_at_boundary']}, "
+            f"1%/5%/10% RSS spans="
+            f"{row['tau3_profile_shape']['near_minimum_1pct_objective_span_ms']:.6g}/"
+            f"{row['tau3_profile_shape']['near_minimum_5pct_objective_span_ms']:.6g}/"
+            f"{row['tau3_profile_shape']['near_minimum_10pct_objective_span_ms']:.6g} ms"
         )
     return 0
 

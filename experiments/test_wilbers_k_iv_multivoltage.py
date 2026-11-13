@@ -13,7 +13,9 @@ from wilbers_k_iv_multivoltage import (
     K_IV_MULTIVOLTAGE_TARGETS_MV,
     analyze_k_iv_waveform,
     read_postpeak_waveforms,
+    summarize_tau3_profile_shape,
     validate_summary_rows,
+    validate_tau3_profile_shape_rows,
 )
 from wilbers_k_iv_three_component import profile_three_exponential_correction
 
@@ -72,6 +74,34 @@ class KIVMultivoltageTests(unittest.TestCase):
         self.assertEqual(fitted["profile_grid_points"], 2801)
         self.assertAlmostEqual(fitted["profile_tau3_min_ms"], 0.1)
         self.assertAlmostEqual(fitted["profile_tau3_max_ms"], 5.0)
+
+    def test_tau3_objective_shape_reports_nested_near_minimum_basins(self) -> None:
+        times = np.arange(0.0, 100.0 + 0.1, 0.1)
+        current = (
+            6.0e-5 * np.exp(-times / 339.4)
+            + 2.6e-5 * np.exp(-times / 450.0)
+            - 3.2e-7 * np.exp(-times / 3.2)
+            + 4.144e-4
+        )
+        result = profile_three_exponential_correction(
+            times, current, 339.4,
+            tau2_ms=450.0, tau3_min_ms=0.1, tau3_max_ms=5.0,
+            grid_points=801,
+        )
+        shape = summarize_tau3_profile_shape(-70.0, 339.4, result["profile"])
+        validate_tau3_profile_shape_rows([shape | {"voltage_mv": voltage}
+            for voltage in K_IV_MULTIVOLTAGE_TARGETS_MV])
+        self.assertAlmostEqual(shape["selected_tau3_ms"], 3.2, delta=0.01)
+        self.assertGreater(shape["profile_objective_normalized_curvature_per_ms2"], 0.0)
+        self.assertLessEqual(
+            shape["near_minimum_1pct_objective_span_ms"],
+            shape["near_minimum_5pct_objective_span_ms"],
+        )
+        self.assertLessEqual(
+            shape["near_minimum_5pct_objective_span_ms"],
+            shape["near_minimum_10pct_objective_span_ms"],
+        )
+        self.assertFalse(shape["minimum_at_grid_boundary"])
 
     def test_tau3_boundary_flag_is_enforced_by_summary_validation(self) -> None:
         times = np.arange(0.0, 489.0, 0.1)
