@@ -11,7 +11,7 @@
 # Current is local membrane density ina in mA/cm2; source selection is min(ina)<-1e-6. The fit mask contains 997 points, t=2.03..11.99 ms.
 # The VClamp command is the source's two segments (-120 mV for 2 ms, then each test voltage for 10 ms); VClamp defaults were read, not overridden.
 # Returned tau_m is joint-fit parameter zero. Returned tau_h remains the preliminary decay estimate because the source's popt[1] assignment is commented out.
-# This is execution of the deposited model and analysis helper, not experimental current data or biological validation.
+# This is original NMODL/VClamp model execution, not experimental-current refitting or biological validation.
 voltage_mv,samples_fitted,source_ina_min_ma_cm2,source_current_density_gate_passed,preliminary_tau_m_ms,preliminary_tau_h_ms,joint_tau_m_ms,joint_tau_h_ms,source_mapped_tau_m_ms,source_mapped_tau_h_ms,joint_r_squared,passed_joint_fit_r2,joint_tau_h_at_upper_bound
 -80.0,997,-1.2626290938475931e-05,True,0.3092325145958179,12.782525724332572,0.39319313265555766,15.580198573452739,,,0.5474752417791624,False,False
 -75.0,997,-5.0970025544102635e-05,True,0.35425752944833777,19.078608398103928,0.4103633123996017,23.08990433795389,,,0.865568642664877,False,False

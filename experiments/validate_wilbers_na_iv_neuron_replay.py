@@ -19,8 +19,8 @@ REQUIRED_TEXT = (
     "rstim=1 MOhm",
     "gain=100000",
     "secondorder=0.0",
-    "original channel_tools.runIna",
-    "not experimental current data",
+    "Source fits use current density ina",
+    "not experimental-current refitting",
 )
 EXPECTED_FIELDS = (
     "voltage_mv",
