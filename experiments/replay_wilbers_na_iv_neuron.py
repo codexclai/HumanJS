@@ -746,6 +746,11 @@ def main() -> int:
     parser.add_argument("--output", type=Path, help="Optional Na_IV current-fit CSV path")
     parser.add_argument("--inactivation-output", type=Path, help="Optional Na_IV_inact CSV path")
     parser.add_argument("--recovery-output", type=Path, help="Optional Na_recovery CSV path")
+    parser.add_argument(
+        "--emit-aux-to-stdout",
+        action="store_true",
+        help="Print auxiliary source CSVs with explicit delimiters for CI result capture",
+    )
     args = parser.parse_args()
     result = run_protocol()
     content = csv_text(result)
@@ -761,6 +766,13 @@ def main() -> int:
                 output_content, encoding="utf-8"
             )
     print(content, end="")
+    if args.emit_aux_to_stdout:
+        print("\\nBEGIN_HUMANJS_NA_IV_INACT_CSV")
+        print(inactivation_content, end="")
+        print("END_HUMANJS_NA_IV_INACT_CSV")
+        print("BEGIN_HUMANJS_NA_RECOVERY_CSV")
+        print(recovery_content, end="")
+        print("END_HUMANJS_NA_RECOVERY_CSV")
     passed = sum(bool(row["passed_joint_fit_r2"]) for row in result["rows"])
     density_gate = sum(bool(row["source_current_density_gate_passed"]) for row in result["rows"])
     recovery_finite = sum(

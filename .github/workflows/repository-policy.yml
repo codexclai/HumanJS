@@ -65,7 +65,8 @@ jobs:
           python3 experiments/replay_wilbers_na_iv_neuron.py \
             --output /tmp/wilbers-na-iv-neuron.csv \
             --inactivation-output /tmp/wilbers-na-iv-inact-neuron.csv \
-            --recovery-output /tmp/wilbers-na-recovery-neuron.csv
+            --recovery-output /tmp/wilbers-na-recovery-neuron.csv \\
+            --emit-aux-to-stdout
       - name: Validate original NEURON Na_IV replay
         run: python3 experiments/validate_wilbers_na_iv_neuron_replay.py --actual /tmp/wilbers-na-iv-neuron.csv
       - name: Validate original NEURON Na inactivation and recovery replays
