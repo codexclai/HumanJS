@@ -135,10 +135,11 @@ jobs:
             --tau3-max-ms 5.0 \
             --short-profile-points 2801 \
             --emit-to-stdout
-      - name: Validate extended K_IV tau3 profile structure
+      - name: Compare extended K_IV tau3 profile with the committed reference
         run: |
           python3 experiments/validate_wilbers_k_iv_multivoltage.py \
             --actual /tmp/wilbers-k-iv-multivoltage-extended-tau3-summary.csv \
+            --expected research/HUMAN-L23-WILBERS-K-IV-TAU3-EXTENDED-RESIDUAL-SUMMARY.csv \
             --tau3-min-ms 0.1 \
             --tau3-max-ms 5.0
       - name: Validate non-source K_IV three-exponential residual counterfactual
