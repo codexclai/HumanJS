@@ -8,7 +8,7 @@
 # Protocol: 25 C; dt=0.01 ms; secondorder=0.0; hold -120 mV for 2 ms; 19 test steps -80..+10 mV for 10 ms.
 # Built-in VClamp defaults (not changed by runIna): gain=100000; rstim=1 MOhm; tau1=0.001 ms; tau2=0 ms; fac=0.
 # The runner compiled the unchanged pure na_human.mod; called the original channel_tools.runIna/get_tau_act/get_tau_inact/fit_na_curr functions.
-# Current is local membrane density ina in mA/cm2; source selection is min(ina)<-1e-6. The fit mask contains 997 points, t=2.03..11.99 ms.
+# Source fits use current density ina (mA/cm2), a local membrane density; source selection is min(ina)<-1e-6. The fit mask contains 997 points, t=2.03..11.99 ms.
 # The VClamp command is the source's two segments (-120 mV for 2 ms, then each test voltage for 10 ms); VClamp defaults were read, not overridden.
 # Returned tau_m is joint-fit parameter zero. Returned tau_h remains the preliminary decay estimate because the source's popt[1] assignment is commented out.
 # This is original NMODL/VClamp model execution, not experimental-current refitting or biological validation.
