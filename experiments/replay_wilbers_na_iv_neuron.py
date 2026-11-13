@@ -172,10 +172,14 @@ def run_protocol() -> dict[str, Any]:
                     f"Expected NEURON {NEURON_VERSION}, found {neuron.__version__}"
                 )
 
-            library = workdir / "x86_64" / "libnrnmech.so"
-            if not library.is_file():
-                raise ReproductionError(f"Compiled mechanism library not found: {library}")
-            h.nrn_load_dll(str(library))
+            # NEURON may auto-load a mechanism library from the working
+            # directory during import. This replay compiles only na_human.mod;
+            # avoid loading it a second time when the suffix is already present.
+            if not hasattr(h, "na_human"):
+                library = workdir / "x86_64" / "libnrnmech.so"
+                if not library.is_file():
+                    raise ReproductionError(f"Compiled mechanism library not found: {library}")
+                h.nrn_load_dll(str(library))
             h.load_file("stdrun.hoc")
             channel_tools = import_channel_tools(workdir / "channel_tools.py")
 
