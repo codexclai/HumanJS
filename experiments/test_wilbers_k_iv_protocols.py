@@ -8,7 +8,6 @@ import numpy as np
 
 import replay_wilbers_k_iv_neuron as replay
 import wilbers_k_iv_fit_diagnostics as fit_diagnostics
-import wilbers_k_iv_fit_diagnostics as fit_diagnostics
 
 
 class WilbersKVoltageClampProtocolTests(unittest.TestCase):
