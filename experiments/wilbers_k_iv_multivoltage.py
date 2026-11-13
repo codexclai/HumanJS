@@ -955,28 +955,22 @@ def tau1_tau3_surface_csv_text(rows: list[dict[str, Any]]) -> str:
 
     output = io.StringIO()
     output.write(
-        "# Conditional tau1-tau3 sensitivity surface for predeclared K_IV commands -30, -60, and +55 mV.
-"
+        "# Conditional tau1-tau3 sensitivity surface for predeclared K_IV commands -30, -60, and +55 mV.\n"
     )
     output.write(
-        "# Waveforms are deterministic NEURON 9.0.2/VClamp outputs from the unchanged DataverseNL v3.0 pure-human K source replay; not raw human experimental current.
-"
+        "# Waveforms are deterministic NEURON 9.0.2/VClamp outputs from the unchanged DataverseNL v3.0 pure-human K source replay; not raw human experimental current.\n"
     )
     output.write(
-        "# At each voltage, nine tau1 values span only the existing local 6% refinement interval from the independently profiled coarse tau1; the center node is the existing selected local tau1.
-"
+        "# At each voltage, nine tau1 values span only the existing local 6% refinement interval from the independently profiled coarse tau1; the center node is the existing selected local tau1.\n"
     )
     output.write(
-        "# At each tau1 node, tau3 is profiled over 0.1..5.0 ms on 2,801 equally spaced points and all four coefficients are refit against the full waveform; tau2 remains fixed at 450 ms.
-"
+        "# At each tau1 node, tau3 is profiled over 0.1..5.0 ms on 2,801 equally spaced points and all four coefficients are refit against the full waveform; tau2 remains fixed at 450 ms.\n"
     )
     output.write(
-        "# Each row stores the conditional tau3 minimum and its 1/5/10% relative-full-RSS basin; relative_rss_to_surface_min_pct compares that slice minimum with the best minimum across tau1 values at the same voltage.
-"
+        "# Each row stores the conditional tau3 minimum and its 1/5/10% relative-full-RSS basin; relative_rss_to_surface_min_pct compares that slice minimum with the best minimum across tau1 values at the same voltage.\n"
     )
     output.write(
-        "# Full/first-10-ms/after-10-ms RMSE values are diagnostics of the same full-waveform objective. This numerical sensitivity surface is not a confidence region or biological uncertainty estimate.
-"
+        "# Full/first-10-ms/after-10-ms RMSE values are diagnostics of the same full-waveform objective. This numerical sensitivity surface is not a confidence region or biological uncertainty estimate.\n"
     )
     writer = csv.DictWriter(
         output,
