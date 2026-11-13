@@ -129,6 +129,13 @@ A targeted NEURON 9.0.2 probe of the unchanged deposited K mechanism at 34°C co
 The deposited K activation expression has a wrong-sign small-argument guard: the denominator is singular at v=th, but the source tests v+th. At the 3,200-node Na-table AP1 trajectory this enters the fallback at 4.402 ms with fabs((v+th)/q)=2.37e-7 while fabs((v-th)/q)=9.09255. The original-source independent K-gate replay error is 0.00138525. A temporary, non-committed mathematical control changed only that guard to v-th and the limiting expression to a*q. With that control, the same 3,200-node run passes the existing gate check and a 6,400-node run also passes. The source TABLE-on/off voltage perturbation and shared-voltage Na gate interpolation error each drop approximately fourfold when the grid doubles 3,200→6,400; the direct-rate control remains unchanged. This isolates the interaction between the Na-table-driven voltage path and the K trap0 branch defect. It does not authorize patching the published mechanism or changing HumanJS biological parameters. See the 2026-11-13 high-resolution extension in the canonical Wilbers experiment and spike-initiation research records for source hashes, fixed protocol, current balances and numerical limits.
 
 
+### ADR-014 follow-up — HumanJS Rust trap0 is already continuous; Na-table residual approaches the direct-rate floor (2026-11-13)
+
+A 12,800-node sodium-table extension of the temporary corrected-K AP1 comparison reduced the actual source TABLE-on/off trajectory difference to 7.185e-6 mV RMSE and the shared-path Na gate interpolation residual to 9.219e-9. The TABLE-on evolved current RMSE (1.78514e-5 A/m²) is within 2.46% of the matched direct-rate control (1.74232e-5 A/m²). Doubling from 6,400 to 12,800 nodes reduced the shared-path gate error 4.00-fold and the coupled voltage-trajectory difference 3.79-fold.
+
+The same investigation checked crates/humanjs-core/src/ion_channels.rs: HumanJS computes the rate from voltage minus half-voltage, uses a small-x analytic series and exp_m1/asymptotic branches, and applies the prefactor×slope limit. The existing trap0_uses_the_analytic_limit_and_is_continuous unit test passed. Thus the wrong-sign small-argument guard is specific to the deposited Wilbers NMODL reference; the current Rust helper already uses the mathematically continuous formulation. No HumanJS source change is warranted by this source-only numerical counterfactual. Detailed protocol, hashes and residual limits are recorded in the canonical experiment and research notes.
+
+
 ## ADR-015 — Published-model reproduction is evidence, not HumanJS implementation
 
 **Status:** Accepted · **Date:** 2026-11-11

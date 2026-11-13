@@ -41,7 +41,7 @@ Do not search for or request old uploads or copied source snapshots. If evidence
 
 `main` is the only branch to use, permanently. Never create, check out, update, merge, or otherwise use another branch. Make authorized changes directly on `main`. Do not create branches, PRs, or automation that opens non-main update branches. No branch protection, rulesets, or deletion-prevention settings are required. Force pushes are permitted but exceptional and must be inspected and verified.
 
-The live repository check immediately before the 2026-11-13 high-resolution K trap0 counterfactual update verified default branch `main`, HEAD `8ca2e5ccb11bca23d5092bdb63c2b7d8c2d8ad67`, a complete non-truncated 75-entry tree, exactly one branch (`main`), no open issues and no open pull requests. GitHub Actions run `43364815457` completed successfully on that exact HEAD. Re-fetch the live main HEAD and newest workflow at every session start; do not rely on a stored SHA as current.
+The live repository check immediately before the 2026-11-13 12,800-node Na TABLE extension verified default branch `main`, HEAD `3846ad55228c789d3c5768f537c0fff327c8515a`, a complete non-truncated 75-entry tree, exactly one branch (`main`), no open issues and no open pull requests. GitHub Actions run `43413763179` completed successfully on that exact HEAD. Re-fetch the live main HEAD and newest workflow at every session start; do not rely on a stored SHA as current.
 
 ## Session procedure
 
@@ -435,3 +435,10 @@ A fresh pinned NEURON 9.0.2 run regenerated the 250-ns HumanJS AP1 trace (116,00
 A temporary K-only mathematical control changed the guard to v-th and the small-x limit to a*q; no parameters changed and no repository source was patched. The same 3,200-node AP1 run then passed the gate check (corrected m_k maximum replay error 1.5844e-5, 87.4-fold lower). A 6,400-node run also passed. At 3,200/6,400 nodes, TABLE-on voltage RMSE was 0.0014623/0.0014729 mV and evolved current RMSE 2.4856e-5/1.9107e-5 A/m²; the direct-rate control stayed at 0.0014774 mV and 1.7423e-5 A/m². Shared-path Na-table gate error and actual source TABLE-on/off voltage perturbation each fell about fourfold when the grid doubled from 3,200 to 6,400 nodes. The result extends the prior approximately second-order table-spacing trend but is still a bounded numerical counterfactual, not a biological comparison.
 
 The corrected-K source CN replay matches NEURON within about 0.000557 mV; its aggregate gate replay RMSE is 2.86e-6 and maximum error 6.76e-5. Current-balance identities remain closed at approximately 1e-13 A/m². Original Dataverse mechanisms, 20-pA rheobase, 30-pA AP1 stimulus, and conductances were preserved; modified NMODL copies and all traces remained outside Git. The author baseline remains 200 nodes / 20 µs / secondorder=0 / TABLE on.
+
+
+### 2026-11-13 — 12,800-node Na TABLE extension
+
+The corrected-K 250-ns counterfactual was extended to 12,800 Na-table nodes. TABLE-on voltage/current RMSEs are 0.00147610 mV and 1.78514e-5 A/m², versus 0.00147738 mV and 1.74232e-5 A/m² for the matched direct-rate control. The current mismatch is now 1.0246× the direct-rate residual (1.0967× at 6,400; 1.4266× at 3,200). Shared-path Na gate error is 9.22e-9; source TABLE-on/off trajectory delta is 7.19e-6 mV RMSE. Doubling 6,400→12,800 lowers the shared-path gate error 4.00× and the trajectory delta 3.79×. Current identities remain closed at approximately 1e-13 A/m².
+
+The current Rust implementation's trap0 helper already uses the correct v-th offset, analytic prefactor×slope limit, exp_m1 and asymptotic branches; its existing continuity unit test passed. No HumanJS code change was needed. Temporary corrected-K/12,800-node NMODL files and outputs remained outside Git. This remains a numerical counterfactual, not biological validation or a replacement for the author's 200-node baseline.
