@@ -825,7 +825,7 @@ def fit_extended_profile_csv_text(result: dict[str, Any]) -> str:
         "# This extended profile tests whether the constrained source-domain optimum is boundary-limited; it is not a refit to human experimental currents or biological validation.",
         _write_csv(result["iv"]["fit_profile_extended"], K_IV_PROFILE_FIELDNAMES),
     ]
-    return "\\n".join(lines) + "\\n"
+    return "\n".join(lines) + "\n"
 
 
 def recovery_csv_text(result: dict[str, Any]) -> str:
