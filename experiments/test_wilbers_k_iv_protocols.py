@@ -130,6 +130,23 @@ class WilbersKVoltageClampProtocolTests(unittest.TestCase):
         self.assertAlmostEqual(selected["fit_tau_fast_ms"], 80.0, places=2)
         self.assertGreater(selected["fit_r_squared"], 0.99999)
 
+    def test_profiled_fast_tau_recovers_synthetic_fixed_slow_curve(self) -> None:
+        times = np.linspace(0.0, 900.0, 901)
+        currents = (
+            0.20 * np.exp(-times / 80.0)
+            + 0.05 * np.exp(-times / 450.0)
+            + 0.01
+        )
+        profile = fit_diagnostics.profile_k_iv_postpeak_tau(
+            -70.0, times, currents
+        )
+        self.assertEqual(len(profile), 601)
+        self.assertTrue(all(row["solver_success"] for row in profile))
+        best = min(profile, key=lambda row: row["fit_rmse_ma_cm2"])
+        self.assertAlmostEqual(best["voltage_mv"], -70.0)
+        self.assertLess(abs(best["tau1_ms"] - 80.0), 1.0)
+        self.assertGreater(best["fit_r_squared"], 0.99999)
+
     def test_source_fit_contracts_and_mechanism_identity_are_pinned(self) -> None:
         self.assertEqual(replay.K_IV_FIXED_SLOW_TAU_MS, 450.0)
         self.assertEqual(replay.SOURCE_FILES["mod/k_human.mod"][0], 318647)
