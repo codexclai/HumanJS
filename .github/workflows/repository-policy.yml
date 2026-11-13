@@ -74,5 +74,11 @@ jobs:
           python3 experiments/validate_wilbers_na_iv_auxiliary_neuron_replay.py \
             --inactivation-actual /tmp/wilbers-na-iv-inact-neuron.csv \
             --recovery-actual /tmp/wilbers-na-recovery-neuron.csv
+      - name: Replay original Wilbers K_IV and K_recovery using NEURON VClamp
+        run: |
+          python3 experiments/replay_wilbers_k_iv_neuron.py \
+            --iv-output /tmp/wilbers-k-iv-neuron.csv \
+            --recovery-output /tmp/wilbers-k-recovery-neuron.csv \
+            --emit-to-stdout
       - name: Validate repository policy
         run: python3 .github/scripts/repository_policy.py
