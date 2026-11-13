@@ -36,6 +36,20 @@ K_IV_FIT_DIAGNOSTIC_FIELDNAMES = (
     "fit_error_type",
 )
 
+K_IV_PROFILE_FIELDNAMES = (
+    "voltage_mv",
+    "tau1_ms",
+    "fit_fast_amplitude_ma_cm2",
+    "fit_slow_amplitude_ma_cm2",
+    "fit_offset_ma_cm2",
+    "fit_r_squared",
+    "fit_rmse_ma_cm2",
+    "residual_sum_squares",
+    "solver_success",
+    "solver_optimality,
+)
+
+
 # Alternative starts are deliberately finite, dimensionally meaningful values
 # within the deposited helper's original tau1 bounds (0, 300) ms. The source
 # initialization is included verbatim as a control, not silently corrected.
@@ -191,4 +205,74 @@ def diagnose_k_iv_postpeak_fit(
         except Exception as exc:  # Keep failed starts visible rather than dropping them.
             row["fit_error_type"] = type(exc).__name__
         rows.append(row)
+    return rows
+
+
+def profile_k_iv_postpeak_tau(
+    voltage_mv: float,
+    times_ms: Any,
+    currents_ma_cm2: Any,
+) -> list[dict[str, Any]]:
+    """Profile the nonnegative linear amplitudes over a fixed tau1 grid.
+
+    For each fixed fast tau1, the remaining (a1, a2, ss) parameters are
+    estimated by bounded linear least squares. This is a deterministic profile
+    objective, not a change to the deposited source fit.
+    """
+    from scipy.optimize import lsq_linear
+
+    times = np.asarray(times_ms, dtype=float)
+    currents = np.asarray(currents_ma_cm2, dtype=float)
+    if (
+        times.ndim != 1
+        or currents.ndim != 1
+        or times.shape != currents.shape
+        or len(times) < 5
+        or not np.isfinite(times).all()
+        or not np.isfinite(currents).all()
+        or np.any(np.diff(times) <= 0.0)
+    ):
+        raise ValueError("K_IV tau profile requires matched, increasing finite samples")
+
+    x = times - times[0]
+    total = float(np.sum((currents - np.mean(currents)) ** 2))
+    tau_grid = np.geomspace(0.05, 300.0, 601)
+    rows: list[dict[str, Any]] = []
+    for tau1 in tau_grid:
+        design = np.column_stack(
+            (
+                np.exp(-x / tau1),
+                np.exp(-x / K_IV_FIXED_SLOW_TAU_MS),
+                np.ones_like(x),
+            )
+        )
+        solution = lsq_linear(
+            design,
+            currents,
+            bounds=(0.0, np.inf),
+            method="trf",
+            tol=1.0e-12,
+            lsmr_tol="auto",
+            max_iter=300,
+        )
+        parameters = np.asarray(solution.x, dtype=float)
+        fitted = design @ parameters
+        residual = currents - fitted
+        rss = float(np.sum(residual**2))
+        rmse = math.sqrt(float(np.mean(residual**2)))
+        r_squared = 1.0 - rss / total if total > 0.0 else math.nan
+        rows.append(
+            {
+                "voltage_mv": float(voltage_mv),
+                "tau1_ms": float(tau1),
+                "fit_fast_amplitude_ma_cm2": float(parameters[0]),
+                "fit_slow_amplitude_ma_cm2": float(parameters[1]),
+                "fit_offset_ma_cm2": float(parameters[2]),
+                "fit_r_squared": r_squared,
+                "fit_rmse_ma_cm2": rmse,
+                "residual_sum_squares": rss,
+                "solver_success": bool(solution.success),
+                "solver_optimality": float(solution.optimality),
+            }
+        )
     return rows
