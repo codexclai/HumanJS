@@ -152,10 +152,11 @@ jobs:
             --expected research/HUMAN-L23-WILBERS-K-IV-TAU3-EXTENDED-RESIDUAL-SUMMARY.csv \
             --tau3-min-ms 0.1 \
             --tau3-max-ms 5.0
-      - name: Validate conditional K_IV tau1-tau3 surface structure
+      - name: Compare conditional K_IV tau1-tau3 surface with the committed reference
         run: |
           python3 experiments/validate_wilbers_k_iv_tau1_tau3_surface.py \
             --actual /tmp/wilbers-k-iv-tau1-tau3-surface.csv \
+            --expected research/HUMAN-L23-WILBERS-K-IV-TAU1-TAU3-SURFACE-SUMMARY.csv \
             --tau3-grid-points 5601 \
             --tau3-max-ms 10.0
       - name: Validate non-source K_IV three-exponential residual counterfactual
