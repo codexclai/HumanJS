@@ -79,11 +79,17 @@ jobs:
           python3 experiments/replay_wilbers_k_iv_neuron.py \
             --iv-output /tmp/wilbers-k-iv-neuron.csv \
             --recovery-output /tmp/wilbers-k-recovery-neuron.csv \
+            --fit-diagnostic-output /tmp/wilbers-k-iv-fit-diagnostics.csv \
             --emit-to-stdout
       - name: Validate original NEURON K_IV and K_recovery replays
         run: |
           python3 experiments/validate_wilbers_k_iv_neuron_replay.py \
             --iv-actual /tmp/wilbers-k-iv-neuron.csv \
             --recovery-actual /tmp/wilbers-k-recovery-neuron.csv
+      - name: Validate K_IV same-waveform fit-start diagnostics
+        run: |
+          python3 experiments/validate_wilbers_k_iv_fit_diagnostics.py \
+            --actual /tmp/wilbers-k-iv-fit-diagnostics.csv \
+            --source-iv /tmp/wilbers-k-iv-neuron.csv
       - name: Validate repository policy
         run: python3 .github/scripts/repository_policy.py
