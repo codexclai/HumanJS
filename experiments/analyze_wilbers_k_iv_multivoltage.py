@@ -34,6 +34,11 @@ def main() -> int:
     parser.add_argument("--surface-tau1-points", type=int, default=9)
     parser.add_argument("--surface-tau3-points", type=int, default=5601)
     parser.add_argument("--surface-tau3-max-ms", type=float, default=10.0)
+    parser.add_argument("--extended-tau1-tau3-surface-output", type=Path)
+    parser.add_argument("--extended-surface-voltage-mv", type=float, default=55.0)
+    parser.add_argument("--extended-surface-tau3-min-ms", type=float, default=0.1)
+    parser.add_argument("--extended-surface-tau3-max-ms", type=float, default=40.0)
+    parser.add_argument("--extended-surface-tau3-points", type=int, default=11401)
     parser.add_argument(
         "--emit-to-stdout",
         action="store_true",
@@ -85,6 +90,32 @@ def main() -> int:
     else:
         surface_rows = []
         surface_content = ""
+    if args.extended_tau1_tau3_surface_output:
+        extended_surface_voltages = (args.extended_surface_voltage_mv,)
+        extended_surface_rows = analyze_tau1_tau3_surface(
+            read_postpeak_waveforms(args.waveforms),
+            rows,
+            tau1_grid_points=args.surface_tau1_points,
+            tau3_min_ms=args.extended_surface_tau3_min_ms,
+            tau3_max_ms=args.extended_surface_tau3_max_ms,
+            tau3_grid_points=args.extended_surface_tau3_points,
+            surface_voltages_mv=extended_surface_voltages,
+        )
+        validate_tau1_tau3_surface_rows(
+            extended_surface_rows,
+            tau1_grid_points=args.surface_tau1_points,
+            tau3_grid_points=args.extended_surface_tau3_points,
+            tau3_min_ms=args.extended_surface_tau3_min_ms,
+            tau3_max_ms=args.extended_surface_tau3_max_ms,
+            surface_voltages_mv=extended_surface_voltages,
+        )
+        extended_surface_content = tau1_tau3_surface_csv_text(extended_surface_rows)
+        args.extended_tau1_tau3_surface_output.expanduser().resolve().write_text(
+            extended_surface_content, encoding="utf-8"
+        )
+    else:
+        extended_surface_rows = []
+        extended_surface_content = ""
     if args.emit_to_stdout:
         print("BEGIN_HUMANJS_K_IV_MULTIVOLTAGE_SUMMARY")
         print(content, end="")
@@ -97,6 +128,10 @@ def main() -> int:
             print("BEGIN_HUMANJS_K_IV_TAU1_TAU3_SURFACE")
             print(surface_content, end="")
             print("END_HUMANJS_K_IV_TAU1_TAU3_SURFACE")
+        if args.extended_tau1_tau3_surface_output:
+            print("BEGIN_HUMANJS_K_IV_TAU1_TAU3_SURFACE_EXTENDED")
+            print(extended_surface_content, end="")
+            print("END_HUMANJS_K_IV_TAU1_TAU3_SURFACE_EXTENDED")
     for row in rows:
         print(
             f"{row['voltage_mv']:g} mV: tau1={row['local_tau1_ms']:.6g} ms, "
@@ -127,6 +162,22 @@ def main() -> int:
                 f"conditional tau3 range across the 6% window="
                 f"{min(conditional_taus):.6g}..{max(conditional_taus):.6g} ms"
             )
+    if extended_surface_rows:
+        group = extended_surface_rows
+        center = group[len(group) // 2]
+        global_row = next(row for row in group if row["is_global_surface_minimum"])
+        positive = [row["tau1_grid_index"] for row in group if row["a3_ma_cm2"] > 0.0]
+        negative = [row["tau1_grid_index"] for row in group if row["a3_ma_cm2"] < 0.0]
+        boundary = [row["tau1_grid_index"] for row in group if row["tau3_minimum_at_grid_boundary"]]
+        print(
+            f"{args.extended_surface_voltage_mv:g} mV extended tau1-tau3 surface: "
+            f"tau3 range={min(row['selected_tau3_ms'] for row in group):.6g}.."
+            f"{max(row['selected_tau3_ms'] for row in group):.6g} ms; "
+            f"tau1 indices at tau3 boundary={boundary}; "
+            f"negative/positive a3 indices={negative}/{positive}; "
+            f"global minimum tau1/tau3={global_row['tau1_ms']:.6g}/"
+            f"{global_row['selected_tau3_ms']:.6g} ms"
+        )
     return 0
 
 

@@ -97,8 +97,14 @@ def main() -> int:
     parser.add_argument("--tau3-grid-points", type=int, default=5601)
     parser.add_argument("--tau3-min-ms", type=float, default=0.1)
     parser.add_argument("--tau3-max-ms", type=float, default=10.0)
+    parser.add_argument("--voltage-mv", type=float, nargs="+", default=None)
     args = parser.parse_args()
 
+    surface_voltages = (
+        tuple(args.voltage_mv)
+        if args.voltage_mv is not None
+        else (-30.0, -60.0, 55.0)
+    )
     actual = read_surface(args.actual)
     try:
         validate_tau1_tau3_surface_rows(
@@ -107,6 +113,7 @@ def main() -> int:
             tau3_grid_points=args.tau3_grid_points,
             tau3_min_ms=args.tau3_min_ms,
             tau3_max_ms=args.tau3_max_ms,
+            surface_voltages_mv=surface_voltages,
         )
     except ValueError as exc:
         raise SystemExit(str(exc)) from exc
@@ -120,13 +127,14 @@ def main() -> int:
                 tau3_grid_points=args.tau3_grid_points,
                 tau3_min_ms=args.tau3_min_ms,
                 tau3_max_ms=args.tau3_max_ms,
+                surface_voltages_mv=surface_voltages,
             )
         except ValueError as exc:
             raise SystemExit(f"Invalid expected tau1-tau3 surface: {exc}") from exc
         compare_expected(actual, expected)
         print(
             "K_IV tau1-tau3 profile-surface summary matches the committed "
-            "three-voltage, 27-slice reference."
+            f"{len(surface_voltages)}-voltage, {len(actual)}-slice reference."
         )
     else:
         print(
@@ -134,7 +142,7 @@ def main() -> int:
             f"{len(actual)} conditional profile slices."
         )
 
-    for voltage in (-30.0, -60.0, 55.0):
+    for voltage in surface_voltages:
         group = [row for row in actual if row["voltage_mv"] == voltage]
         center = group[len(group) // 2]
         global_row = next(row for row in group if row["is_global_surface_minimum"])

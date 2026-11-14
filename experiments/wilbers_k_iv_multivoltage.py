@@ -613,8 +613,9 @@ def analyze_tau1_tau3_surface(
     tau3_min_ms: float = 0.1,
     tau3_max_ms: float = 5.0,
     tau3_grid_points: int = 2801,
+    surface_voltages_mv: tuple[float, ...] = K_IV_TAU1_TAU3_SURFACE_VOLTAGES_MV,
 ) -> list[dict[str, Any]]:
-    """Profile tau3 while tau1 varies within three predeclared local windows.
+    """Profile tau3 while tau1 varies within predeclared local windows.
 
     Each row is one tau1 slice of the conditional tau3 profile surface. All
     coefficients are refit against the complete waveform at every tau3 grid
@@ -624,6 +625,12 @@ def analyze_tau1_tau3_surface(
     """
     if tuple(sorted(waveforms)) != K_IV_MULTIVOLTAGE_TARGETS_MV:
         raise ValueError("K_IV tau1-tau3 surface requires all 27 source-fit waveforms")
+    if (
+        not surface_voltages_mv
+        or len(set(surface_voltages_mv)) != len(surface_voltages_mv)
+        or any(voltage not in K_IV_TAU1_TAU3_SURFACE_VOLTAGES_MV for voltage in surface_voltages_mv)
+    ):
+        raise ValueError("K_IV tau1-tau3 surface voltage selection must be a nonempty subset of the predeclared commands")
     if tuple(row.get("voltage_mv") for row in baseline_rows) != K_IV_MULTIVOLTAGE_TARGETS_MV:
         raise ValueError("K_IV tau1-tau3 surface requires the ordered 27-row baseline profile")
     if (
@@ -649,7 +656,7 @@ def analyze_tau1_tau3_surface(
 
     baseline_by_voltage = {float(row["voltage_mv"]): row for row in baseline_rows}
     output: list[dict[str, Any]] = []
-    for voltage in K_IV_TAU1_TAU3_SURFACE_VOLTAGES_MV:
+    for voltage in surface_voltages_mv:
         baseline = baseline_by_voltage[voltage]
         coarse_tau1 = float(baseline["coarse_tau1_ms"])
         reference_tau1 = float(baseline["local_tau1_ms"])
@@ -750,6 +757,7 @@ def analyze_tau1_tau3_surface(
         tau3_grid_points=int(tau3_grid_points),
         tau3_min_ms=tau3_min_ms,
         tau3_max_ms=tau3_max_ms,
+        surface_voltages_mv=surface_voltages_mv,
     )
     return output
 
@@ -761,14 +769,19 @@ def validate_tau1_tau3_surface_rows(
     tau3_grid_points: int = 2801,
     tau3_min_ms: float = 0.1,
     tau3_max_ms: float = 5.0,
+    surface_voltages_mv: tuple[float, ...] = K_IV_TAU1_TAU3_SURFACE_VOLTAGES_MV,
 ) -> None:
     """Validate the ordered conditional tau1-tau3 objective-surface summary."""
-    expected_count = (
-        len(K_IV_TAU1_TAU3_SURFACE_VOLTAGES_MV) * int(tau1_grid_points)
-    )
+    if (
+        not surface_voltages_mv
+        or len(set(surface_voltages_mv)) != len(surface_voltages_mv)
+        or any(voltage not in K_IV_TAU1_TAU3_SURFACE_VOLTAGES_MV for voltage in surface_voltages_mv)
+    ):
+        raise ValueError("K_IV tau1-tau3 surface validation requires a nonempty predeclared voltage subset")
+    expected_count = len(surface_voltages_mv) * int(tau1_grid_points)
     expected_voltages = tuple(
         voltage
-        for voltage in K_IV_TAU1_TAU3_SURFACE_VOLTAGES_MV
+        for voltage in surface_voltages_mv
         for _ in range(int(tau1_grid_points))
     )
     if len(rows) != expected_count or tuple(
@@ -802,7 +815,7 @@ def validate_tau1_tau3_surface_rows(
         raise ValueError("K_IV tau1-tau3 surface tau3 bounds are invalid")
 
     cursor = 0
-    for voltage in K_IV_TAU1_TAU3_SURFACE_VOLTAGES_MV:
+    for voltage in surface_voltages_mv:
         group = rows[cursor : cursor + int(tau1_grid_points)]
         cursor += int(tau1_grid_points)
         reference = group[int(tau1_grid_points) // 2]
@@ -950,13 +963,14 @@ def tau1_tau3_surface_csv_text(rows: list[dict[str, Any]]) -> str:
     import io
 
     if not rows:
-        raise ValueError("K_IV tau1-tau3 surface CSV requires all 27 conditional slices")
+        raise ValueError("K_IV tau1-tau3 surface CSV requires at least one conditional slice")
     tau3_min_ms = float(rows[0]["tau3_min_ms"])
     tau3_max_ms = float(rows[0]["tau3_max_ms"])
     tau3_grid_points = int(rows[0]["tau3_grid_points"])
     output = io.StringIO()
+    voltage_labels = ", ".join(f"{float(value):g}" for value in dict.fromkeys(row["voltage_mv"] for row in rows))
     output.write(
-        "# Conditional tau1-tau3 sensitivity surface for predeclared K_IV commands -30, -60, and +55 mV.\n"
+        f"# Conditional tau1-tau3 sensitivity surface for predeclared K_IV command(s) {voltage_labels} mV.\n"
     )
     output.write(
         "# Waveforms are deterministic NEURON 9.0.2/VClamp outputs from the unchanged DataverseNL v3.0 pure-human K source replay; not raw human experimental current.\n"

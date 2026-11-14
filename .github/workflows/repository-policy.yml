@@ -139,6 +139,11 @@ jobs:
             --surface-tau1-points 9 \
             --surface-tau3-points 5601 \
             --surface-tau3-max-ms 10.0 \
+            --extended-tau1-tau3-surface-output /tmp/wilbers-k-iv-tau1-tau3-surface-40ms.csv \
+            --extended-surface-voltage-mv 55.0 \
+            --extended-surface-tau3-min-ms 0.1 \
+            --extended-surface-tau3-max-ms 40.0 \
+            --extended-surface-tau3-points 11401 \
             --emit-to-stdout
       - name: Compare local K_IV tau3 full-waveform objective shape with the committed reference
         run: |
@@ -159,6 +164,15 @@ jobs:
             --expected research/HUMAN-L23-WILBERS-K-IV-TAU1-TAU3-SURFACE-SUMMARY.csv \
             --tau3-grid-points 5601 \
             --tau3-max-ms 10.0
+      - name: Validate extended +55 mV K_IV tau1-tau3 surface structure
+        run: |
+          python3 experiments/validate_wilbers_k_iv_tau1_tau3_surface.py \
+            --actual /tmp/wilbers-k-iv-tau1-tau3-surface-40ms.csv \
+            --tau1-grid-points 9 \
+            --tau3-grid-points 11401 \
+            --tau3-min-ms 0.1 \
+            --tau3-max-ms 40.0 \
+            --voltage-mv 55.0
       - name: Validate non-source K_IV three-exponential residual counterfactual
         run: python3 experiments/validate_wilbers_k_iv_three_component.py
       - name: Validate repository policy

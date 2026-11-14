@@ -163,6 +163,35 @@ class KIVMultivoltageTests(unittest.TestCase):
             self.assertGreaterEqual(group[1]["rmse_first_10ms_ma_cm2"], 0.0)
             self.assertGreaterEqual(group[1]["rmse_after_10ms_ma_cm2"], 0.0)
             self.assertEqual(sum(row["is_global_surface_minimum"] for row in group), 1)
+        single_voltage_rows = analyze_tau1_tau3_surface(
+            waveforms,
+            baseline_rows,
+            tau1_grid_points=3,
+            tau3_min_ms=0.1,
+            tau3_max_ms=5.0,
+            tau3_grid_points=101,
+            surface_voltages_mv=(55.0,),
+        )
+        validate_tau1_tau3_surface_rows(
+            single_voltage_rows,
+            tau1_grid_points=3,
+            tau3_grid_points=101,
+            tau3_min_ms=0.1,
+            tau3_max_ms=5.0,
+            surface_voltages_mv=(55.0,),
+        )
+        self.assertEqual(len(single_voltage_rows), 3)
+        self.assertEqual({row["voltage_mv"] for row in single_voltage_rows}, {55.0})
+        with self.assertRaises(ValueError):
+            analyze_tau1_tau3_surface(
+                waveforms,
+                baseline_rows,
+                tau1_grid_points=3,
+                tau3_min_ms=0.1,
+                tau3_max_ms=5.0,
+                tau3_grid_points=101,
+                surface_voltages_mv=(40.0,),
+            )
         rows[0]["tau1_ms"] = 107.0
         with self.assertRaises(ValueError):
             validate_tau1_tau3_surface_rows(
