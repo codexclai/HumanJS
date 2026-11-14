@@ -324,3 +324,12 @@ The global full-RSS minimum remains at the centre tau1 node (17.195223 ms, tau3=
 These results concern only a non-source numerical residual fit to deterministic NEURON/VClamp model currents. They do not identify a human experimental K current, a molecular gate, a biological kinetic parameter, or a statistical uncertainty interval. Raw human K NWB traces and individual kinetic targets remain unavailable in the inspected DataverseNL v3.0 inventory. Do not transfer the correction into Rust. Source helper/caller/NMODL and HumanJS runtime parameters remain unchanged; ADR-014 remains open.
 
 The 9-row/44-column result is committed as `research/HUMAN-L23-WILBERS-K-IV-TAU1-TAU3-55MV-40MS-SUMMARY.csv` and strictly compared field-by-field in the main workflow.
+
+
+### ADR-019 follow-up — fixed-tau1 +55 mV basin extended to 120 ms (2026-11-14)
+
+The +55 mV conditional tau1–tau3 surface left the 5% and 10% objective basins at tau1 index 5 truncated by the 40 ms tau3 ceiling. A bounded follow-up held the same node fixed at tau1=17.44495210313133 ms (index 5), held tau2=450 ms, and profiled tau3 over 0.1–120 ms on 34,258 uniform points. At each point all coefficients were refit against full-waveform RSS; a1, a2 and steady offset were nonnegative, while a3 was signed. A nonnegative-a3 control was refit at the selected signed optimum.
+
+The selected tau3 is 28.649619055959366 ms. The contiguous 1%, 5%, and 10% relative-full-RSS basins span 10.556044, 25.098605, and 37.702157 ms, ending at 34.536644, 44.459185, and 55.148230 ms. All are interior to the 0.1–120 ms grid, resolving the prior 40 ms edge truncation for this exact fixed-tau1 slice. The signed a3 is -0.00703755 mA/cm²; the nonnegative control clips it to zero and has 88.9233% higher full-waveform RSS than the signed fit.
+
+This remains an engineering counterfactual used to summarize a deterministic model-current residual. It is not raw human K current, not a statistical confidence region, and not evidence for a biological gate, ionic component, or kinetic constant. The source fitting helper/caller/NMODL, HumanJS Rust equations and channel parameters remain unchanged. Do not transfer tau3 or a3 into the Rust model. Raw human K current traces and individual kinetic targets remain absent from the inspected DataverseNL v3.0 inventory; ADR-014 remains open.

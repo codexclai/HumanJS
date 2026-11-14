@@ -2,7 +2,7 @@
 
 **Updated:** 2026-11-14
 **Canonical repository:** codexclai/HumanJS, branch main only.
-**Latest live implementation HEAD before this documentation handoff refresh:** `cdba13783f435645fb5f194a0e2bd2d5858ce1ab` (117-entry non-truncated tree, main only, zero open issues and zero open PRs). Workflow [43552164142](https://github.com/codexclai/HumanJS/actions/runs/43552164142) passed on that exact pushed code/data commit with all 35 job steps successful, including the strict 9-row/44-column +55 mV 0.1–40 ms reference comparison. All code, data and workflow changes were pushed directly to main; the live remote ref was checked against the commit.
+**Latest live implementation HEAD before this documentation handoff refresh:** `d8b623ba4fd0ac1224b4c5ac52b1fce64592851f` (119-entry non-truncated tree, main only, zero open issues and zero open PRs). Workflow [43567023221](https://github.com/codexclai/HumanJS/actions/runs/43567023221) passed on that exact pushed code/data commit with all 36 job steps successful, including the fixed-tau1 +55 mV 0.1–120 ms profile generation. The main ref was checked against the commit; all changes were pushed directly to main.
 **Next session:** refresh repository metadata, read live docs/BOOT.md, then inspect the current main tree, latest workflow, issues/PRs and branch refs before relying on this handoff.
 
 ## Verified repository state at handoff
@@ -956,3 +956,47 @@ The complete analyzer execution is in hosted GitHub Actions; no local clone or l
 ### Next concrete step
 
 Profile tau3 beyond 40 ms at only the tau1 index 5 node (tau1=17.444952 ms) to see whether its 5% and 10% near-minimum basins become enclosed. Keep that test on the exact same model-generated waveform and full-waveform RSS objective, with the sign constraints unchanged. Report the width as a conditional numerical basin only, not biological uncertainty or a confidence interval.
+
+
+## Latest handoff — +55 mV fixed-tau1 K_IV objective basin extended to 120 ms (2026-11-14)
+
+### Verified repository state before this documentation/reference refresh
+
+- Canonical repository `codexclai/HumanJS`; default branch and only branch `main`; implementation HEAD `d8b623ba4fd0ac1224b4c5ac52b1fce64592851f`; complete 119-entry recursive tree, not truncated; zero open issues and zero open pull requests.
+- GitHub Actions [43567023221](https://github.com/codexclai/HumanJS/actions/runs/43567023221) passed on exact code/data HEAD `d8b623ba4fd0ac1224b4c5ac52b1fce64592851f`: 36 successful job steps, no failures. It parsed 32 Python experiment scripts, passed 50 Python tests, ran the Rust tests (41 core unit, 3 synapse integration, 6 passive-membrane integration), replayed the original Wilbers Na/K protocols under NEURON 9.0.2, and passed every existing K_IV comparison plus the new profile-generation step.
+
+### Work completed
+
+- Added `experiments/analyze_wilbers_k_iv_fixed_tau1.py`, a fixed-parameter profile using the already existing waveform loader, full-waveform signed three-exponential fitting, and the existing objective-shape summary method.
+- Added `experiments/test_wilbers_k_iv_fixed_tau1.py` with synthetic recovery of a signed component beyond the previous 40 ms domain and validator rejection cases.
+- Added a main-workflow step to profile only the +55 mV waveform at tau1 grid index 5, with tau1 fixed at 17.44495210313133 ms, tau2 fixed at 450 ms, tau3=0.1–120 ms, and 34,258 uniform grid points.
+- The workflow emitted an interior minimum at tau3=28.649619055959366 ms. The 1%, 5%, and 10% contiguous relative-full-RSS basin spans are 10.55604402020025, 25.098604664740055, and 37.70215722334122 ms. Their upper bounds are 34.53664360568643, 44.45918498409085, and 55.14822955892227 ms, respectively; none touches the 120 ms grid edge.
+- The signed a3 is -0.007037549809997629 mA/cm². A same-tau3 positive-amplitude control clips a3 to zero and has 88.92330427008206% higher full-waveform RSS. This says only that the signed numerical correction improves this chosen deterministic waveform objective.
+- The full-waveform RMSE is 0.00022063629885869346 mA/cm².
+
+### Provenance and scientific boundary
+
+The waveform is exact post-peak output from the deposited pure-human K model replay in NEURON 9.0.2/VClamp. It is not raw human experimental current. No raw K NWB traces or individual K kinetic-target CSVs were present in the inspected DataverseNL v3.0 inventory. Objective-basin spans are not confidence intervals or biological uncertainty. The fitted signed correction is not a gate, positive ionic current, or biological kinetic parameter. Do not transfer it into Rust. The source fitting helper/caller/NMODL and HumanJS Rust equations/channel parameters were not modified. ADR-014 remains open; the spike-capable single-compartment model remains exploratory and biologically unvalidated.
+
+### Changed paths in this continuation
+
+- `.github/workflows/repository-policy.yml`
+- `experiments/analyze_wilbers_k_iv_fixed_tau1.py`
+- `experiments/test_wilbers_k_iv_fixed_tau1.py`
+- `research/HUMAN-L23-WILBERS-K-IV-TAU1-TAU3-55MV-INDEX5-120MS-SUMMARY.csv`
+- `research/HUMAN-L23-WILBERS-K-IV-FIT-SENSITIVITY.md`
+- `docs/BOOT.md`
+- `docs/status/STATUS.md`
+- `docs/status/SESSION-HANDOFF.md`
+- `docs/decisions/DECISIONS.md`
+- `docs/roadmap/MASTER-ROADMAP.md`
+
+### Commits and verification
+
+- `4a3588d2c7d5a4e823d6c67451e6c6af08c4fd01` — add the fixed-tau1 analyzer, synthetic tests, and initial CI invocation.
+- `d8b623ba4fd0ac1224b4c5ac52b1fce64592851f` — correct the workflow invocation to a single shell command. The run for this exact code/data commit succeeded: [43567023221](https://github.com/codexclai/HumanJS/actions/runs/43567023221).
+- This handoff/reference commit will add the committed one-row expected CSV and make CI compare every summary field rather than only generating the report.
+
+### Next concrete step
+
+Commit the exact generated 39-column profile output as the canonical expected reference, enable strict `--expected` comparison in CI, update the boot/status/decision/roadmap/research records, push directly to `main`, and verify the resulting workflow against that exact branch head.

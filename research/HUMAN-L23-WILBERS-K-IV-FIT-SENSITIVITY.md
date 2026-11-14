@@ -381,3 +381,30 @@ This is a descriptive sensitivity calculation on deterministic model-generated c
 The strict reference is `research/HUMAN-L23-WILBERS-K-IV-TAU1-TAU3-55MV-40MS-SUMMARY.csv` (9 rows, 44 columns). The source replay regenerates the result and CI compares every numeric, Boolean, and integer field with the committed reference using the declared tolerances. GitHub Actions [43552164142](https://github.com/codexclai/HumanJS/actions/runs/43552164142) passed on exact code/data HEAD `cdba13783f435645fb5f194a0e2bd2d5858ce1ab` with all 35 job steps successful and no failed steps. Hosted checks included Rust formatting and Clippy, Rust tests (41 core unit, 3 synapse integration, 6 passive-membrane integration), syntax parsing of 30 Python experiment scripts, 48 Python tests, the original Wilbers NEURON 9.0.2 Na/K protocol replays and validators, strict comparisons of the baseline and expanded 27-row K_IV residual summaries, the 27-row/26-column fixed-tau1 objective-shape reference, the 27-row/44-column three-voltage tau1–tau3 surface, the new 9-row/44-column +55 mV 0.1–40 ms surface, the three-exponential residual validator, and repository policy (16 required files).
 
 This resolves the 10 ms *point-minimum* clipping at this representative voltage, and shows that the earlier positive signed coefficients do not persist under the wider domain. It does not close the broader near-minimum basin at tau1 index 5, identify a biological kinetic component, or replace missing experimental data.
+
+
+## 2026-11-14 — +55 mV fixed-tau1 objective basin extended to 120 ms
+
+### Question and method
+
+The preceding nine-node +55 mV tau1–tau3 surface extended tau3 only to 40 ms. At tau1 index 5 (tau1=17.44495210313133 ms), the selected minimum was interior at 28.6495 ms, but the 5% and 10% near-minimum basins reached the 40 ms upper edge. This follow-up isolates that exact node: tau1 remains fixed at 17.44495210313133 ms, source tau2 remains fixed at 450 ms, and tau3 is profiled from 0.1 to 120 ms on 34,258 equally spaced points (0.0035000146 ms spacing). The same exact source-replay waveform is used. At every tau3 point, all four coefficients are refit against full-waveform RSS; a1, a2, and the steady offset are constrained nonnegative, while the additional a3 remains signed. The nonnegative-amplitude control is refit at the selected signed optimum. First-10-ms and after-10-ms RMSE are diagnostic windows only; neither defines a separate fitting objective.
+
+### Results
+
+The selected tau3 is 28.649619055959366 ms and is interior to the expanded grid. The contiguous relative-full-RSS basins are:
+
+| Relative RSS threshold | Lower bound (ms) | Upper bound (ms) | Span (ms) | Grid points | Touches grid edge |
+|---:|---:|---:|---:|---:|---:|
+| 1% | 23.980600 | 34.536644 | 10.556044 | 3,017 | No |
+| 5% | 19.360580 | 44.459185 | 25.098605 | 7,172 | No |
+| 10% | 17.446072 | 55.148230 | 37.702157 | 10,773 | No |
+
+The 5% basin therefore continues 4.4592 ms beyond the former 40 ms ceiling and the 10% basin continues 15.1482 ms beyond it; both are now fully enclosed. The 1% basin remains essentially the same as the previous 40 ms result. The normalized central second difference of relative RSS is 0.00073845005 ms⁻²; the immediate neighbouring increases are extremely small on this broad profile (left 5.89893×10⁻⁸%, right 8.45620×10⁻⁷%).
+
+At the signed optimum, a1=0.2605146500, a2=0.2016783568, a3=-0.00703754981, and the steady offset is 0.08970440010 mA/cm². The positive control sets a3=0 and has full-waveform RSS 0.0004568998835 mA²/cm⁴, compared with 0.0002418441098 mA²/cm⁴ for the signed fit (88.9233% higher). The full-waveform RMSE is 0.0002206362989 mA/cm². These quantify the chosen non-source signed-exponential fit family only; a signed residual correction is not an identified positive current or a biological state.
+
+The complete one-row/39-column reference is `research/HUMAN-L23-WILBERS-K-IV-TAU1-TAU3-55MV-INDEX5-120MS-SUMMARY.csv`. The main workflow regenerates the exact NEURON 9.0.2/VClamp waveform and compares every numeric, integer, and Boolean field with the committed reference.
+
+### Interpretation and limitations
+
+The 120 ms domain encloses all three descriptive objective basins at this fixed tau1 node; it does not establish global identifiability, tau1–tau3 joint uncertainty, or a probability interval. The source data are deterministic output from the deposited pure-human K mechanism, not raw human experimental voltage-clamp currents. No measurement-noise model was fitted. The basin spans are not confidence intervals, biological uncertainty, or human K channel kinetics. The deposited fitting helper, caller, pure-human NMODL, HumanJS Rust equations, and channel parameters remain unchanged. Do not transfer tau3 or a3 into Rust. Raw human K NWB traces and individual K kinetic target CSVs remain absent from the inspected DataverseNL v3.0 inventory; ADR-014 remains open and the exploratory spike-capable single-compartment model remains biologically unvalidated.
