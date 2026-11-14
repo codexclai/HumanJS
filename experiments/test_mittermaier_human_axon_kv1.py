@@ -39,6 +39,20 @@ class MittermaierHumanAxonalKv1Tests(unittest.TestCase):
         self.assertLess(fit["vhalf_mv"], -30.0)
         self.assertGreater(fit["slope_mv"], 0.0)
 
+    def test_long_inactivation_mean_fit_recovers_two_time_scales(self) -> None:
+        time = np.linspace(0.02, 2900.02, 1500)
+        mean = (
+            0.35 * np.exp(-time / 1330.0)
+            + 0.24 * np.exp(-time / 120.0)
+            + 0.41
+        )
+        from analyze_mittermaier_human_axon_kv1 import fit_long_inactivation_mean
+
+        fit = fit_long_inactivation_mean(time, mean)
+        self.assertAlmostEqual(fit["tau_fast_ms"], 120.0, delta=0.5)
+        self.assertAlmostEqual(fit["tau_slow_ms"], 1330.0, delta=1.0)
+        self.assertAlmostEqual(fit["offset"], 0.41, delta=0.002)
+
     def test_summary_serialization_preserves_schema_and_blank_fields(self) -> None:
         row = _result_row(
             analysis="dtx_block_summary",

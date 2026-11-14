@@ -50,6 +50,7 @@ SOURCE_FILES = {
 # Derived from the final 101 samples of the authors' mean normalized long-
 # inactivation trace (their R script uses rows 144900:145000 as t=0 recovery).
 RECOVERY_ZERO_TIME_NORMALIZED = 0.4423915697884116
+LONG_INACTIVATION_SHA256 = "d0f27bfaf107c7d53c4ea2737973a33dd71d682bd477a49a38d747e324a58909"
 
 FIELDNAMES = (
     "analysis",
@@ -323,6 +324,96 @@ def summarize_toxin(path: Path) -> dict[str, Any]:
     )
 
 
+def fit_long_inactivation_mean(
+    time_ms: np.ndarray, mean_normalized_current: np.ndarray
+) -> dict[str, Any]:
+    """Fit the authors' two-exponential-plus-offset model to the mean pulse trace."""
+    time = np.asarray(time_ms, dtype=float)
+    current = np.asarray(mean_normalized_current, dtype=float)
+    if (
+        time.ndim != 1
+        or current.ndim != 1
+        or len(time) != len(current)
+        or len(time) < 10
+        or not np.all(np.isfinite(time))
+        or not np.all(np.isfinite(current))
+        or np.any(np.diff(time) <= 0.0)
+    ):
+        raise ValueError("Long-inactivation inputs must be finite, aligned and time ordered")
+
+    def model(
+        t: np.ndarray, amp_slow: float, amp_fast: float, tau_slow: float, tau_fast: float
+    ) -> np.ndarray:
+        return (
+            amp_slow * np.exp(-t / tau_slow)
+            + amp_fast * np.exp(-t / tau_fast)
+            + (1.0 - amp_slow - amp_fast)
+        )
+
+    fitted, _ = curve_fit(
+        model,
+        time,
+        current,
+        p0=(0.55, 0.2, 1500.0, 150.0),
+        maxfev=100000,
+    )
+    amp_slow, amp_fast, tau_slow, tau_fast = (float(x) for x in fitted)
+    if tau_fast > tau_slow:
+        amp_fast, amp_slow = amp_slow, amp_fast
+        tau_fast, tau_slow = tau_slow, tau_fast
+    if tau_fast <= 0.0 or tau_slow <= 0.0:
+        raise ValueError("Long-inactivation fit returned a non-positive time constant")
+    residual = current - model(time, amp_slow, amp_fast, tau_slow, tau_fast)
+    return _result_row(
+        analysis="long_inactivation_group_mean_fit",
+        recording_id="mean_of_20_pulses",
+        n_points=len(time),
+        amplitude_fast=amp_fast,
+        amplitude_slow=amp_slow,
+        tau_fast_ms=tau_fast,
+        tau_slow_ms=tau_slow,
+        offset=1.0 - amp_fast - amp_slow,
+        rmse=float(np.sqrt(np.mean(residual**2))),
+    )
+
+
+def fit_long_inactivation_csv(path: Path) -> dict[str, Any]:
+    """Load the 20 normalized pulse traces and reproduce the authors' mean-curve fit."""
+    sums: dict[float, float] = {}
+    counts: dict[float, int] = {}
+    trace_ids: set[str] = set()
+    with path.open("r", encoding="utf-8-sig", newline="") as stream:
+        reader = csv.DictReader(stream)
+        if tuple(reader.fieldnames or ()) != (
+            "trace_id",
+            "time_point",
+            "normalized_trace",
+        ):
+            raise ValueError("Unexpected long-inactivation source columns")
+        for row in reader:
+            trace_id = row["trace_id"]
+            time = float(row["time_point"])
+            current = float(row["normalized_trace"])
+            if not math.isfinite(time) or not math.isfinite(current):
+                raise ValueError("Long-inactivation trace contains a non-finite sample")
+            trace_ids.add(trace_id)
+            sums[time] = sums.get(time, 0.0) + current
+            counts[time] = counts.get(time, 0) + 1
+    if len(trace_ids) != 20:
+        raise ValueError(f"Expected 20 long-inactivation pulse traces, found {len(trace_ids)}")
+    time = np.asarray(sorted(sums), dtype=float)
+    mean = np.asarray([sums[float(t)] / counts[float(t)] for t in time], dtype=float)
+    if (
+        len(time) != 145001
+        or not math.isclose(float(time[0]), 0.02, rel_tol=0.0, abs_tol=1e-9)
+        or not math.isclose(float(time[-1]), 2900.02, rel_tol=0.0, abs_tol=1e-8)
+        or not np.allclose(np.diff(time), 0.02, rtol=0.0, atol=1e-9)
+        or any(count != 20 for count in counts.values())
+    ):
+        raise ValueError("Long-inactivation source does not match the pinned 20 × 145,001 sample layout")
+    return fit_long_inactivation_mean(time, mean)
+
+
 def _result_row(
     *,
     analysis: str,
@@ -452,8 +543,12 @@ def main() -> int:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--expected", type=Path)
     parser.add_argument("--source-dir", type=Path)
+    parser.add_argument("--long-inactivation-csv", type=Path)
+    parser.add_argument("--long-output", type=Path)
     args = parser.parse_args()
 
+    if bool(args.long_inactivation_csv) != bool(args.long_output):
+        parser.error("--long-inactivation-csv and --long-output must be supplied together")
     if args.source_dir:
         paths = download_sources(args.source_dir.expanduser().resolve())
         rows = analyze(paths)
@@ -461,6 +556,23 @@ def main() -> int:
         with tempfile.TemporaryDirectory(prefix="humanjs-mittermaier-kv1-") as temp:
             paths = download_sources(Path(temp))
             rows = analyze(paths)
+
+    if args.long_inactivation_csv:
+        long_path = args.long_inactivation_csv.expanduser().resolve()
+        actual_hash = _sha256(long_path)
+        if actual_hash != LONG_INACTIVATION_SHA256:
+            raise ValueError(
+                "Long-inactivation source checksum mismatch: "
+                f"expected {LONG_INACTIVATION_SHA256}, got {actual_hash}"
+            )
+        long_row = fit_long_inactivation_csv(long_path)
+        long_output = args.long_output.expanduser().resolve()
+        long_output.parent.mkdir(parents=True, exist_ok=True)
+        long_output.write_text(serialize_rows([long_row]), encoding="utf-8")
+        print(
+            f"Long-inactivation mean trace: tau_fast={long_row['tau_fast_ms']:.6g} ms, "
+            f"tau_slow={long_row['tau_slow_ms']:.6g} ms (20 normalized pulses)"
+        )
 
     content = serialize_rows(rows)
     output = args.output.expanduser().resolve()
