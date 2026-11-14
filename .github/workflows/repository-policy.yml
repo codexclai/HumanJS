@@ -145,6 +145,12 @@ jobs:
             --extended-surface-tau3-max-ms 40.0 \
             --extended-surface-tau3-points 11401 \
             --emit-to-stdout
+      - name: Profile +55 mV at fixed tau1=17.444952 ms beyond the 40 ms domain
+        run: |
+          python3 experiments/analyze_wilbers_k_iv_fixed_tau1.py \\
+            --waveforms /tmp/wilbers-k-iv-postpeak-waveforms.csv \\
+            --output /tmp/wilbers-k-iv-fixed-tau1-profile-120ms.csv
+
       - name: Compare local K_IV tau3 full-waveform objective shape with the committed reference
         run: |
           python3 experiments/validate_wilbers_k_iv_tau3_profile_shape.py \
