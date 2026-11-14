@@ -2,7 +2,7 @@
 
 **Updated:** 2026-11-14
 **Canonical repository:** codexclai/HumanJS, branch main only.
-**Latest live implementation HEAD before this documentation handoff refresh:** `d8b623ba4fd0ac1224b4c5ac52b1fce64592851f` (119-entry non-truncated tree, main only, zero open issues and zero open PRs). Workflow [43567023221](https://github.com/codexclai/HumanJS/actions/runs/43567023221) passed on that exact pushed code/data commit with all 36 job steps successful, including the fixed-tau1 +55 mV 0.1–120 ms profile generation. The main ref was checked against the commit; all changes were pushed directly to main.
+**Latest live implementation HEAD before this documentation handoff refresh:** `2be947d96a7e079bb05b799e6a01fa704acd1004` (120-entry non-truncated tree, main only, zero open issues and zero open PRs). Workflow [43568457823](https://github.com/codexclai/HumanJS/actions/runs/43568457823) passed on that exact pushed code/data commit with all 36 job steps successful, including the strict fixed-tau1 39-column expected-summary comparison. The main ref was checked against the commit; all changes were pushed directly to main.
 **Next session:** refresh repository metadata, read live docs/BOOT.md, then inspect the current main tree, latest workflow, issues/PRs and branch refs before relying on this handoff.
 
 ## Verified repository state at handoff
@@ -995,8 +995,20 @@ The waveform is exact post-peak output from the deposited pure-human K model rep
 
 - `4a3588d2c7d5a4e823d6c67451e6c6af08c4fd01` — add the fixed-tau1 analyzer, synthetic tests, and initial CI invocation.
 - `d8b623ba4fd0ac1224b4c5ac52b1fce64592851f` — correct the workflow invocation to a single shell command. The run for this exact code/data commit succeeded: [43567023221](https://github.com/codexclai/HumanJS/actions/runs/43567023221).
-- This handoff/reference commit will add the committed one-row expected CSV and make CI compare every summary field rather than only generating the report.
+- `bf853524c4c8e9dc15c8c070ff7b8347a8eb8d21` — commit the one-row/39-column expected reference, enable `--expected` in the workflow, and update status/decision/roadmap/research records. The first exact replay exposed a near-zero left-neighbour metric drift of 1.62×10⁻¹², slightly outside the prior 1×10⁻¹² absolute tolerance.
+- `90866dbb2ce5040e8c7ace05e38947d03cf87c7c` — add a narrowly scoped 1×10⁻¹⁰ absolute tolerance for the two tiny neighbour-delta percentage fields and a test for tolerated drift. Its first workflow run revealed the test's fixed rejection perturbation could still fall within the relative tolerance.
+- `2be947d96a7e079bb05b799e6a01fa704acd1004` — scale the rejection perturbation to exceed relative tolerance, then verify the full workflow. Run [43568457823](https://github.com/codexclai/HumanJS/actions/runs/43568457823) passed all 36 steps, including all 51 Python tests and the strict expected-profile comparison.
 
 ### Next concrete step
 
-Commit the exact generated 39-column profile output as the canonical expected reference, enable strict `--expected` comparison in CI, update the boot/status/decision/roadmap/research records, push directly to `main`, and verify the resulting workflow against that exact branch head.
+Audit alternative public human cortical K-current voltage-clamp/NWB datasets and their per-voltage kinetic target metadata beyond the inspected DataverseNL v3.0 inventory. The present source-replay profile is now reproducible, but the raw human K recordings and individual target CSVs remain absent; do not infer biological K kinetics or transfer the signed residual into Rust unless suitable human experimental evidence is located and independently assessed.
+
+
+## Final exact-head verification and precision audit — 2026-11-14
+
+- Final main HEAD: `2be947d96a7e079bb05b799e6a01fa704acd1004`; complete recursive tree: 120 entries, not truncated; only branch: `main`; open issues: 0; open pull requests: 0.
+- Exact-head GitHub Actions run [43568457823](https://github.com/codexclai/HumanJS/actions/runs/43568457823) completed successfully: 36 job steps, no failures or skipped scientific checks. It passed rustfmt, Clippy, Rust tests (41 core unit, 3 synapse integration, 6 passive-membrane integration), 32 Python syntax checks, 51 Python tests, original NEURON 9.0.2 Na/K replays and validators, all existing K_IV comparisons, the new fixed-tau1 0.1–120 ms profile, the strict one-row/39-column expected comparison, and repository policy. The log explicitly states that the fixed-tau1 profile matches every field of the committed reference.
+- Comparator audit: run [43567926270](https://github.com/codexclai/HumanJS/actions/runs/43567926270) caught a 1.62×10⁻¹² absolute replay difference in `left_neighbor_delta_rss_pct`, beyond the previous 1×10⁻¹² absolute tolerance. A dedicated 1×10⁻¹⁰ absolute tolerance was added only for the left/right neighbour-delta percentage fields; relative tolerance remains 2×10⁻⁵ and all other fields retain the prior tolerances.
+- Test audit: run [43568339733](https://github.com/codexclai/HumanJS/actions/runs/43568339733) caught a synthetic rejection delta that was too small relative to the fixture's value. The test now uses `max(abs(actual_metric) * 1e-3, 1e-6)`, ensuring the changed value exceeds the relative tolerance; it separately verifies that 5×10⁻¹¹ absolute drift is accepted. No product code or scientific threshold was relaxed by this test correction.
+- Commits in this continuation: `4a3588d`, `d8b623b`, `bf85352`, `90866db`, and `2be947d` (all directly on `main`). An intermediate workflow command bug was fixed in `d8b623b`; run [43567003131](https://github.com/codexclai/HumanJS/actions/runs/43567003131) was cancelled by the subsequent correction, not a failure.
+- No local clone or local Rust/NEURON execution was performed; verification was in hosted GitHub Actions. No researcher or author was contacted.
