@@ -164,10 +164,11 @@ jobs:
             --expected research/HUMAN-L23-WILBERS-K-IV-TAU1-TAU3-SURFACE-SUMMARY.csv \
             --tau3-grid-points 5601 \
             --tau3-max-ms 10.0
-      - name: Validate extended +55 mV K_IV tau1-tau3 surface structure
+      - name: Compare extended +55 mV K_IV tau1-tau3 surface with its committed reference
         run: |
           python3 experiments/validate_wilbers_k_iv_tau1_tau3_surface.py \
             --actual /tmp/wilbers-k-iv-tau1-tau3-surface-40ms.csv \
+            --expected research/HUMAN-L23-WILBERS-K-IV-TAU1-TAU3-55MV-40MS-SUMMARY.csv \
             --tau1-grid-points 9 \
             --tau3-grid-points 11401 \
             --tau3-min-ms 0.1 \
