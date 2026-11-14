@@ -96,7 +96,9 @@ class FixedTau1KIVProfileTests(unittest.TestCase):
         expected["left_neighbor_delta_rss_pct"] += 5e-11
         compare_expected(actual, expected)
 
-        expected["left_neighbor_delta_rss_pct"] += 1e-3
+        expected["left_neighbor_delta_rss_pct"] += max(
+            abs(actual["left_neighbor_delta_rss_pct"]) * 1e-3, 1e-6
+        )
         with self.assertRaises(ValueError):
             compare_expected(actual, expected)
 
