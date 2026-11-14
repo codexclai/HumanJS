@@ -301,3 +301,26 @@ The +55-mV surface behaves differently. Six of its nine tau1 slices select tau3 
 At the center tau1 node, the contiguous 1%/5%/10% objective-basin spans are 0.4561/1.0254/1.4620 ms at -30 mV, 0.1485/0.3359/0.4756 ms at -60 mV, and 0.06541/0.14673/0.21037 ms at +55 mV. These widths are conditional slices through a discrete, deterministic objective surface; they are not statistical uncertainty intervals.
 
 The surface makes clear that the earlier fixed-tau1 basin widths are conditional, not parameter uncertainty. At -30/-60 mV the best sampled full-RSS point shifts within the local tau1 window and substantially reduces the objective. At +55 mV six of nine tau1 slices remain clipped at tau3=10 ms and the signed extra amplitude changes sign across the tau1 grid. The result is a non-source numerical fit to deterministic NEURON/VClamp model output, not raw human data or evidence for a biological gate. Do not transfer any fit term into Rust channel kinetics. The deposited helper, caller, NMODL and HumanJS runtime parameters remain unchanged; ADR-014 remains open.
+
+
+### ADR-019 follow-up — extended +55 mV conditional tau1–tau3 profile (2026-11-14)
+
+The prior +55 mV surface had six of nine tau1 slices at the 10 ms tau3 upper bound and positive signed a3 values at tau1 indices 5–8. The same nine tau1 nodes in the same local 6% window were reprofiled over 0.1–40 ms on 11,401 equally spaced tau3 points, refitting all coefficients against the full waveform at every tau3. All nine selected minima are now interior (0.4955–28.6495 ms), and all nine signed a3 coefficients are negative. The positive values from the 10 ms grid did not persist once tau3 could move beyond that bound.
+
+| Tau1 grid index | Tau1 (ms) | Selected tau3 (ms) | Signed a3 (mA/cm²) |
+|---:|---:|---:|---:|
+| 0 | 16.134424 | 13.4280 | -0.0965012 |
+| 1 | 16.399624 | 11.9685 | -0.0440700 |
+| 2 | 16.664824 | 8.4615 | -0.0162458 |
+| 3 | 16.930024 | 0.9540 | -0.0103225 |
+| 4 | 17.195223 | 0.4955 | -0.0093360 |
+| 5 | 17.444952 | 28.6495 | -0.0070376 |
+| 6 | 17.694681 | 23.5780 | -0.0239165 |
+| 7 | 17.944409 | 21.6355 | -0.0551058 |
+| 8 | 18.194138 | 20.6030 | -0.1105878 |
+
+The global full-RSS minimum remains at the centre tau1 node (17.195223 ms, tau3=0.4955 ms). The conditional tau3 minimum still moves markedly across the tau1 window. The 1% basin at all nine tau1 nodes is interior, but the 5% and 10% basin at index 5 (tau1=17.444952 ms; selected tau3=28.6495 ms) still touches the 40 ms upper edge: the 5% basin spans 20.6395 ms ([19.3605, 40] ms), and the 10% basin spans 22.554 ms ([17.446, 40] ms). Therefore the earlier boundary-pinned sign reversal is not retained, but the wider near-minimum basin at that node remains incompletely sampled.
+
+These results concern only a non-source numerical residual fit to deterministic NEURON/VClamp model currents. They do not identify a human experimental K current, a molecular gate, a biological kinetic parameter, or a statistical uncertainty interval. Raw human K NWB traces and individual kinetic targets remain unavailable in the inspected DataverseNL v3.0 inventory. Do not transfer the correction into Rust. Source helper/caller/NMODL and HumanJS runtime parameters remain unchanged; ADR-014 remains open.
+
+The 9-row/44-column result is committed as `research/HUMAN-L23-WILBERS-K-IV-TAU1-TAU3-55MV-40MS-SUMMARY.csv` and strictly compared field-by-field in the main workflow.

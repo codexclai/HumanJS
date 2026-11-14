@@ -342,3 +342,42 @@ This surface demonstrates that the previously reported tau3 curvature and basin 
 All inputs are deterministic NEURON 9.0.2/VClamp outputs from the deposited pure-human K model, not raw human experimental K-current recordings. Raw human K voltage-clamp NWB traces and individual kinetic target CSVs remain absent from the inspected DataverseNL v3.0 inventory. No noise model was fitted; do not interpret the basin widths as confidence intervals, measurement uncertainty, biological uncertainty, or human channel kinetics. The deposited helper/caller/NMODL, HumanJS Rust equations, and channel parameters remain unchanged. Do not transfer tau3 or the signed correction into Rust. ADR-014 remains open and the single-compartment spike-capable model remains exploratory and biologically unvalidated.
 
 The surface is deliberately limited to the three predeclared representative voltages; it does not imply the same tau1–tau3 coupling at the other 24 commands. Its purpose is to show that fixed-tau1 objective-shape summaries are conditional, and that the added residual term's parameters can move substantially when tau1 is allowed to vary. GitHub Actions [43500401868](https://github.com/codexclai/HumanJS/actions/runs/43500401868) passed on exact code/data HEAD `5e41b681bcb6307921f466c90b4fbe680d1f2681` with all 34 workflow steps successful. Hosted verification included Rust formatting/Clippy and tests (41 core unit, 3 synapse integration, 6 passive-membrane integration), syntax parsing of 30 Python experiment scripts, 48 Python tests, original Wilbers NEURON 9.0.2 Na/K protocol replays and validators, strict comparisons of the baseline and extended 27-row K_IV profiles, the 27-row/26-column fixed-tau1 objective-shape reference, the new 27-row/44-column tau1–tau3 surface reference, the three-exponential residual validator, and repository policy (16 required files).
+
+
+## 2026-11-14 — +55 mV conditional tau1–tau3 surface extended to 40 ms
+
+### Question and method
+
+The preceding +55 mV tau1–tau3 surface showed six of nine tau1 slices with tau3 minima pinned at 10 ms. Its signed added coefficient was positive at four of those high-tau1 nodes. The bounded follow-up asks whether those minima and positive coefficients persist once the short time-constant grid is allowed to extend farther, without changing the waveform, tau1 nodes, fitting objective, or coefficient sign constraints.
+
+The previous +55 mV conditional surface used nine fixed tau1 nodes in the already defined local 6% refinement interval and a 0.1–10.0 ms tau3 grid. Six of nine conditional minima were pinned at the 10 ms upper limit, and the added signed coefficient was positive at four of those high-tau1 nodes. To test whether that behavior persisted away from the limit, the same nine tau1 nodes and exact source waveform were reprofiled over 0.1–40.0 ms on 11,401 equally spaced tau3 points (0.0035 ms spacing). At every tau3 point all four coefficients were refit against full-waveform RSS; source tau2 remained fixed at 450 ms; a1, a2 and the steady offset remained nonnegative while a3 remained signed. First-10-ms and after-10-ms RMSE were retained as diagnostics, not alternative objectives.
+
+### Results
+
+All **nine of nine selected tau3 minima are now interior** to the expanded 0.1–40 ms grid, ranging from 0.4955 to 28.6495 ms. Compared with the 0.1–10 ms surface, the six upper-bound minima disappear. More importantly, the signed added coefficient is now negative at all nine tau1 nodes. The four positive coefficients previously found at tau1 indices 5–8 do not persist when tau3 can move beyond 10 ms. That makes the earlier sign reversal consistent with a truncated conditional fit, not a stable feature of this surface.
+
+| Tau1 grid index | Tau1 (ms) | Selected tau3 (ms) | Signed a3 (mA/cm²) |
+|---:|---:|---:|---:|
+| 0 | 16.134424 | 13.4280 | -0.0965012 |
+| 1 | 16.399624 | 11.9685 | -0.0440700 |
+| 2 | 16.664824 | 8.4615 | -0.0162458 |
+| 3 | 16.930024 | 0.9540 | -0.0103225 |
+| 4 | 17.195223 | 0.4955 | -0.0093360 |
+| 5 | 17.444952 | 28.6495 | -0.0070376 |
+| 6 | 17.694681 | 23.5780 | -0.0239165 |
+| 7 | 17.944409 | 21.6355 | -0.0551058 |
+| 8 | 18.194138 | 20.6030 | -0.1105878 |
+
+The lowest full-waveform RSS remains at the middle tau1 node (17.195223 ms), with tau3=0.4955 ms; the global surface minimum is therefore still the centre-tau1 fit. The tau3 minima nevertheless move substantially across the allowed tau1 window, spanning approximately 0.50–28.65 ms. This is strong tau1–tau3 coupling in the selected numerical fit family, not an identified biological kinetic process.
+
+The *selected minima* are no longer at the tau3 search boundary, but one local basin remains incompletely enclosed: at tau1 index 5 (17.444952 ms), its 1% basin is interior ([23.9805, 34.5365] ms), while the 5% basin reaches 40 ms ([19.3605, 40] ms; 20.6395 ms span) and the 10% basin also reaches 40 ms ([17.446, 40] ms; 22.554 ms span). The other eight tau1 slices have 1%, 5%, and 10% basin edge flags clear. Thus the point estimate is interior at every node, but the broader 5% and 10% neighbourhood at index 5 is still truncated by the current 40 ms ceiling.
+
+The complete reference is `research/HUMAN-L23-WILBERS-K-IV-TAU1-TAU3-55MV-40MS-SUMMARY.csv` (9 rows, 44 columns). It preserves the selected tau3 and coefficients, full/early/late RMSE diagnostics, relative full-RSS values, conditional basin bounds/spans/point counts and boundary flags. The workflow regenerates this surface from the same original NEURON 9.0.2/VClamp replay and compares all 44 fields against the committed reference.
+
+### Interpretation and limitations
+
+This is a descriptive sensitivity calculation on deterministic model-generated current, not raw human experimental K-current data, a statistical confidence region, measurement uncertainty, or biological uncertainty. The source fitting helper, source caller, pure-human NMODL, HumanJS Rust equations and channel parameters remain unchanged. Raw human K voltage-clamp NWB traces and individual K kinetic target CSVs remain absent from the inspected DataverseNL v3.0 inventory. Do not transfer tau3 or the signed correction into Rust channel kinetics. ADR-014 remains open and the single-compartment spike-capable model remains exploratory and biologically unvalidated.
+
+The strict reference is `research/HUMAN-L23-WILBERS-K-IV-TAU1-TAU3-55MV-40MS-SUMMARY.csv` (9 rows, 44 columns). The source replay regenerates the result and CI compares every numeric, Boolean, and integer field with the committed reference using the declared tolerances. GitHub Actions [43552164142](https://github.com/codexclai/HumanJS/actions/runs/43552164142) passed on exact code/data HEAD `cdba13783f435645fb5f194a0e2bd2d5858ce1ab` with all 35 job steps successful and no failed steps. Hosted checks included Rust formatting and Clippy, Rust tests (41 core unit, 3 synapse integration, 6 passive-membrane integration), syntax parsing of 30 Python experiment scripts, 48 Python tests, the original Wilbers NEURON 9.0.2 Na/K protocol replays and validators, strict comparisons of the baseline and expanded 27-row K_IV residual summaries, the 27-row/26-column fixed-tau1 objective-shape reference, the 27-row/44-column three-voltage tau1–tau3 surface, the new 9-row/44-column +55 mV 0.1–40 ms surface, the three-exponential residual validator, and repository policy (16 required files).
+
+This resolves the 10 ms *point-minimum* clipping at this representative voltage, and shows that the earlier positive signed coefficients do not persist under the wider domain. It does not close the broader near-minimum basin at tau1 index 5, identify a biological kinetic component, or replace missing experimental data.

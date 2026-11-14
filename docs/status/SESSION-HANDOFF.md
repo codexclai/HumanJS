@@ -1,8 +1,8 @@
 # HumanJS — current session handoff
 
-**Updated:** 2026-11-13
+**Updated:** 2026-11-14
 **Canonical repository:** codexclai/HumanJS, branch main only.
-**Latest live implementation HEAD before this documentation handoff refresh:** 5d5e180bc5068f647edc040de39481801be52a0e (111-entry non-truncated tree, main only, no open issues or PRs). Workflow [43469283136](https://github.com/codexclai/HumanJS/actions/runs/43469283136) passed on that exact pushed experiment commit, including the new three-adjacent-voltage residual profile and expected-summary validator. All code, data and workflow changes were pushed directly to main; its live remote ref was checked against the commit.
+**Latest live implementation HEAD before this documentation handoff refresh:** `cdba13783f435645fb5f194a0e2bd2d5858ce1ab` (117-entry non-truncated tree, main only, zero open issues and zero open PRs). Workflow [43552164142](https://github.com/codexclai/HumanJS/actions/runs/43552164142) passed on that exact pushed code/data commit with all 35 job steps successful, including the strict 9-row/44-column +55 mV 0.1–40 ms reference comparison. All code, data and workflow changes were pushed directly to main; the live remote ref was checked against the commit.
 **Next session:** refresh repository metadata, read live docs/BOOT.md, then inspect the current main tree, latest workflow, issues/PRs and branch refs before relying on this handoff.
 
 ## Verified repository state at handoff
@@ -894,3 +894,65 @@ Workflow [43500401868](https://github.com/codexclai/HumanJS/actions/runs/4350040
 ### Next concrete step
 
 Inspect the +55-mV upper-bound slices with a wider tau3 domain while retaining the same nine tau1 nodes and full-waveform objective. Determine whether conditional minima move inside the wider domain and whether the positive a3 values at the high-tau1 slices persist away from the current 10-ms edge. Keep it bounded to this representative command and report any remaining boundary limitation; do not infer biology or transfer the term into Rust.
+
+
+## Latest handoff — extended +55 mV K_IV tau1–tau3 surface (2026-11-14)
+
+### Verified repository state before this documentation refresh
+
+- Canonical repository `codexclai/HumanJS`; default branch and only branch `main`; head `cdba13783f435645fb5f194a0e2bd2d5858ce1ab`; complete 117-entry recursive tree, not truncated; zero open issues and zero open pull requests.
+- Code/data workflow [43552164142](https://github.com/codexclai/HumanJS/actions/runs/43552164142) passed on exact head `cdba13783f435645fb5f194a0e2bd2d5858ce1ab`; all 35 job steps succeeded, no failed steps.
+
+### Work completed
+
+The prior +55 mV conditional tau1–tau3 profile used nine tau1 nodes inside the same 6% local refinement interval but capped tau3 at 10 ms. Six of nine minima hit that upper bound and the fitted signed a3 coefficient was positive at tau1 indices 5–8. The follow-up retained the same waveform and all nine tau1 nodes, and widened only the tau3 grid to 0.1–40 ms at 11,401 equally spaced points (0.0035 ms step). All four coefficients were refit against the full waveform at every tau3 point; source tau2 remained 450 ms; a1, a2 and offset stayed nonnegative; a3 remained signed. Early/late RMSE remain diagnostics of the same full-waveform objective.
+
+All **nine of nine selected tau3 minima are now interior** to the expanded 0.1–40 ms grid, ranging from 0.4955 to 28.6495 ms. Compared with the 0.1–10 ms surface, the six upper-bound minima disappear. More importantly, the signed added coefficient is now negative at all nine tau1 nodes. The four positive coefficients previously found at tau1 indices 5–8 do not persist when tau3 can move beyond 10 ms. That makes the earlier sign reversal consistent with a truncated conditional fit, not a stable feature of this surface.
+
+| Tau1 grid index | Tau1 (ms) | Selected tau3 (ms) | Signed a3 (mA/cm²) |
+|---:|---:|---:|---:|
+| 0 | 16.134424 | 13.4280 | -0.0965012 |
+| 1 | 16.399624 | 11.9685 | -0.0440700 |
+| 2 | 16.664824 | 8.4615 | -0.0162458 |
+| 3 | 16.930024 | 0.9540 | -0.0103225 |
+| 4 | 17.195223 | 0.4955 | -0.0093360 |
+| 5 | 17.444952 | 28.6495 | -0.0070376 |
+| 6 | 17.694681 | 23.5780 | -0.0239165 |
+| 7 | 17.944409 | 21.6355 | -0.0551058 |
+| 8 | 18.194138 | 20.6030 | -0.1105878 |
+
+The lowest full-waveform RSS remains at the middle tau1 node (17.195223 ms), with tau3=0.4955 ms; the global surface minimum is therefore still the centre-tau1 fit. The tau3 minima nevertheless move substantially across the allowed tau1 window, spanning approximately 0.50–28.65 ms. This is strong tau1–tau3 coupling in the selected numerical fit family, not an identified biological kinetic process.
+
+The *selected minima* are no longer at the tau3 search boundary, but one local basin remains incompletely enclosed: at tau1 index 5 (17.444952 ms), its 1% basin is interior ([23.9805, 34.5365] ms), while the 5% basin reaches 40 ms ([19.3605, 40] ms; 20.6395 ms span) and the 10% basin also reaches 40 ms ([17.446, 40] ms; 22.554 ms span). The other eight tau1 slices have 1%, 5%, and 10% basin edge flags clear. Thus the point estimate is interior at every node, but the broader 5% and 10% neighbourhood at index 5 is still truncated by the current 40 ms ceiling.
+
+The complete reference is `research/HUMAN-L23-WILBERS-K-IV-TAU1-TAU3-55MV-40MS-SUMMARY.csv` (9 rows, 44 columns). It preserves the selected tau3 and coefficients, full/early/late RMSE diagnostics, relative full-RSS values, conditional basin bounds/spans/point counts and boundary flags. The workflow regenerates this surface from the same original NEURON 9.0.2/VClamp replay and compares all 44 fields against the committed reference.
+
+This is a descriptive sensitivity calculation on deterministic model-generated current, not raw human experimental K-current data, a statistical confidence region, measurement uncertainty, or biological uncertainty. The source fitting helper, source caller, pure-human NMODL, HumanJS Rust equations and channel parameters remain unchanged. Raw human K voltage-clamp NWB traces and individual K kinetic target CSVs remain absent from the inspected DataverseNL v3.0 inventory. Do not transfer tau3 or the signed correction into Rust channel kinetics. ADR-014 remains open and the single-compartment spike-capable model remains exploratory and biologically unvalidated.
+
+### Changed paths in this continuation
+
+- `.github/workflows/repository-policy.yml`
+- `experiments/wilbers_k_iv_multivoltage.py`
+- `experiments/analyze_wilbers_k_iv_multivoltage.py`
+- `experiments/validate_wilbers_k_iv_tau1_tau3_surface.py`
+- `experiments/test_wilbers_k_iv_multivoltage.py`
+- `research/HUMAN-L23-WILBERS-K-IV-TAU1-TAU3-55MV-40MS-SUMMARY.csv`
+- `docs/BOOT.md`
+- `docs/status/STATUS.md`
+- `docs/status/SESSION-HANDOFF.md`
+- `docs/decisions/DECISIONS.md`
+- `docs/roadmap/MASTER-ROADMAP.md`
+- `research/HUMAN-L23-WILBERS-K-IV-FIT-SENSITIVITY.md`
+
+### Commits and verification
+
+- `b61906caf4501568be5a320d4ca1b2da4ee9a627` — add the 0.1–40 ms +55 mV surface scan, voltage-subset analysis/validation, CLI, workflow generation and a synthetic subset-contract test.
+- `cdba13783f435645fb5f194a0e2bd2d5858ce1ab` — commit the generated 9-row/44-column surface and restore strict expected-reference comparison in CI.
+
+GitHub Actions [43552164142](https://github.com/codexclai/HumanJS/actions/runs/43552164142) passed on exact code/data HEAD `cdba13783f435645fb5f194a0e2bd2d5858ce1ab` with all 35 job steps successful and no failed steps. Hosted checks included Rust formatting and Clippy, Rust tests (41 core unit, 3 synapse integration, 6 passive-membrane integration), syntax parsing of 30 Python experiment scripts, 48 Python tests, the original Wilbers NEURON 9.0.2 Na/K protocol replays and validators, strict comparisons of the baseline and expanded 27-row K_IV residual summaries, the 27-row/26-column fixed-tau1 objective-shape reference, the 27-row/44-column three-voltage tau1–tau3 surface, the new 9-row/44-column +55 mV 0.1–40 ms surface, the three-exponential residual validator, and repository policy (16 required files).
+
+The complete analyzer execution is in hosted GitHub Actions; no local clone or local Cargo/NEURON run was performed. No researcher or author was contacted. The output files are derived from the deterministic NEURON source-model replay, not raw experimental recordings.
+
+### Next concrete step
+
+Profile tau3 beyond 40 ms at only the tau1 index 5 node (tau1=17.444952 ms) to see whether its 5% and 10% near-minimum basins become enclosed. Keep that test on the exact same model-generated waveform and full-waveform RSS objective, with the sign constraints unchanged. Report the width as a conditional numerical basin only, not biological uncertainty or a confidence interval.
