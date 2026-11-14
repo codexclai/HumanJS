@@ -10,6 +10,7 @@ from analyze_wilbers_k_iv_fixed_tau1 import (
     TAU1_MS,
     TAU2_MS,
     analyze_fixed_tau1_profile,
+    compare_expected,
     validate_summary_row,
 )
 
@@ -78,6 +79,26 @@ class FixedTau1KIVProfileTests(unittest.TestCase):
                 tau3_max_ms=120.0,
                 tau3_grid_points=241,
             )
+
+
+    def test_expected_comparison_allows_only_roundoff_scale_neighbor_delta_drift(self) -> None:
+        times = np.arange(0.0, 489.0, 0.1)
+        current = (
+            1.5e-4 * np.exp(-times / TAU1_MS)
+            + 8.0e-5 * np.exp(-times / TAU2_MS)
+            - 2.0e-6 * np.exp(-times / 66.25)
+            + 4.0e-4
+        )
+        actual = analyze_fixed_tau1_profile(
+            times, current, tau3_min_ms=0.1, tau3_max_ms=120.0, tau3_grid_points=241
+        )
+        expected = dict(actual)
+        expected["left_neighbor_delta_rss_pct"] += 5e-11
+        compare_expected(actual, expected)
+
+        expected["left_neighbor_delta_rss_pct"] += 1e-3
+        with self.assertRaises(ValueError):
+            compare_expected(actual, expected)
 
 
 if __name__ == "__main__":

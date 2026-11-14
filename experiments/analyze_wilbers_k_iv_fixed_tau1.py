@@ -334,6 +334,8 @@ def compare_expected(actual: dict[str, Any], expected: dict[str, Any]) -> None:
                 if field in ("rss_full", "positive_control_rss_full")
                 else 1e-14
                 if field.endswith("_ma_cm2")
+                else 1e-10
+                if field in ("left_neighbor_delta_rss_pct", "right_neighbor_delta_rss_pct")
                 else 1e-12
             )
             if not math.isclose(float(found), float(reference), rel_tol=2e-5, abs_tol=abs_tol):
