@@ -1,6 +1,6 @@
 # HumanJS — current session handoff
 
-**Updated:** 2026-11-14
+**Updated:** 2026-11-15
 **Canonical repository:** codexclai/HumanJS, branch main only.
 **Latest live implementation HEAD before this documentation handoff refresh:** `2be947d96a7e079bb05b799e6a01fa704acd1004` (120-entry non-truncated tree, main only, zero open issues and zero open PRs). Workflow [43568457823](https://github.com/codexclai/HumanJS/actions/runs/43568457823) passed on that exact pushed code/data commit with all 36 job steps successful, including the strict fixed-tau1 39-column expected-summary comparison. The main ref was checked against the commit; all changes were pushed directly to main.
 **Next session:** refresh repository metadata, read live docs/BOOT.md, then inspect the current main tree, latest workflow, issues/PRs and branch refs before relying on this handoff.
@@ -1101,4 +1101,13 @@ This continuation began from main `7b313ee4eac1edcc606a9234e78d156392992c96`. Th
 - `docs/status/STATUS.md`
 - `docs/status/SESSION-HANDOFF.md`
 
-No code or model parameter changed in this follow-up. No Rust equation/gate, channel density, or biological claim is added. The next step is to confirm the exact-main workflow result triggered by this documentation-only commit.
+No code or model parameter changed in this follow-up. No Rust equation/gate, channel density, or biological claim is added. Exact-head workflow [43660501666](https://github.com/codexclai/HumanJS/actions/runs/43660501666) has now passed on the resulting main commit `ca17aa18c2860eabac5078e7f291ba6586745e9a`; all 35 workflow execution steps succeeded. No further unverified CI gate remains for this evidence/documentation batch.
+
+
+## Final live-main verification — 2026-11-15
+
+- Repository: public `codexclai/HumanJS`; default branch: `main`; live HEAD at verification: `ca17aa18c2860eabac5078e7f291ba6586745e9a`.
+- Full recursive Git tree: 126 entries, `truncated=false`. Branch refs: only `refs/heads/main`. Open issues: 0. Open pull requests: 0.
+- Exact-head GitHub Actions [43660501666](https://github.com/codexclai/HumanJS/actions/runs/43660501666) completed successfully: 35 workflow execution steps, zero failures. The job included Rust fmt/Clippy and tests (41+3+6), Python AST syntax for 34 scripts, 59 Python tests, Mittermaier source download/hash plus both strict references, all original Wilbers NEURON 9.0.2 Na/K source replays and model-output comparisons, and repository policy.
+- Mittermaier long-inactivation source file SHA-256: `d0f27bfaf107c7d53c4ea2737973a33dd71d682bd477a49a38d747e324a58909`; the CI log confirms both "Long-inactivation mean fit matches every field of the committed reference" and "Mittermaier human axonal Kv1 summary matches every field of the committed reference".
+- Subsequent public evidence reviews include Howard et al. raw current-clamp ABF/NWB data (redistribution licensing unresolved), Planert et al. processed GPL 3.0+ L2–3 intrinsic-feature tables, and Kushner et al. pediatric L2/3 broad 4-AP current-clamp perturbation. They broaden the current-clamp comparison evidence only; they do not isolate intrinsic Kv channel currents or provide gate kinetics. No Rust equations or parameters were changed; ADR-014 remains open and the spike-capable single-compartment model remains exploratory and unaccepted.
