@@ -16,7 +16,7 @@
 
 ## Verified branch state
 
-The live GitHub branch listing on 2026-11-15 returned exactly one branch: main; no non-main refs were present. Live main HEAD was `ca17aa18c2860eabac5078e7f291ba6586745e9a`; the complete recursive tree contained 126 entries and was not truncated. Open issues and pull requests were both zero. Exact-head workflow [43660501666](https://github.com/codexclai/HumanJS/actions/runs/43660501666) passed all 35 workflow execution steps. Recheck live refs at the start of every session.
+The live GitHub branch listing on 2026-11-15 returned exactly one branch: main; no non-main refs were present. Live main HEAD was `840764e4a99ce35a3b5bdea119a64b16bb55b48e`; the complete recursive tree contained 126 entries and was not truncated. Open issues and pull requests were both zero. Exact-head workflow [43675405851](https://github.com/codexclai/HumanJS/actions/runs/43675405851) passed all 37 job steps with no failures or skipped steps. Recheck live refs at the start of every session.
 
 ## Repository and delivery
 

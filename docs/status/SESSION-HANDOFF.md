@@ -1144,7 +1144,13 @@ No new public human somatic Kv dataset with raw isolated voltage-step currents a
 
 ### Verification state
 
-The baseline workflow passed on the parent commit. The new documentation/research commit's exact-head workflow is pending and must be checked before treating this batch as complete. No local clone, local Cargo test, or local NEURON replay was run in this task.
+The baseline workflow passed on the parent commit. The exact-head workflow [43675405851](https://github.com/codexclai/HumanJS/actions/runs/43675405851) completed successfully on `840764e4a99ce35a3b5bdea119a64b16bb55b48e`: all 37 job steps succeeded, zero failed, and none were skipped. It passed rustfmt, Clippy, Rust tests (41+3+6), syntax parsing of 34 Python scripts, 59 Python tests, all Mittermaier and Wilbers source replays/strict reference comparisons, and repository policy. No local clone, local Cargo test, or local NEURON replay was run in this task.
+
+### Verification and completion
+
+- Research commit: `840764e4a99ce35a3b5bdea119a64b16bb55b48e` — `research: screen human cortical Kv voltage-clamp evidence`.
+- Exact-head Actions run: [43675405851](https://github.com/codexclai/HumanJS/actions/runs/43675405851), passed on that SHA with all 37 job steps successful and no skipped checks.
+- Final live `refs/heads/main` was verified as `840764e4a99ce35a3b5bdea119a64b16bb55b48e`; the branch listing contains only `main`, the recursive tree has 126 entries and `truncated=false`, and there are zero open issues and pull requests.
 
 ### Next concrete step
 
