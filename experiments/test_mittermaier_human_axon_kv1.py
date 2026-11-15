@@ -39,6 +39,27 @@ class MittermaierHumanAxonalKv1Tests(unittest.TestCase):
         self.assertLess(fit["vhalf_mv"], -30.0)
         self.assertGreater(fit["slope_mv"], 0.0)
 
+    def test_pooled_boltzmann_fit_accepts_repeated_voltage_observations(self) -> None:
+        voltage_grid = np.arange(-90.0, 71.0, 20.0)
+        voltage = np.tile(voltage_grid, 5)
+        conductance = _boltzmann_increasing(voltage, 0.02, 1.0, -7.0, 24.0)
+        fit = fit_boltzmann(
+            voltage,
+            conductance,
+            direction="increasing",
+            allow_repeated_voltages=True,
+            bounded=False,
+        )
+        self.assertAlmostEqual(fit["vhalf_mv"], -7.0, places=6)
+        self.assertAlmostEqual(fit["slope_mv"], 24.0, places=6)
+        self.assertLess(fit["rmse"], 1e-9)
+
+    def test_duplicate_voltage_rejected_for_single_recording(self) -> None:
+        voltage = np.array([-90.0, -70.0, -50.0, -30.0, -10.0, 10.0, 10.0])
+        conductance = _boltzmann_increasing(voltage, 0.02, 1.0, -7.0, 24.0)
+        with self.assertRaisesRegex(ValueError, "must be unique"):
+            fit_boltzmann(voltage, conductance, direction="increasing")
+
     def test_long_inactivation_mean_fit_recovers_two_time_scales(self) -> None:
         time = np.linspace(0.02, 2900.02, 1500)
         mean = (

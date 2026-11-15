@@ -48,6 +48,20 @@ jobs:
         run: |
           python3 -m pip install --disable-pip-version-check numpy==1.26.4 scipy==1.11.4
           python3 -m unittest discover -s experiments -p 'test_*.py' -v
+      - name: Reproduce human axonal Kv1 source summaries from Mittermaier et al.
+        run: |
+          curl --fail --location --silent --show-error --retry 3 --retry-all-errors \
+            https://ndownloader.figshare.com/files/48304417 \
+            --output /tmp/mittermaier-kv-long-inactivation.csv
+          printf '%s  %s\n' \
+            'd0f27bfaf107c7d53c4ea2737973a33dd71d682bd477a49a38d747e324a58909' \
+            '/tmp/mittermaier-kv-long-inactivation.csv' | sha256sum --check
+          python3 experiments/analyze_mittermaier_human_axon_kv1.py \
+            --output /tmp/mittermaier-kv1-summary.csv \
+            --expected research/HUMAN-AXONAL-KV1-MITTERMAIER-SUMMARY.csv \
+            --long-inactivation-csv /tmp/mittermaier-kv-long-inactivation.csv \
+            --long-output /tmp/mittermaier-kv-long-summary.csv \
+            --long-expected research/HUMAN-AXONAL-KV1-MITTERMAIER-LONG-INACTIVATION.csv
       - name: Validate Wilbers Figure S5 digitization
         run: python3 experiments/validate_wilbers_fig_s5_digitization.py
       - name: Validate Wilbers current-clamp conductance grid

@@ -129,6 +129,8 @@ def fit_boltzmann(
     normalized_conductance: np.ndarray,
     *,
     direction: str,
+    allow_repeated_voltages: bool = False,
+    bounded: bool = True,
 ) -> dict[str, float]:
     """Fit a per-recording increasing activation or decreasing availability curve."""
     voltage = np.asarray(voltage_mv, dtype=float)
@@ -137,8 +139,8 @@ def fit_boltzmann(
         raise ValueError("Boltzmann inputs must be equal-length one-dimensional arrays")
     if len(voltage) < 5 or not np.all(np.isfinite(voltage)) or not np.all(np.isfinite(conductance)):
         raise ValueError("Boltzmann inputs are too short or non-finite")
-    if len(np.unique(voltage)) != len(voltage):
-        raise ValueError("Boltzmann voltage levels must be unique")
+    if not allow_repeated_voltages and len(np.unique(voltage)) != len(voltage):
+        raise ValueError("Boltzmann voltage levels must be unique unless fitting pooled observations")
     if np.any(conductance < -0.5) or np.any(conductance > 1.5):
         raise ValueError("Normalized conductance lies outside the declared fitting range")
 
@@ -151,14 +153,10 @@ def fit_boltzmann(
     else:
         raise ValueError(f"Unsupported Boltzmann direction: {direction}")
 
-    fitted, _ = curve_fit(
-        function,
-        voltage,
-        conductance,
-        p0=initial,
-        bounds=((-0.5, 0.5, -150.0, 1.0), (0.5, 1.5, 100.0, 100.0)),
-        maxfev=50000,
-    )
+    fit_options: dict[str, Any] = {"p0": initial, "maxfev": 100000}
+    if bounded:
+        fit_options["bounds"] = ((-0.5, 0.5, -150.0, 1.0), (0.5, 1.5, 100.0, 100.0))
+    fitted, _ = curve_fit(function, voltage, conductance, **fit_options)
     residual = conductance - function(voltage, *fitted)
     return {
         "bottom": float(fitted[0]),
@@ -199,6 +197,8 @@ def _load_voltage_source(
 
     curves: dict[str, np.ndarray] = {}
     records: list[dict[str, Any]] = []
+    pooled_voltage: list[float] = []
+    pooled_normalized: list[float] = []
     direction = "increasing" if protocol == "activation" else "decreasing"
     for recording_id, pairs in sorted(grouped.items()):
         array = np.asarray(pairs, dtype=float)
@@ -217,6 +217,8 @@ def _load_voltage_source(
             raise ValueError(f"Invalid maximum conductance in {protocol} recording {recording_id}")
         normalized = conductance / maximum
         curves[recording_id] = normalized
+        pooled_voltage.extend(float(value) for value in voltage)
+        pooled_normalized.extend(float(value) for value in normalized)
         fit = fit_boltzmann(voltage, normalized, direction=direction)
         records.append(
             _result_row(
@@ -228,6 +230,24 @@ def _load_voltage_source(
                 **fit,
             )
         )
+
+    pooled_fit = fit_boltzmann(
+        np.asarray(pooled_voltage, dtype=float),
+        np.asarray(pooled_normalized, dtype=float),
+        direction=direction,
+        allow_repeated_voltages=True,
+        bounded=False,
+    )
+    records.append(
+        _result_row(
+            analysis=f"{protocol}_pooled_observations",
+            recording_id="all_source_points",
+            n_points=len(pooled_voltage),
+            voltage_min_mv=float(min(pooled_voltage)),
+            voltage_max_mv=float(max(pooled_voltage)),
+            **pooled_fit,
+        )
+    )
 
     common_voltage = np.sort(
         np.asarray(sorted({v for v, _ in grouped[next(iter(grouped))]}), dtype=float)
@@ -269,26 +289,29 @@ def fit_recovery(path: Path) -> dict[str, Any]:
     current = data[:, 1]
 
     def recovery_model(
-        t: np.ndarray, amp_fast: float, amp_slow: float, tau_fast: float, tau_slow: float
+        t: np.ndarray, amp_slow: float, amp_fast: float, tau_slow: float, tau_fast: float
     ) -> np.ndarray:
         return (
-            amp_fast * (1.0 - np.exp(-t / tau_fast))
-            + amp_slow * (1.0 - np.exp(-t / tau_slow))
-            + (1.0 - amp_fast - amp_slow)
+            amp_slow * (1.0 - np.exp(-t / tau_slow))
+            + amp_fast * (1.0 - np.exp(-t / tau_fast))
+            + (1.0 - amp_slow - amp_fast)
         )
 
+    # Match the source R script's parameter order and starting values. The
+    # authors' nls call is unconstrained (algorithm="port", no explicit bounds).
     fitted, _ = curve_fit(
         recovery_model,
         time,
         current,
-        p0=(0.55, 0.2, 150.0, 1500.0),
-        bounds=((0.0, 0.0, 1.0, 10.0), (1.0, 1.0, 1000.0, 10000.0)),
-        maxfev=50000,
+        p0=(0.55, 0.2, 1500.0, 150.0),
+        maxfev=100000,
     )
-    amp_fast, amp_slow, tau_fast, tau_slow = (float(x) for x in fitted)
+    amp_slow, amp_fast, tau_slow, tau_fast = (float(x) for x in fitted)
     if tau_fast > tau_slow:
         amp_fast, amp_slow = amp_slow, amp_fast
         tau_fast, tau_slow = tau_slow, tau_fast
+    if tau_fast <= 0.0 or tau_slow <= 0.0:
+        raise ValueError("Recovery fit returned a non-positive time constant")
     residual = current - recovery_model(time, amp_fast, amp_slow, tau_fast, tau_slow)
     return _result_row(
         analysis="recovery_group_fit",
@@ -545,10 +568,13 @@ def main() -> int:
     parser.add_argument("--source-dir", type=Path)
     parser.add_argument("--long-inactivation-csv", type=Path)
     parser.add_argument("--long-output", type=Path)
+    parser.add_argument("--long-expected", type=Path)
     args = parser.parse_args()
 
     if bool(args.long_inactivation_csv) != bool(args.long_output):
         parser.error("--long-inactivation-csv and --long-output must be supplied together")
+    if args.long_expected and not args.long_output:
+        parser.error("--long-expected requires --long-output")
     if args.source_dir:
         paths = download_sources(args.source_dir.expanduser().resolve())
         rows = analyze(paths)
@@ -569,6 +595,9 @@ def main() -> int:
         long_output = args.long_output.expanduser().resolve()
         long_output.parent.mkdir(parents=True, exist_ok=True)
         long_output.write_text(serialize_rows([long_row]), encoding="utf-8")
+        if args.long_expected:
+            compare_expected(long_output, args.long_expected.expanduser().resolve())
+            print("Long-inactivation mean fit matches every field of the committed reference.")
         print(
             f"Long-inactivation mean trace: tau_fast={long_row['tau_fast_ms']:.6g} ms, "
             f"tau_slow={long_row['tau_slow_ms']:.6g} ms (20 normalized pulses)"
