@@ -1,6 +1,6 @@
 # HumanJS — current status
 
-**As of:** 2026-11-14
+**As of:** 2026-11-15
 **Stage:** two foundational Rust CPU mechanisms plus one exploratory, unaccepted human L2/L3 single-compartment spike-capable mechanism. HumanJS is not a whole-brain simulator.
 
 ## Canonical repository and live state
@@ -762,3 +762,19 @@ This remains a descriptive numerical diagnostic on deterministic model-generated
 The live main branch is `2be947d96a7e079bb05b799e6a01fa704acd1004`, with a complete 120-entry tree, one branch (`main`), and no open issues or pull requests. Run [43568457823](https://github.com/codexclai/HumanJS/actions/runs/43568457823) passed all 36 job steps on that exact HEAD. It parsed 32 Python experiment scripts, passed 51 Python tests, passed the Rust formatting/Clippy/test steps, replayed the original Wilbers Na/K source protocols in NEURON 9.0.2, and passed every established reference comparison. For the new +55 mV fixed-tau1 analysis, CI regenerated the 0.1–120 ms profile and printed: "Fixed-tau1 K_IV profile matches every field of the committed reference."
 
 Two earlier failed runs remain part of the audit trail and were corrected without changing scientific acceptance criteria. Run [43567926270](https://github.com/codexclai/HumanJS/actions/runs/43567926270) found a 1.62×10⁻¹² absolute difference in the very small left-neighbour RSS-slope metric against a 1×10⁻¹² absolute tolerance. The comparison now applies 1×10⁻¹⁰ absolute tolerance only to the left/right neighbour-delta percentage metrics; relative tolerance remains 2×10⁻⁵ and every other field retains its original tolerance. Run [43568339733](https://github.com/codexclai/HumanJS/actions/runs/43568339733) then showed the rejection test's fixed 1×10⁻³ perturbation could remain within relative tolerance for its fixture. The test perturbation is now the greater of 0.1% of the fixture's actual metric magnitude or 1×10⁻⁶. This verifies acceptance of roundoff-scale numerical drift and rejection of a material change. Final run [43568457823](https://github.com/codexclai/HumanJS/actions/runs/43568457823) passed all steps.
+
+
+## 2026-11-15 — independent human axonal Kv1 evidence and author-script reproduction
+
+An additional public human cortical potassium-current source was audited: Mittermaier et al. (2024), Nature Communications 15, 10340, with data/scripts at Figshare DOI 10.6084/m9.figshare.24793218.v1. It is an axonal whole-bleb voltage-clamp preparation, not the somatic nucleated-patch preparation in Wilbers et al.; the article states that raw human electrophysiology trace files are not public under German and European privacy restrictions. The public deposit contains processed/pseudonymized tables and the original R analysis scripts.
+
+The Python source analyzer now explicitly reproduces the authors' pooled activation/inactivation Boltzmann estimator (81 and 60 normalized observations). Per-recording fits and arithmetic group-mean-curve fits remain available but separately labelled; the group-mean curve is not conflated with the original pooled R fit. Recovery fit parameter ordering and initial values now follow the R script. The 145,001-point, 20-trace long-inactivation table is downloaded, SHA-256 verified, aggregated using the authors' timepoint mean, and fitted to the original two-exponential-plus-offset model.
+
+Reproduced source summaries include:
+- Pooled axonal Kv activation V1/2 = −6.629120 mV and slope = 24.239800 mV; the archived original R nls result is −6.629073/24.239651 mV.
+- Pooled axonal Kv steady-state inactivation V1/2 = −43.341956 mV and slope = 12.623362 mV; the original R nls result is −43.341964/12.623345 mV. The Python and R bottom/top asymptote labels are reversed for this decreasing curve.
+- Long-inactivation group-mean fit: fast tau = 120.105632 ms, slow tau = 1330.319646 ms; the R script independently returned approximately 120.1067/1330.3305 ms.
+- Sparse recovery fit: fast tau = 110.684712 ms, slow tau = 1013.485386 ms, from 20 four-delay observations plus a derived t=0 anchor.
+- DTX-I block fraction = 0.546260 ± 0.059685 SEM (n=5).
+
+The verified references are research/HUMAN-AXONAL-KV1-MITTERMAIER-SUMMARY.csv and research/HUMAN-AXONAL-KV1-MITTERMAIER-LONG-INACTIVATION.csv. Methods, checksums, comparison against the archived R scripts, and limitations are documented in research/HUMAN-AXONAL-KV1-MITTERMAIER.md. No raw-trace fit, somatic kinetic substitution, AIS density inference, ADR-014 acceptance, or Rust parameter change is claimed.

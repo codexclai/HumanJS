@@ -1012,3 +1012,38 @@ Audit alternative public human cortical K-current voltage-clamp/NWB datasets and
 - Test audit: run [43568339733](https://github.com/codexclai/HumanJS/actions/runs/43568339733) caught a synthetic rejection delta that was too small relative to the fixture's value. The test now uses `max(abs(actual_metric) * 1e-3, 1e-6)`, ensuring the changed value exceeds the relative tolerance; it separately verifies that 5×10⁻¹¹ absolute drift is accepted. No product code or scientific threshold was relaxed by this test correction.
 - Commits in this continuation: `4a3588d`, `d8b623b`, `bf85352`, `90866db`, and `2be947d` (all directly on `main`). An intermediate workflow command bug was fixed in `d8b623b`; run [43567003131](https://github.com/codexclai/HumanJS/actions/runs/43567003131) was cancelled by the subsequent correction, not a failure.
 - No local clone or local Rust/NEURON execution was performed; verification was in hosted GitHub Actions. No researcher or author was contacted.
+
+
+## Latest handoff — Mittermaier human axonal Kv1 source-data audit (2026-11-15)
+
+### Repository baseline and source review
+
+This continuation began from live main at 718800b7043bcd32ab82211971d06e61e42b9ab9. The default branch was confirmed as main; the recursive tree had 122 entries and was not truncated; main was the only branch; there were zero open issues and pull requests. Exact-head Actions run 43611086724 passed on that baseline. The preceding run 43610744524 failed at the original Wilbers Na_IV/VClamp replay; the subsequent exact-head run passed. No non-main branch was used.
+
+### Research and implementation completed
+
+- Retrieved the Mittermaier et al. 2024 Figshare data deposit and inspected the original R files Kv_act_inact_curves.Rmd, Kv_recov_inact.Rmd and Kv_toxin.Rmd.
+- Corrected a meaningful analysis mismatch: the original R activation/inactivation script fits one Boltzmann nls curve to all per-recording normalized observations pooled together. The earlier Python analyzer only fitted each recording and the group-mean curve. It now has an explicitly distinct pooled-observation fit (81 activation and 60 inactivation observations), while retaining per-recording and group-mean diagnostics.
+- Matched the recovery fitter's parameter ordering and initial values to the original R script and added a separate long-inactivation expected-reference comparison.
+- Executed the archived original R nls equations against the deposited source tables in R 4.1.2. The pooled V1/2/slope and long-inactivation time constants agree with the Python implementation within small nonlinear-optimizer differences.
+- Downloaded the complete 154,469,163-byte long-inactivation CSV; its SHA-256 is d0f27bfaf107c7d53c4ea2737973a33dd71d682bd477a49a38d747e324a58909. It contains 20 trace IDs × 145,001 samples at 0.02 ms spacing. The Python source analyzer completed with NumPy 1.26.4/SciPy 1.11.4. Seven focused synthetic analyzer tests passed. Strict comparison against both locally generated compact and long-inactivation reference CSVs also passed every field.
+- Confirmed that the study's measurements are axonal whole-bleb voltage clamp, not somatic nucleated-patch. Raw human trace files are not public under the article's data-availability statement. No author or researcher was contacted.
+
+### Changed paths
+
+- .github/workflows/repository-policy.yml
+- experiments/analyze_mittermaier_human_axon_kv1.py
+- experiments/test_mittermaier_human_axon_kv1.py
+- research/HUMAN-AXONAL-KV1-MITTERMAIER.md
+- research/HUMAN-AXONAL-KV1-MITTERMAIER-SUMMARY.csv
+- research/HUMAN-AXONAL-KV1-MITTERMAIER-LONG-INACTIVATION.csv
+- docs/BOOT.md
+- docs/status/STATUS.md
+- docs/status/SESSION-HANDOFF.md
+- docs/roadmap/MASTER-ROADMAP.md
+
+### Scientific boundary
+
+The Figshare tables are processed/pseudonymized, not raw sweeps. Activation and inactivation use normalized chord conductance with source EK=−105 mV and command voltages not corrected for the stated liquid-junction potential. The 20 long-pulse traces are repeated processed observations, not 20 independent cells or donors. Recovery uses four experimental delays plus one derived zero-time anchor. DTX-I supports a Kv1-family contribution, not a complete molecular-subunit composition. This evidence does not replace the Wilbers somatic dataset, close ADR-014, or establish AIS channel density. No Rust gate equation, conductance density, or model parameter changed.
+
+The analyzer and seven focused tests passed in the temporary research workspace. The new CI step downloads the 154 MB source, checks its SHA-256, and strictly compares both generated references. Its exact-main workflow result is the next verification gate.

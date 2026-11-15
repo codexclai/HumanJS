@@ -1,0 +1,2 @@
+analysis,recording_id,n_points,voltage_min_mv,voltage_max_mv,bottom,top,vhalf_mv,slope_mv,rmse,amplitude_fast,amplitude_slow,tau_fast_ms,tau_slow_ms,offset,mean_block_fraction,sd_block_fraction,sem_block_fraction
+long_inactivation_group_mean_fit,mean_of_20_pulses,145001,,,,,,,0.00782864459361411,0.241755876987899,0.350103350103904,120.10563193219,1330.31964638283,0.408140772908197,,,
