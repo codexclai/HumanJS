@@ -674,3 +674,8 @@ Mittermaier et al. (2024) provides pseudonymized/preprocessed human axonal whole
 ### 2026-11-15 — current-clamp evidence audit
 
 Two further public human cortical current-clamp evidence sources were reviewed for future spike-model validation: Howard et al. 2022 (raw ABF and NWB, mixed L2/3/L3c/L5, GigaDB 10.5524/102317 and DANDI 000293) and Planert et al. 2025 (processed per-cell L2–3 intrinsic features, Figshare 10.6084/m9.figshare.28184126, GPL 3.0+). Neither describes isolated intrinsic Kv voltage-step kinetics; Planert's 901-cell core analysis is processed only. See `research/HUMAN-L23-CURRENT-CLAMP-VALIDATION-SOURCES.md` for protocols, source-code definitions, cohort filtering, descriptive medians, licensing and raw-data limits. Keep these datasets separate from the Mittermaier axonal Kv1 source and the Wilbers somatic nucleated-patch evidence. No model parameters changed.
+
+
+### 2026-11-15 — pediatric human L2/3 K-blocker perturbation evidence
+
+Added Kushner et al. (2025), an open CC BY 4.0 pediatric human L2/3 current-clamp study (33 patients, 108 neurons) that includes a 100 μM 4-AP pre/post perturbation in 17 neurons from 8 patients. Table 5 quantifies changes in input resistance, AP threshold/half-width, AHP magnitude/latency and accommodation. This is broad pharmacological current-clamp evidence, not intrinsic voltage-clamp isolation of Kv1/Kv4 kinetics; no public raw-trace repository was located. See `research/HUMAN-L23-CURRENT-CLAMP-VALIDATION-SOURCES.md`. No model parameter changed.

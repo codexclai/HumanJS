@@ -771,8 +771,8 @@ An additional public human cortical potassium-current source was audited: Mitter
 The Python source analyzer now explicitly reproduces the authors' pooled activation/inactivation Boltzmann estimator (81 and 60 normalized observations). Per-recording fits and arithmetic group-mean-curve fits remain available but separately labelled; the group-mean curve is not conflated with the original pooled R fit. Recovery fit parameter ordering and initial values now follow the R script. The 145,001-point, 20-trace long-inactivation table is downloaded, SHA-256 verified, aggregated using the authors' timepoint mean, and fitted to the original two-exponential-plus-offset model.
 
 Reproduced source summaries include:
-- Pooled axonal Kv activation V1/2 = −6.629120 mV and slope = 24.239800 mV; the archived original R nls result is −6.629073/24.239651 mV.
-- Pooled axonal Kv steady-state inactivation V1/2 = −43.341956 mV and slope = 12.623362 mV; the original R nls result is −43.341964/12.623345 mV. The Python and R bottom/top asymptote labels are reversed for this decreasing curve.
+- Pooled axonal Kv activation V1/2 = −6.629036 mV and slope = 24.239524 mV; the archived original R nls result is −6.629073/24.239651 mV.
+- Pooled axonal Kv steady-state inactivation V1/2 = −43.341969 mV and slope = 12.623361 mV; the original R nls result is −43.341964/12.623345 mV. The Python and R bottom/top asymptote labels are reversed for this decreasing curve.
 - Long-inactivation group-mean fit: fast tau = 120.105632 ms, slow tau = 1330.319646 ms; the R script independently returned approximately 120.1067/1330.3305 ms.
 - Sparse recovery fit: fast tau = 110.684712 ms, slow tau = 1013.485386 ms, from 20 four-delay observations plus a derived t=0 anchor.
 - DTX-I block fraction = 0.546260 ± 0.059685 SEM (n=5).
@@ -790,3 +790,8 @@ Reviewed two further human electrophysiology sources relevant to future validati
 - A representative Howard NWB asset was inspected. Acquisition records were `CurrentClampSeries` with 20 kHz sampling; the matched stimulus description was `I_clampsec`. A stimulus container typed as `VoltageClampStimulusSeries` should not be misread as an intrinsic K voltage-step protocol.
 
 These datasets could support future protocol-matched validation of AP morphology and excitability, with Howard raw-trace work dependent on licensing and Planert limited to processed summaries. The Planert and Mittermaier studies share investigators/context and cohort overlap is unknown; do not count them as independent subject replication. No Rust gate, conductance density, or spike-model parameter is changed. Full source and selection caveats are in `research/HUMAN-L23-CURRENT-CLAMP-VALIDATION-SOURCES.md`.
+
+
+## 2026-11-15 — pediatric human L2/3 broad K-blocker perturbation
+
+Added Kushner et al. (2025), *eNeuro* 12(5), DOI 10.1523/ENEURO.0247-24.2025, an open CC BY 4.0 pediatric human L2/3 study. Its 4-AP experiment is whole-cell current clamp, not voltage clamp: 100 μM 4-AP was washed onto 17 neurons from 8 patients. Table 5 reports input resistance 146.00→111.40 MΩ (p=.0002), AP threshold −38.14→−40.59 mV (p=.0433), AP half-width 1.28→1.61 ms (p=.0091), AHP magnitude −16.85→−14.13 mV (p=.0021), and AHP latency 8.59→15.53 ms (p=.0002). Voltage sag, membrane decay, AP amplitude and maximum firing rate did not change significantly. Accommodation ratios increased at six depolarizing current steps. This is a broad pharmacological, pediatric, seizure-affected functional perturbation, not channel-subtype-specific Kv kinetics or a direct current measurement. The public article page and supplementary files expose summary tables but no linked raw trace deposit or formal data-availability statement was located. Details and full Table 5 summaries are in `research/HUMAN-L23-CURRENT-CLAMP-VALIDATION-SOURCES.md`. No Rust gate or model parameter changed.

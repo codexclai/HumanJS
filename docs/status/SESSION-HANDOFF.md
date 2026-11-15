@@ -1077,3 +1077,28 @@ This continuation began from main `479ce87cf37dede35d5b549332bbd6dd305fe71d`. Li
 - `docs/roadmap/MASTER-ROADMAP.md`
 
 The long-inactivation CSV reference is unchanged. The main workflow already contains the strict compact/long reference regeneration step; the next exact-main workflow run must verify the updated pooled-fit starting values and the new 8th unit test. No Rust source, gate, conductance density, or spike-model parameter is changed.
+
+
+## Latest handoff — pediatric human L2/3 4-AP current-clamp perturbation added (2026-11-15)
+
+### Verified baseline and exact-head CI
+
+This continuation began from main `7b313ee4eac1edcc606a9234e78d156392992c96`. The exact-head GitHub Actions run [43659806172](https://github.com/codexclai/HumanJS/actions/runs/43659806172) is now completed successfully on that SHA: all 36 job steps passed. This included Rust fmt, Clippy and tests; the Python experiment tests and syntax checks; Mittermaier source download, long-table SHA-256 verification and both strict output comparisons; Wilbers NEURON 9.0.2 Na/K replay and all existing K_IV profile/surface comparisons; and repository policy.
+
+### New evidence reviewed
+
+- Added Kushner et al. (2025), *eNeuro* 12(5), DOI 10.1523/ENEURO.0247-24.2025 (CC BY 4.0), and its full PMC article/table data.
+- Cohort: 33 pediatric patients, age 1–21 years (mean 9.9), 108 L2/3 pyramidal neurons: MCD 37, other epilepsy 45, tumour controls 26.
+- Current clamp only: 0→1000 pA ramp over 2 s and 600 ms square steps from −100 to +100 pA by 10 pA, then −250 to +1000 pA by 50 pA, at about 33°C.
+- A 100 μM 4-AP wash-on was tested in 17 neurons from 8 patients. Table 5 provides paired pre/post summaries and exact p values for input resistance, AP threshold/half-width, AHP magnitude/latency and accommodation ratios. No significant effect on voltage sag, membrane decay, AP amplitude or maximum firing rate.
+- This is broad pharmacological perturbation consistent with K-channel involvement, but not channel-subtype-isolated, not voltage clamp and not a gate-kinetic dataset. No public raw-trace repository or formal data-availability statement was located on the reviewed page.
+- Updated the Mittermaier pooled values in STATUS to the final author-started Python results (−6.629036/24.239524mV for activation; −43.341969/12.623361mV for inactivation).
+
+### Changed paths in this follow-up
+
+- `research/HUMAN-L23-CURRENT-CLAMP-VALIDATION-SOURCES.md`
+- `docs/BOOT.md`
+- `docs/status/STATUS.md`
+- `docs/status/SESSION-HANDOFF.md`
+
+No code or model parameter changed in this follow-up. No Rust equation/gate, channel density, or biological claim is added. The next step is to confirm the exact-main workflow result triggered by this documentation-only commit.
