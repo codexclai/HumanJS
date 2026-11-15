@@ -778,3 +778,15 @@ Reproduced source summaries include:
 - DTX-I block fraction = 0.546260 ± 0.059685 SEM (n=5).
 
 The verified references are research/HUMAN-AXONAL-KV1-MITTERMAIER-SUMMARY.csv and research/HUMAN-AXONAL-KV1-MITTERMAIER-LONG-INACTIVATION.csv. Methods, checksums, comparison against the archived R scripts, and limitations are documented in research/HUMAN-AXONAL-KV1-MITTERMAIER.md. No raw-trace fit, somatic kinetic substitution, AIS density inference, ADR-014 acceptance, or Rust parameter change is claimed.
+
+
+## 2026-11-15 — human cortical current-clamp validation datasets
+
+Reviewed two further human electrophysiology sources relevant to future validation of the exploratory single-compartment spike model:
+
+- Howard et al. (2022), GigaDB 10.5524/102317 and human DANDI 000293 version 0.220708.1652: 118 neurons from 35 individuals across L2/3, deep L3c and L5, with raw ABF and NWB records publicly downloadable. The reviewed intrinsic protocol is current-clamp long-square injection, not a direct Kv voltage-step assay. The GigaDB page did not clearly expose a redistribution license; do not copy raw files until terms are resolved.
+- Planert et al. (2025 online; 2026 issue), Figshare 10.6084/m9.figshare.28184126 (GPL 3.0+): processed human temporal L2–3 pyramidal-neuron feature data. Reproduced the published core selection `saved == 0` and `etype != "IntN"`: 901 cells across 22 anonymized patient IDs. Descriptive medians include R_in 71.92 MΩ, membrane tau 19.30 ms, AP amplitude 84.38 mV, half-width 0.870 ms, rheobase 250 pA and F–I slope 0.0404 Hz/pA. Four existing processed labels are SlowAP (445), LowRin (293), FastAP (136) and DoubSpk (27).
+- The Planert article's intrinsic assays are current-clamp current injection at 34 °C; no isolated Kv activation/inactivation/recovery or toxin protocol is described. Original human traces are not openly shared; only processed data and analysis scripts are deposited. The archived earlier clustering R Markdown documents 15-feature z-scoring, Ward.D2 splits and Kimes `sigclust2` branch significance testing; the 2025 figure-analysis script uses pre-existing `etype` labels.
+- A representative Howard NWB asset was inspected. Acquisition records were `CurrentClampSeries` with 20 kHz sampling; the matched stimulus description was `I_clampsec`. A stimulus container typed as `VoltageClampStimulusSeries` should not be misread as an intrinsic K voltage-step protocol.
+
+These datasets could support future protocol-matched validation of AP morphology and excitability, with Howard raw-trace work dependent on licensing and Planert limited to processed summaries. The Planert and Mittermaier studies share investigators/context and cohort overlap is unknown; do not count them as independent subject replication. No Rust gate, conductance density, or spike-model parameter is changed. Full source and selection caveats are in `research/HUMAN-L23-CURRENT-CLAMP-VALIDATION-SOURCES.md`.

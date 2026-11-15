@@ -1047,3 +1047,33 @@ This continuation began from live main at 718800b7043bcd32ab82211971d06e61e42b9a
 The Figshare tables are processed/pseudonymized, not raw sweeps. Activation and inactivation use normalized chord conductance with source EK=−105 mV and command voltages not corrected for the stated liquid-junction potential. The 20 long-pulse traces are repeated processed observations, not 20 independent cells or donors. Recovery uses four experimental delays plus one derived zero-time anchor. DTX-I supports a Kv1-family contribution, not a complete molecular-subunit composition. This evidence does not replace the Wilbers somatic dataset, close ADR-014, or establish AIS channel density. No Rust gate equation, conductance density, or model parameter changed.
 
 The analyzer and seven focused tests passed in the temporary research workspace. The new CI step downloads the 154 MB source, checks its SHA-256, and strictly compares both generated references. Its exact-main workflow result is the next verification gate.
+
+
+## Latest handoff — current-clamp source audit and pooled Kv1 fit parity (2026-11-15)
+
+### Starting live repository state
+
+This continuation began from main `479ce87cf37dede35d5b549332bbd6dd305fe71d`. Live GitHub verification showed default branch `main`, the sole branch `main`, 125 non-truncated tree entries, zero open issues and zero open pull requests. Exact-head Actions run [43658447245](https://github.com/codexclai/HumanJS/actions/runs/43658447245) passed on that commit, including Rust checks, 58 Python tests, the Mittermaier long-table download/hash verification and both strict expected-summary comparisons. Earlier run [43658334779](https://github.com/codexclai/HumanJS/actions/runs/43658334779) failed because its code-only commit preceded the separate reference-file commit; the final combined exact-head run passed.
+
+### Research completed
+
+- Revisited the original Mittermaier R scripts and aligned Python pooled activation/inactivation fits with the exact R `nls` starting values. The decreasing Python inactivation logistic reverses R's low/high asymptote tuple for equivalent curve orientation.
+- The focused Mittermaier analyzer test suite passed 8/8 in the temporary research workspace. The full analyzer was rerun on the five compact Figshare CSVs plus the checksum-verified 154,469,163-byte long-inactivation table. The updated compact and long summaries strictly matched every field in the temporary expected-reference comparisons.
+- Author-started Python pooled estimates: activation V1/2 −6.62903554 mV/slope 24.23952369 mV; inactivation V1/2 −43.34196855 mV/slope 12.62336059 mV. Original R `nls` results differ only slightly (−6.62907347/24.23965052 and −43.3419644/12.6233452).
+- Audited Howard et al. (2022) GigaDB 10.5524/102317 and human DANDI 000293: 118 neurons from 35 participants, multiple layers, original ABF and NWB current-clamp data. The GigaDB page's redistribution license remains unclear.
+- Audited Planert et al. (2025) Figshare 10.6084/m9.figshare.28184126: processed GPL 3.0+ per-cell data. Reproduced the core `saved==0 && etype!="IntN"` subset (901 L2–3 pyramidal cells, 22 anonymized patients) and inspected the MATLAB feature extraction and older 15-feature Ward.D2/`sigclust2` clustering workflow. Raw original human sweeps are not public.
+- Neither candidate article documents intrinsic Kv activation/inactivation/recovery voltage-step protocols. Planert and Mittermaier have shared investigators/context; cohort overlap is unknown.
+
+### Changed paths in this continuation
+
+- `experiments/analyze_mittermaier_human_axon_kv1.py`
+- `experiments/test_mittermaier_human_axon_kv1.py`
+- `research/HUMAN-AXONAL-KV1-MITTERMAIER-SUMMARY.csv`
+- `research/HUMAN-L23-CURRENT-CLAMP-VALIDATION-SOURCES.md`
+- `research/HUMAN-AXONAL-KV1-MITTERMAIER.md`
+- `docs/BOOT.md`
+- `docs/status/STATUS.md`
+- `docs/status/SESSION-HANDOFF.md`
+- `docs/roadmap/MASTER-ROADMAP.md`
+
+The long-inactivation CSV reference is unchanged. The main workflow already contains the strict compact/long reference regeneration step; the next exact-main workflow run must verify the updated pooled-fit starting values and the new 8th unit test. No Rust source, gate, conductance density, or spike-model parameter is changed.

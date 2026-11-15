@@ -131,6 +131,7 @@ def fit_boltzmann(
     direction: str,
     allow_repeated_voltages: bool = False,
     bounded: bool = True,
+    initial_parameters: tuple[float, float, float, float] | None = None,
 ) -> dict[str, float]:
     """Fit a per-recording increasing activation or decreasing availability curve."""
     voltage = np.asarray(voltage_mv, dtype=float)
@@ -153,7 +154,10 @@ def fit_boltzmann(
     else:
         raise ValueError(f"Unsupported Boltzmann direction: {direction}")
 
-    fit_options: dict[str, Any] = {"p0": initial, "maxfev": 100000}
+    fit_options: dict[str, Any] = {
+        "p0": initial if initial_parameters is None else initial_parameters,
+        "maxfev": 100000,
+    }
     if bounded:
         fit_options["bounds"] = ((-0.5, 0.5, -150.0, 1.0), (0.5, 1.5, 100.0, 100.0))
     fitted, _ = curve_fit(function, voltage, conductance, **fit_options)
@@ -237,6 +241,11 @@ def _load_voltage_source(
         direction=direction,
         allow_repeated_voltages=True,
         bounded=False,
+        initial_parameters=(
+            (0.1, 1.1, -10.0, 23.0)
+            if protocol == "activation"
+            else (1.1, 0.1, -45.0, 14.0)
+        ),
     )
     records.append(
         _result_row(

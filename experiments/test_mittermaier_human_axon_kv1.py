@@ -54,6 +54,20 @@ class MittermaierHumanAxonalKv1Tests(unittest.TestCase):
         self.assertAlmostEqual(fit["slope_mv"], 24.0, places=6)
         self.assertLess(fit["rmse"], 1e-9)
 
+    def test_explicit_initial_parameters_override_direction_defaults(self) -> None:
+        voltage = np.tile(np.arange(-90.0, 71.0, 20.0), 2)
+        conductance = _boltzmann_increasing(voltage, 0.02, 1.0, -7.0, 24.0)
+        fit = fit_boltzmann(
+            voltage,
+            conductance,
+            direction="increasing",
+            allow_repeated_voltages=True,
+            bounded=False,
+            initial_parameters=(0.1, 1.1, -10.0, 23.0),
+        )
+        self.assertAlmostEqual(fit["vhalf_mv"], -7.0, places=6)
+        self.assertAlmostEqual(fit["slope_mv"], 24.0, places=6)
+
     def test_duplicate_voltage_rejected_for_single_recording(self) -> None:
         voltage = np.array([-90.0, -70.0, -50.0, -30.0, -10.0, 10.0, 10.0])
         conductance = _boltzmann_increasing(voltage, 0.02, 1.0, -7.0, 24.0)
