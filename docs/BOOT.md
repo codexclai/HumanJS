@@ -684,3 +684,8 @@ Added Kushner et al. (2025), an open CC BY 4.0 pediatric human L2/3 current-clam
 ### 2026-11-15 — final current-main evidence verification
 
 The current main snapshot is `ca17aa18c2860eabac5078e7f291ba6586745e9a` with a 126-entry non-truncated tree, only the `main` branch, and no open issues or pull requests. Exact-head run [43660501666](https://github.com/codexclai/HumanJS/actions/runs/43660501666) completed successfully with all 35 workflow execution steps successful. The full handoff records the Mittermaier Kv1 source reproduction, Howard/Planert current-clamp datasets, Kushner pediatric 4-AP perturbation and their limits. No HumanJS model parameter or scientific acceptance gate changed.
+
+
+### Additional human voltage-clamp evidence screen (2026-11-15)
+
+A focused public-source screen of Chameh et al. (2021), Rich et al. (2021), Planert et al. (2025/2026), Howard et al. (2022), and Kushner et al. (2025) found no new public human somatic Kv activation/inactivation/recovery dataset with raw traces and per-cell kinetic targets. Chameh and Rich's voltage-clamp measurements concern human (I_h), not Kv. Planert's voltage-clamp use does not supply intrinsic Kv isolation and its original human-participant data are not openly shared. Howard remains a possible current-clamp comparator with unresolved ABF redistribution terms; Kushner's 4-AP perturbation is current clamp. Mittermaier remains axonal Kv1 processed-data evidence and cannot substitute for somatic nucleated-patch data. See `research/HUMAN-L23-CURRENT-CLAMP-VALIDATION-SOURCES.md`. No Rust equations or parameters changed; ADR-014 remains open.

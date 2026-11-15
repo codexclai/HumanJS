@@ -1111,3 +1111,41 @@ No code or model parameter changed in this follow-up. No Rust equation/gate, cha
 - Exact-head GitHub Actions [43660501666](https://github.com/codexclai/HumanJS/actions/runs/43660501666) completed successfully: 35 workflow execution steps, zero failures. The job included Rust fmt/Clippy and tests (41+3+6), Python AST syntax for 34 scripts, 59 Python tests, Mittermaier source download/hash plus both strict references, all original Wilbers NEURON 9.0.2 Na/K source replays and model-output comparisons, and repository policy.
 - Mittermaier long-inactivation source file SHA-256: `d0f27bfaf107c7d53c4ea2737973a33dd71d682bd477a49a38d747e324a58909`; the CI log confirms both "Long-inactivation mean fit matches every field of the committed reference" and "Mittermaier human axonal Kv1 summary matches every field of the committed reference".
 - Subsequent public evidence reviews include Howard et al. raw current-clamp ABF/NWB data (redistribution licensing unresolved), Planert et al. processed GPL 3.0+ L2–3 intrinsic-feature tables, and Kushner et al. pediatric L2/3 broad 4-AP current-clamp perturbation. They broaden the current-clamp comparison evidence only; they do not isolate intrinsic Kv channel currents or provide gate kinetics. No Rust equations or parameters were changed; ADR-014 remains open and the spike-capable single-compartment model remains exploratory and unaccepted.
+
+ 
+## Latest handoff — additional human cortical voltage-clamp evidence screen (2026-11-15)
+
+### Starting live-main verification
+
+- Repository metadata confirms public `codexclai/HumanJS`, default branch `main`.
+- Live `refs/heads/main` at task start: `42166ed7783801e81f1a0a9b7676ec1ccbcd2ab7`.
+- Full recursive tree: 126 entries, `truncated=false`; branch listing contains only `main`; open issues: 0; open pull requests: 0.
+- Latest workflow at task start: [43667074525](https://github.com/codexclai/HumanJS/actions/runs/43667074525), completed successfully on exact HEAD `42166ed7783801e81f1a0a9b7676ec1ccbcd2ab7). The immediately preceding run [43658334779](https://github.com/codexclai/HumanJS/actions/runs/43658334779) failed on an earlier code-only commit; the intervening exact-main run [43658447245](https://github.com/codexclai/HumanJS/actions/runs/43658447245) passed. No non-main refs were used.
+
+### Work completed
+
+- Performed a targeted literature/data-repository search for public human cortical voltage-clamp recordings that could independently validate somatic Kv gating.
+- Inspected the protocol/data-availability context for Chameh et al. (2021), Rich et al. (2021), and Planert et al. (2025/2026), and reconciled these with the existing Howard, Kushner and Mittermaier records.
+- Classified Chameh/Rich voltage-clamp observations as (I_h) evidence, not K-current evidence; Planert's voltage-clamp use does not expose an intrinsic Kv isolation dataset and its original human-participant recordings are not openly shared.
+- Confirmed that Howard remains current-clamp-oriented for the reviewed intrinsic recordings and that its ABF redistribution terms remain unresolved; Kushner's 4-AP perturbation is current clamp; Mittermaier is axonal whole-bleb Kv1 with processed/pseudonymized tables.
+- Added a source-backed negative evidence screen to `research/HUMAN-L23-CURRENT-CLAMP-VALIDATION-SOURCES.md`, summarized it in STATUS and BOOT, and marked the bounded roadmap audit complete.
+
+### Scientific interpretation
+
+No new public human somatic Kv dataset with raw isolated voltage-step currents and per-cell kinetic targets was located. (I_h), synaptic voltage-clamp recordings, broad 4-AP current-clamp effects, and axonal Kv1 summaries are not interchangeable with somatic L2/3 Kv gate kinetics. No Rust equations, channel parameters, conductance densities or spike-model parameters were changed. ADR-014 remains open; the single-compartment spike-capable mechanism remains exploratory and unaccepted. The search was targeted, not exhaustive; no authors or researchers were contacted.
+
+### Changed paths
+
+- `research/HUMAN-L23-CURRENT-CLAMP-VALIDATION-SOURCES.md`
+- `docs/BOOT.md`
+- `docs/status/STATUS.md`
+- `docs/roadmap/MASTER-ROADMAP.md`
+- `docs/status/SESSION-HANDOFF.md`
+
+### Verification state
+
+The baseline workflow passed on the parent commit. The new documentation/research commit's exact-head workflow is pending and must be checked before treating this batch as complete. No local clone, local Cargo test, or local NEURON replay was run in this task.
+
+### Next concrete step
+
+Continue the ADR-014 evidence gate by searching primary human cortical datasets specifically for isolated somatic Kv4/A-type and Kv1 voltage-step protocols, including supplementary/source-data files and repository inventories; do not transfer any parameter without raw-trace provenance and protocol-level comparability.
