@@ -1200,3 +1200,43 @@ The new research note is source analysis and documentation only. No local clone,
 ### Next concrete step
 
 Audit the source-protocol comparability of Rüschenschmidt's human neocortical A-current and the Wilbers human somatic K voltage-clamp protocols, prioritizing the full methods and whether raw/per-cell current traces or exact kinetic target tables can be lawfully retrieved from public repositories. Keep hippocampal dentate data separate and do not transfer any parameter without a matched cell class, preparation, temperature, ionic conditions and fitting definition.
+
+
+## Latest handoff — additional human neocortical KATP/BK, AHP and fetal K-current evidence (2026-11-17)
+
+### Verified starting state
+
+- Live repository: codexclai/HumanJS, default branch main.
+- Main HEAD at the beginning of this follow-up: c781442b64d275b7d1642220df53936682692da4.
+- Recursive tree: 127 entries, not truncated. Only branch: main. Open issues: 0. Open PRs: 0.
+- Parent research commit 6c56ebeb55efab15556f3317bd5294bb65e62d14 passed exact-head Actions run 43940242441, all 37 steps. Run 43941344405 was running on c781442 at the time these documentation updates were authored.
+
+### Additional primary sources
+
+- Jiang & Haddad (1997), DOI 10.1152/jn.1997.77.1.93: human anterior temporal-neocortical KATP and BK-like conductances from pyramidal-shaped cells presumed to include cortical layers III–V. S-KATP was seen in 9 patches of ~80 neurons (47±3 pS, n=9); BK-like current in 8 patches from 15 neurons (277±24 pS). These are metabolic KATP and Ca2+/voltage-activated BK currents, not classical Kv gate kinetics.
+- Lorenzon & Foehring (1992), DOI 10.1152/jn.1992.67.2.350: human fast/medium/slow AHPs and repetitive firing from intracellular recording/pharmacology, with reversal potentials and blocker sensitivities but no isolated voltage-clamp gate measurements.
+- Sah (1995), DOI 10.1152/jn.1995.74.5.1889: the accessible abstract reports delayed-rectifier-like and fast-inactivating K-current classes in fetal human central-neuron cultures but no quantitative parameters or resolved regional origin for the K-current subset.
+- These studies were added to research/HUMAN-K-CURRENT-VOLTAGE-CLAMP-EVIDENCE.md and the roadmap/status evidence catalogue. They must not be pooled with adult neocortical I_A, hippocampal dentate currents, axonal Kv1, or pediatric L2/3 KCNQ network pharmacology.
+
+### Scientific boundary
+
+No new public raw human cortical Kv sweep/per-cell dataset suitable for independent refitting was located. No direct gate parameters are transferred. No Rust equation, channel parameter, conductance density, temperature setting, or spike-model parameter changed. ADR-014 remains open and the single-compartment spike-capable model remains exploratory and unaccepted. No researchers or authors were contacted.
+
+### Changed paths
+
+- research/HUMAN-K-CURRENT-VOLTAGE-CLAMP-EVIDENCE.md
+- docs/BOOT.md
+- docs/status/STATUS.md
+- docs/roadmap/MASTER-ROADMAP.md
+- docs/status/SESSION-HANDOFF.md
+- docs/operations/GITHUB-SECURITY.md
+
+### Verification
+
+- Parent commit 6c56ebeb55efab15556f3317bd5294bb65e62d14 passed exact-head Actions run 43940242441 (37/37 job steps).
+- The current baseline c781442b64d275b7d1642220df53936682692da4 had exact-head workflow 43941344405 running when these docs were prepared. Confirm its final result and run the workflow triggered by this documentation commit before reporting completion.
+- No local Rust/Cargo/NEURON execution was performed.
+
+### Next concrete step
+
+Compare the adult temporal-neocortical A-current method of Rüschenschmidt et al. with the Wilbers somatic K voltage-clamp protocol, including exact holding/prepulse/test steps, preparation, temperature, blockers, voltage errors and nonlinear fitting definitions. Investigate whether original per-cell kinetic CSVs or raw traces are publicly retrievable. Keep KATP/BK, AHP, fetal-culture and hippocampal evidence separate; no parameter transfer without matched cell and protocol provenance.

@@ -16,7 +16,7 @@
 
 ## Verified branch state
 
-The live GitHub branch listing on 2026-11-17 returned exactly one branch: main; no non-main refs were present. Live main HEAD at task start was a867cc71b6007859347752188cd6db0d26185c2a; the complete recursive tree contained 126 entries and was not truncated. Open issues and pull requests were both zero. Exact-head workflow 43675920732 passed on that commit; its predecessor research workflow 43675405851 passed all 37 job steps. Recheck live refs at the start of every session.
+The live GitHub branch listing on 2026-11-17 returned exactly one branch: main; no non-main refs were present. At the beginning of this documentation update, main HEAD was c781442b64d275b7d1642220df53936682692da4, its complete recursive tree had 127 entries and was not truncated, and there were zero open issues and PRs. The parent research commit 6c56ebeb55efab15556f3317bd5294bb65e62d14 passed exact-head workflow 43940242441 (37/37 steps). Workflow 43941344405 on c781442 was in progress when this update was prepared. Recheck live refs and exact-head CI at the end of the task.
 
 ## Repository and delivery
 
