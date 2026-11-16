@@ -152,13 +152,57 @@ The Rüschenschmidt neocortical A-current study is now the most directly relevan
 
 The Rüschenschmidt A-current inactivation \(V_{1/2}\) (−98.9 ± 8.3 mV) and the small Beck figure-specific TEA-resistant transient-current estimate (−58.0 mV) differ substantially. They come from different preparations, sampling and protocols, and must not be averaged or treated as a single common parameter. The Beck A-current summary also depends on AHS pathology, and its tiny two-cell figure-specific parameter fit is not interchangeable with the Rüschenschmidt n=5 group summary.
 
+
+## Additional human neocortical K conductances and developmental evidence (2026-11-17)
+
+The following sources broaden the human K-conductance inventory, but they are not interchangeable with adult neocortical Kv activation/inactivation/recovery measurements.
+
+### Jiang and Haddad (1997): temporal-neocortical KATP and BK-like single-channel conductances
+
+**Citation:** C. Jiang and G. G. Haddad, “Modulation of K+ channels by intracellular ATP in human neocortical neurons,” Journal of Neurophysiology 77(1) (1997), 93–102. DOI [10.1152/jn.1997.77.1.93](https://doi.org/10.1152/jn.1997.77.1.93); PMID [9120601](https://pubmed.ncbi.nlm.nih.gov/9120601/). The publisher's full PDF is available [here](https://journals.physiology.org/doi/pdf/10.1152/jn.1997.77.1.93).
+
+**Tissue and recording.** The authors obtained anterior temporal neocortical tissue, mostly from middle temporal gyrus, from epilepsy-surgery patients. The tissue was removed to gain access to the hippocampus and was judged to have normal excitability from intracranial and/or intraoperative recordings. They prepared 300-µm slices, enzymatically incubated them, and dissociated grey matter presumed to include layers III–V. Cells were selected for a pyramidal-shaped soma with one thick proximal dendrite and no visible injury; laminar and molecular subtype identity were not established.
+
+Experiments were performed at approximately 24 °C. Whole-cell currents used perforated-patch voltage clamp; single-channel currents used excised inside-out patches. The main single-channel protocol used symmetric 150-mM K+ solutions. The article examined human and rat neurons, but the results below are human-only unless explicitly stated otherwise.
+
+**Conductances and pharmacology.**
+
+- **Small-conductance ATP-sensitive K+ channel (S-KATP):** observed in nine patches from approximately 80 human neocortical neurons studied (one patch per cell). Single-channel conductance was 47 ± 3 pS (n=9), with strong inward rectification. ATP inhibited channel activity concentration-dependently (IC50 approximately 130 µM); ADP, AMP-PNP and glibenclamide also inhibited it. The article shows rapid reduction in open probability after ATP application and recovery after washout.
+- **Large-conductance ATP-sensitive K+ channel (L-KATP):** examples had unitary conductances around 180 and 230 pS and weak inward rectification. The group was inhibited by ATP (IC50 approximately 350 µM), AMP-PNP and glibenclamide. Activity required micromolar cytosolic Ca2+, but charybdotoxin did not block it. The exact human cell/patch n for this component was not stated in the passages inspected, so no population sample count is assigned here.
+- **Large-conductance Ca2+-activated BK-like channel:** observed in eight patches from 15 human neocortical neurons (one patch per cell). Slope conductance was 277 ± 24 pS (n=8). The channel was voltage activated, lacked inward rectification, and was almost completely blocked by external charybdotoxin (50 nM), iberiotoxin (100 nM), or TEA (2 mM); internal TEA above 40 mM did not block it. ATP increased open probability (0.096 ± 0.011 to 0.172 ± 0.014, n=5) and unitary conductance (267 ± 6 to 295 ± 7 pS, n=5). It was not inhibited by glibenclamide.
+
+The authors also demonstrated a levcromakalim-sensitive whole-cell inward current at a holding potential of −60 mV under symmetric K+, low-Na+ and Co2+ conditions; levcromakalim (5 µM) increased the current and glibenclamide (20 µM) blocked it. This is a pharmacologically identified KATP current, not a voltage-gated Kv activation/inactivation assay.
+
+**Interpretation and limits.** This is direct human neocortical evidence for metabolic KATP conductances and a Ca2+- and voltage-activated BK-like single-channel conductance. It complements the A-current and delayed-rectifier literature, and is relevant to energy-state regulation and calcium-dependent repolarization. It does **not** provide classical Kv1/Kv4/Kv7 activation, steady-state inactivation or recovery kinetics. The inside-out excised-patch preparation does not preserve cell compartments or whole-cell dendritic/axonal context. The selected cells were morphologically pyramidal-like and presumed to derive from layers III–V, but this is not equivalent to a laminar molecularly identified cell class. No public per-patch raw recording archive was located in this review.
+
+### Lorenzon and Foehring (1992): human neocortical afterhyperpolarization conductances
+
+**Citation:** N. M. Lorenzon and R. C. Foehring, “Relationship between repetitive firing and afterhyperpolarizations in human neocortical neurons,” Journal of Neurophysiology 67(2) (1992), 350–363. DOI [10.1152/jn.1992.67.2.350](https://doi.org/10.1152/jn.1992.67.2.350); PMID [1373765](https://pubmed.ncbi.nlm.nih.gov/1373765/).
+
+The study combined intracellular recordings in human neocortical slices with pharmacological manipulations. It characterized fast, medium and slow afterhyperpolarizations (AHPs), and repetitive firing/adaptation during long depolarizing current injections. It is **not** an isolated voltage-clamp K-current study.
+
+- Fast AHP reversal was approximately −65 mV. It was eliminated by extracellular Co2+, TEA or 4-AP and by intracellular TEA or CsCl; these interventions also broadened spikes.
+- Medium AHP reversal was approximately −90 to −93 mV. It was reduced by Co2+, apamin, tubocurare and several neuromodulators; the authors inferred contributions from a Ca2+-dependent K+ current and Ih.
+- Slow AHP reversal was approximately −83 to −87 mV. Its pharmacology was consistent with a slowly acting Ca2+-dependent K+ current.
+- Human neurons showed spike-frequency adaptation and habituation under repeated 1-s current stimuli. The mean steady-state f–I slope reported in the abstract was 57.8 Hz/nA.
+
+These are useful human functional constraints on repolarization, AHPs and firing adaptation, but do not identify Kv subunits, gate activation/inactivation curves, recovery constants or channel densities. Do not reinterpret the TEA/4-AP-sensitive fast AHP as a molecularly specific Kv current.
+
+### Sah (1995): fetal human central-neuron voltage-gated K+ current classes
+
+**Citation:** D. W. Sah, “Human fetal central neurons in culture: voltage- and ligand-gated currents,” Journal of Neurophysiology 74(5) (1995), 1889–1899. DOI [10.1152/jn.1995.74.5.1889](https://doi.org/10.1152/jn.1995.74.5.1889); PMID [8592182](https://pubmed.ncbi.nlm.nih.gov/8592182/). The accessible [PubMed abstract](https://pubmed.ncbi.nlm.nih.gov/8592182/) describes dissociated monolayer cultures of fetal human brain neurons studied with whole-cell patch clamp.
+
+The abstract reports at least two K+ current classes resembling a delayed rectifier and a fast-inactivating current. They differed in kinetics, voltage dependence of activation/inactivation, and sensitivity to 4-aminopyridine and TEA. The abstract does not provide quantitative K-current parameters, sample sizes, fetal age, exact brain region for the K-current subset, or a raw-data repository. The article includes comparisons of cortical and cerebellar ligand-gated responses, but that does not establish the anatomical origin of each reported K-current class.
+
+This is direct human developmental-neuron current evidence at the broad level, but it is not an adult temporal-neocortical or L2/3 pyramidal-cell parameter source. Treat its K-current classes as qualitative fetal-culture evidence only; no numeric Kv gate values are inferred.
+
 ### Decision for HumanJS
 
 - Correct the earlier statement that no direct human cortical Kv current evidence had been identified: published human neocortical A-type current kinetics do exist.
 - Retain the stricter data-access statement: no public raw human neocortical K-current sweep dataset or per-cell kinetic table suitable for independent trace refitting was located in this review.
 - Do not infer Kv4 molecular identity, layer-specific distribution, AIS/somatic density, or cortical pyramidal-cell subtype from the A-current phenotype alone.
 - Do not transfer the reported \(V_{1/2}\), slope, or recovery values into Rust yet. First reconcile protocol details, preparation, temperature, pharmacological isolation, current definition, series-resistance effects, and population/anatomical differences with the target HumanJS cell class.
-- Keep hippocampal dentate data, cortical temporal-lobe A-current data, axonal Kv1 summaries, and human L2/3 network-level KCNQ pharmacology as distinct evidence classes.
+- Keep hippocampal dentate data, cortical temporal-lobe A-current data, temporal-neocortical KATP/BK currents, human AHP pharmacology, fetal-culture K currents, axonal Kv1 summaries, and human L2/3 network-level KCNQ pharmacology as distinct evidence classes.
 - No Rust equation, gate, conductance density, temperature parameter, or spike-model parameter was changed by this review. ADR-014 remains open; the single-compartment spike-capable model remains exploratory and unaccepted.
 
 The review was a targeted literature and public-repository search, not a systematic review of all human neuronal potassium-current publications. No authors or researchers were contacted.
