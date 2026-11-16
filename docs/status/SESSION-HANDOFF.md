@@ -1155,3 +1155,48 @@ The baseline workflow passed on the parent commit. The exact-head workflow [4367
 ### Next concrete step
 
 Continue the ADR-014 evidence gate by searching primary human cortical datasets specifically for isolated somatic Kv4/A-type and Kv1 voltage-step protocols, including supplementary/source-data files and repository inventories; do not transfer any parameter without raw-trace provenance and protocol-level comparability.
+
+
+## Latest handoff — direct human neocortical A-type and hippocampal K-current evidence (2026-11-17)
+
+### Verified starting live-main state
+
+- Canonical repository: public codexclai/HumanJS; default branch main.
+- Starting live HEAD: a867cc71b6007859347752188cd6db0d26185c2a.
+- Recursive tree: 126 entries, truncated=false; branch refs: only main; open issues: 0; open pull requests: 0.
+- Exact-head workflow 43675920732 passed on this HEAD. The preceding exact-head research workflow 43675405851 passed all 37 job steps, zero failures/skips.
+
+### Research completed
+
+- Corrected the previous literature-screen conclusion: direct human temporal-neocortical A-type current summaries do exist in Rüschenschmidt et al. (2004), DOI 10.1002/jnr.20055. The accessible abstract reports V1/2 activation −14.8±1.8 mV, V1/2 inactivation −98.9±8.3 mV and monoexponential recovery tau 18.2±7.5 ms, each based on n=5.
+- Retrieved and parsed the full open-access Beck et al. (1997) article, DOI 10.1113/jphysiol.1997.sp021842. It includes 34 acutely isolated human dentate granule cells from 11 TLE patients; delayed outward I_K was seen in all cells and A-type I_A in six cells from three AHS patients. I_K and I_A are kept as separate current components. The patient cohort overlaps with the authors' 1996 study in four people, using different neurons, so these papers are not independent subject replication.
+- Audited the related Rüschenschmidt et al. calcium-channel-blocker article, DOI 10.1016/j.neulet.2004.06.058, carefully separating human neocortical effects from guinea pig CA1 measurements.
+- Added Kushner et al. (2026), DOI 10.1016/j.nbd.2025.107252, as human L2/3 KCNQ2–5 network pharmacology evidence. Retigabine eliminated 4-AP-induced HypOs in n=5; the experimental mode is current clamp, not isolated Kv7 voltage clamp.
+- Distinguished published summary kinetics from publicly accessible raw trace data: no public raw human cortical K sweeps/per-cell table for independent trace refitting was located in the reviewed sources. The earlier blanket “no direct human somatic Kv evidence” wording was too broad; the corrected conclusion is that direct summaries exist but the raw-data and protocol-matching gates remain.
+
+### Scientific boundary
+
+- Rüschenschmidt's direct neocortical A-current phenotype has only five cells for the reported activation/inactivation/recovery fits; the accessible abstract does not resolve layer or pyramidal-cell identity, and it does not identify Kv molecular subunits.
+- Beck's recordings are hippocampal dentate granule cells from TLE resections, not neocortical pyramidal cells. Its A-current was associated with AHS and appeared only in six of fifteen investigated AHS neurons; the figure-specific activation/inactivation fit in two cells is not a population estimate.
+- Rüschenschmidt and Beck A-current inactivation values are markedly different and must not be averaged: the studies differ in preparation, sampling and protocol. No channel parameter is transferred.
+- Kushner 2026 demonstrates a network-level effect of KCNQ2–5 pharmacology; it does not define intrinsic Kv7 gate kinetics.
+- The existing Wilbers source/model replays and Mittermaier axonal whole-bleb summaries remain distinct evidence classes. Raw Wilbers experimental K sweeps are still absent from the inspected DataverseNL v3 inventory; raw Mittermaier traces remain restricted.
+- No Rust equation, channel gate, conductance density, temperature parameter or spike-model parameter was changed. ADR-014 remains open and the single-compartment spike-capable model remains exploratory and unaccepted. No author outreach was made.
+
+### Changed paths in this continuation
+
+- research/HUMAN-K-CURRENT-VOLTAGE-CLAMP-EVIDENCE.md (new)
+- research/HUMAN-L23-CURRENT-CLAMP-VALIDATION-SOURCES.md
+- docs/BOOT.md
+- docs/status/STATUS.md
+- docs/roadmap/MASTER-ROADMAP.md
+- docs/status/SESSION-HANDOFF.md
+- docs/operations/GITHUB-SECURITY.md
+
+### Verification
+
+The new research note is source analysis and documentation only. No local clone, Rust source edit, local Cargo test or NEURON run was performed for this continuation. The exact-head workflow on the resulting commit must be checked before calling this documentation batch fully verified.
+
+### Next concrete step
+
+Audit the source-protocol comparability of Rüschenschmidt's human neocortical A-current and the Wilbers human somatic K voltage-clamp protocols, prioritizing the full methods and whether raw/per-cell current traces or exact kinetic target tables can be lawfully retrieved from public repositories. Keep hippocampal dentate data separate and do not transfer any parameter without a matched cell class, preparation, temperature, ionic conditions and fitting definition.
