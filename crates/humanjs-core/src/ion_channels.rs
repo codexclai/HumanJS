@@ -1933,15 +1933,13 @@ mod tests {
 
         // Source: DataverseNL v3.0, data_fig4.xlsx, file 318667,
         // SHA-1 30ba48520d8d27a7f4db8aaa6abc7ae0f80ba7d3.
-        // Human-only nonblank per-recording activation current-fit summaries;
-        // n=13 at each voltage. These are processed fit outputs, not raw
-        // current traces and not microscopic channel-gating time constants.
-        // The source helper uses get_tau_act on the rising phase of the K_IV
-        // current, which is the fit family replayed by this test.
-        let voltages_mv = [-10.0, 0.0, 10.0, 20.0, 30.0, 40.0, 50.0];
+        // Human-only nonblank per-recording activation current-fit summaries.
+        // The five selected voltages have n=13 and minimum per-recording
+        // activation-fit R² > 0.95. The workbook export script is unavailable,
+        // so this is a distribution-level consistency check, not a claim that
+        // its experimental fit implementation is identical to this replay.
+        let voltages_mv = [10.0, 20.0, 30.0, 40.0, 50.0];
         let human_mean_tau_ms = [
-            3.356_764_345_809_124_5,
-            2.417_445_141_880_592,
             1.687_869_061_011_281_4,
             1.356_393_532_612_615_3,
             1.081_361_396_932_848_4,
@@ -1949,17 +1947,20 @@ mod tests {
             0.883_612_192_062_682,
         ];
         let human_sample_sd_tau_ms = [
-            2.373_427_262_517_900_3,
-            1.150_558_419_875_953_3,
             0.707_273_637_489_374_8,
             0.489_665_009_405_290_1,
             0.331_560_842_299_137_7,
             0.242_189_714_429_909_55,
             0.212_821_052_607_411_05,
         ];
+        let human_minimum_fit_r_squared = [
+            0.955_301_683_815_748,
+            0.980_917_074_133_173,
+            0.984_841_222_812_972,
+            0.984_201_760_040_31,
+            0.987_413_389_416_793,
+        ];
         let source_model_reference_tau_ms = [
-            3.284_746_40,
-            2.298_529_85,
             1.700_318_83,
             1.330_597_10,
             1.082_613_13,
@@ -1969,6 +1970,7 @@ mod tests {
         let mut squared_error = 0.0;
 
         for index in 0..voltages_mv.len() {
+            assert!(human_minimum_fit_r_squared[index] > 0.95);
             let current = replay_k_activation_current(model, voltages_mv[index]);
             let (tau_ms, r_squared) = fit_k_activation_current_tau(&current, 0.1).unwrap();
             assert!(
@@ -1989,7 +1991,7 @@ mod tests {
 
         let rmse_ms = (squared_error / voltages_mv.len() as f64).sqrt();
         assert!(
-            rmse_ms < 0.1,
+            rmse_ms < 0.08,
             "Human-only activation current-fit RMSE {rmse_ms} ms is unexpectedly large"
         );
     }
