@@ -2,7 +2,7 @@
 
 **Reviewed:** 2026-11-18  
 **Scope:** Published human neuronal voltage-clamp current summaries, the public per-recording Wilbers K-current fit workbook, and related human network-level KCNQ evidence.  
-**Status:** Direct human neocortical A-type and somatic mixed K-current measurements are documented below. Wilbers et al. provide a public per-recording fit workbook, but the original raw K-current NWB sweeps and several separate fitting-target CSVs are absent from the inspected DataverseNL v3.0 inventory. No raw-trace refit was performed. This note does not authorize parameter transfer into HumanJS.
+**Status:** Direct human neocortical A-type and somatic mixed K-current measurements are documented below. Wilbers et al. provide a public per-recording fit workbook, but the original raw K-current NWB sweeps and several separate fitting-target CSVs are absent from the inspected Wilbers DataverseNL v3.0 inventory. Separately, Dalley et al. (2026) deposited raw human neocortical nucleated-patch electrophysiology in DANDI:002018; seven NWB assets contain candidate nucleated-patch voltage-clamp protocol families. Those records have not yet been mapped to the paper's L4 IT subclasses, area-normalized or refitted. These are distinct studies and preparations. This note does not authorize parameter transfer into HumanJS.
 
 ## Executive finding
 
@@ -12,7 +12,7 @@ The previous literature screen was incomplete in two different ways. Direct huma
 2. Beck et al. (1997) characterize voltage- and calcium-dependent K currents in acutely isolated human hippocampal dentate granule cells. Their open full-text article reports a delayed outward current in all 34 recorded neurons and an A-type current in six neurons from three patients with Ammon's horn sclerosis.
 3. Wilbers et al. (2023) measure pharmacologically isolated aggregate voltage-gated K currents in nucleated somatic patches from adult human L2/L3 pyramidal neurons. The unrestricted Dataverse data_fig4.xlsx workbook contains per-recording steady-state and voltage-dependent kinetic fit summaries for 13 human recordings, with activation fits in 13 and inactivation fits in 11.
 
-These sources establish complementary human K-current evidence but are not interchangeable. Rüschenschmidt provides an A-type current summary from five cells without a resolved cortical layer or molecular channel identity. Beck provides pathology-dependent hippocampal dentate-granule-cell currents, not cortical pyramidal-cell evidence. Wilbers provides adult human L2/L3 somatic mixed-K-current voltage-clamp measurements plus processed per-recording fit arrays; however, the workbook is not a raw-sweep archive. No original human K-current NWB traces were found in the 65-file DataverseNL v3.0 inventory, and a raw-trace refit is therefore still unavailable. Neither a mixed K-current fit nor a pharmacological A-current phenotype identifies an individual Kv molecular subtype.
+These sources establish complementary human K-current evidence but are not interchangeable. Rüschenschmidt provides an A-type current summary from five cells without a resolved cortical layer or molecular channel identity. Beck provides pathology-dependent hippocampal dentate-granule-cell currents, not cortical pyramidal-cell evidence. Wilbers provides adult human L2/L3 somatic mixed-K-current voltage-clamp measurements plus processed per-recording fit arrays; however, the workbook is not a raw-sweep archive. No original human K-current NWB traces were found in the 65-file Wilbers DataverseNL v3.0 inventory. This is Wilbers-specific: a separate 2026 human neocortical Patch-seq study has since deposited raw nucleated-patch electrophysiology in DANDI:002018, but its records require separate calibration, cell-type mapping and current-density reconstruction before use. Neither a mixed K-current fit nor a pharmacological A-current phenotype identifies an individual Kv molecular subtype.
 
 A further 2026 human L2/3 study shows that KCNQ2–5 activation can suppress 4-AP-induced network oscillations, but it uses current clamp and pharmacology, not isolated Kv7 voltage-clamp protocols.
 
@@ -353,10 +353,76 @@ This is direct human developmental-neuron current evidence at the broad level, b
 ### Decision for HumanJS
 
 - Correct the earlier statement that no direct human cortical Kv current evidence had been identified: published human neocortical A-type current kinetics do exist.
-- Retain the stricter data-access statement: no public raw human neocortical K-current sweep dataset or per-cell kinetic table suitable for independent trace refitting was located in this review.
+- Scope the raw-data gap to the Wilbers Dataverse release: its original human K-current NWB sweeps remain absent. A separate direct human neocortical nucleated-patch NWB dataset was published by Dalley et al. (2026) and is now documented in research/HUMAN-L4-IT-NUCLEATED-PATCH-K-CURRENT-EVIDENCE.md; it is not yet a protocol-matched kinetic fit dataset and has not been independently refitted.
 - Do not infer Kv4 molecular identity, layer-specific distribution, AIS/somatic density, or cortical pyramidal-cell subtype from the A-current phenotype alone.
 - Do not transfer the reported \(V_{1/2}\), slope, or recovery values into Rust yet. First reconcile protocol details, preparation, temperature, pharmacological isolation, current definition, series-resistance effects, and population/anatomical differences with the target HumanJS cell class.
 - Keep hippocampal dentate data, cortical temporal-lobe A-current data, temporal-neocortical KATP/BK currents, human AHP pharmacology, fetal-culture K currents, axonal Kv1 summaries, and human L2/3 network-level KCNQ pharmacology as distinct evidence classes.
 - No Rust equation, gate, conductance density, temperature parameter, or spike-model parameter was changed by this review. ADR-014 remains open; the single-compartment spike-capable model remains exploratory and unaccepted.
 
 The review was a targeted literature and public-repository search, not a systematic review of all human neuronal potassium-current publications. No authors or researchers were contacted.
+
+
+## 7. Dalley et al. (2026): raw human neocortical nucleated-patch K-current recordings
+
+**Citation:** Dalley et al., “Human neocortical glutamatergic neurons revealed through multimodal profiling,” Cell Reports (published online 2026-11-12), DOI [10.1016/j.celrep.2026.118269](https://doi.org/10.1016/j.celrep.2026.118269); [full article](https://www.sciencedirect.com/science/article/pii/S2211124726013483). Electrophysiology NWB data: [DANDI:002018](https://dandiarchive.org/dandiset/002018), release [0.261117.2218](https://api.dandiarchive.org/api/dandisets/002018/versions/0.261117.2218/). Public code and extracted features: [AllenInstitute/human_patchseq_excitatory](https://github.com/AllenInstitute/human_patchseq_excitatory).
+
+The final article explicitly describes direct perisomatic K-current experiments from Giga-seal nucleated patches. This is a separate human neocortical dataset from the Wilbers 2023 adult L2/L3 somatic-patch study and must not be pooled with its current fits.
+
+The DANDI release contains 163 NWB assets (approximately 6.04 GB; CC BY 4.0). A metadata-only audit opened all 163 HDF5/NWB files with HTTP byte-range reads, found at least one VoltageClampSeries in every asset, and completed without metadata-scan errors. Seven assets contain named nucleated-patch voltage-clamp series. Six have session metadata dated 2022–2025; one additional asset is dated 2018 and is retained as a legacy/provenance-separated candidate rather than assumed to belong to the 2026 article's analyzed cohort.
+
+The seven public DANDI asset UUIDs are:
+- 2022–2025 candidate recordings: 050d8369-dd67-4f93-b825-51b74a46a6c7, 44b87d2f-8c36-46af-9f17-049c17bfaf56, 4011c6ca-454e-42dd-acbd-747e06932dbb, d737cf6f-b00b-43a5-930c-1a6127541767, ffa5f98e-7542-4521-8e6c-9ff75c8cc22d, and bf1c6a2f-c7a1-4162-b5db-5a281584c5dd.
+- Legacy 2018 candidate, not yet linked to the paper's analyzed cohort: 98c62990-9971-47a0-80a3-af1d442ebaf7.
+
+No donor names, subject pseudonyms, or pseudonymous NWB paths are copied into this note. Each asset can be resolved by its public UUID through the DANDI asset API, for example [the first candidate asset](https://api.dandiarchive.org/api/assets/050d8369-dd67-4f93-b825-51b74a46a6c7/).
+
+### Published voltage-clamp protocol
+
+The article's STAR Methods describes:
+1. Giga-seal nucleated patches, with capacitance transients compensated during patch approach.
+2. A −90 mV holding potential and 1-s voltage steps in 15-mV increments from −65 to +70 mV to measure total current (I_total).
+3. Leak measurement using a −10-mV command for 1 s while held at −90 mV; the leak waveform is scaled to the original protocol and digitally subtracted.
+4. A repeat of the step family after a 125-ms +70-mV prepulse while the cell is held at −20 mV, intended to substantially inactivate A-current and measure delayed-rectifier current (I_K).
+5. A-type current calculated as I_A = I_total − I_K.
+6. Nucleus imaging during nucleated-patch formation, ellipsoid surface-area measurement in ImageJ, and division of current responses by that area to obtain current density.
+
+Figure 4G compares these current-density components across L4 IT subclasses. The reported pattern is that L4 IT_4 has the lowest peak outward K-current density, L4 IT_1 the highest, and L4 IT_1 the largest rapidly inactivating A-type component. The paper reports an association between I_A and AP downstroke speed and between KCND2/KCND3 expression and downstroke speed. These are cell-class-associated macroscopic current phenotypes, not microscopic Kv gate equations or kinetic constants.
+
+### What the raw NWB audit verifies
+
+A detailed examination of one candidate asset (050d8369-dd67-4f93-b825-51b74a46a6c7) verified NWB 2.3.0, paired acquisition and command series, 12.5-kHz sampling, 127 acquisition groups, 127 stimulus groups, and 70 VoltageClampSeries. Sixty-four of those voltage-clamp series carry the named nucleated-patch protocol families:
+- NucVCLS0: nine 1-s voltage-step sweeps.
+- NucVCLS1Leak: ten leak-control sweeps.
+- NucVCprepulse: nine prepulse/test sweeps.
+- NucVCSus0 and NucVCSus1Leak: sustained-step and corresponding leak-control families.
+- NucVCzrecovms5, NucVCzrecovms100 and NucVCzrecovs1: recovery-labelled protocol families.
+
+The raw command metadata for this file includes a −20-mV baseline command, a leak command 10 mV below that baseline for 1 s, and a prepulse command 70 mV above baseline. The prepulse series has an approximately 100-ms +50-mV command segment followed by the 1-s test command. The first NucVCLS0 family has nine test commands at +20, +35, …, +140 mV in the recorded command coordinate, each separated by 15 mV and bracketed by the −20-mV baseline. The paired recorded currents are raw VoltageClampSeries; the NWB data are not merely processed feature summaries.
+
+These observations establish that the deposited file contains actual current and command waveforms, with protocol families corresponding in broad design to the published leak-subtraction, A-current prepulse and recovery experiments. They do not establish that the raw command values are absolute membrane voltages or that every series is an exact reproduction of the article's written protocol.
+
+### Protocol and calibration discrepancies
+
+- The raw NucVCLS0 family has nine activation/test sweeps, whereas the article's inclusive −65-to-+70-mV range at 15-mV increments describes ten nominal levels.
+- The raw NucVCprepulse waveform contains an approximately 100-ms prepulse command; the article describes 125 ms.
+- The NWB voltage-clamp series, stimulus records, electrode description and ITC18USB device metadata inspected do not expose an absolute command-voltage offset or holding-potential calibration. The raw command arrays cannot therefore be relabelled as absolute membrane voltages solely from the available NWB metadata.
+- The paper normalizes current by nucleus surface area measured from images. That area was not present in the inspected NWB electrode metadata, and no image-to-recording mapping or independent area measurement has been completed.
+- The similarly named series in the legacy 2018 candidate do not prove it belongs to the 2026 paper or its L4 IT analysis.
+
+### Evidence boundary and implications for HumanJS
+
+This finding supersedes the broad earlier claim that no raw human neocortical K-current voltage-clamp sweeps are publicly available. The accurate scoped statement is:
+- Wilbers: the inspected DataverseNL release still lacks the original human K-current NWB/ABF sweeps and separate Experimental-means fitting inputs; its per-recording workbook remains processed evidence.
+- Dalley et al. (2026): a separate public DANDI release contains raw human neocortical nucleated-patch voltage-clamp current and command series, including candidate leak, prepulse, sustained and recovery protocols. The seven UUIDs above are candidate files, not seven verified L4 IT experimental replicates.
+- Analysis completeness: all 163 NWB assets have had metadata inspected; one asset has had series and representative raw waveforms inspected. No trace-level leak correction, I_K/I_A subtraction, nucleus-area normalization, current-density analysis, kinetic fit, or L4 IT subclass assignment has yet been reproduced.
+- Model implication: the raw data improve the human K-current evidence base but do not yet provide a calibrated, cell-type-matched, area-normalized kinetic target for the HumanJS L2/L3 exploratory model. Do not transfer them into Rust, alter a gate, identify a Kv subtype or claim biological validation.
+
+### Next evidence work
+
+1. Map the six 2022–2025 candidate assets to the released electrophysiology feature and cell-class tables without copying donor identifiers into HumanJS. Keep the 2018 legacy asset separate until its provenance is resolved.
+2. Recover and verify per-recording clamp calibration/holding-offset metadata from original acquisition configuration or other deposited provenance. Resolve the activation-step count and 100-ms-versus-125-ms prepulse discrepancy before assigning absolute voltages.
+3. Locate the corresponding nucleus images and their mapping to each nucleated patch; reproduce area normalization with uncertainty recorded.
+4. Reproduce I_total, scaled leak, I_K and I_A calculations on raw waveforms with explicit units, command windows, signs and per-recording QC. Preserve failures and missingness.
+5. Only after protocol, voltage, current-density and subclass mappings are established should a distribution-level comparison against HumanJS mechanism outputs be considered. Do not fit a new Rust gate or conductance from the present audit.
+
+No authors or researchers were contacted. No Rust equation, gate, conductance density, temperature parameter or spike-model parameter changed. ADR-014 remains open; the single-compartment spike-capable model remains exploratory and unaccepted.

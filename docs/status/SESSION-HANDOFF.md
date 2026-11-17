@@ -1472,3 +1472,48 @@ Continue source provenance review only where it resolves an identifiable method 
 ### Next concrete step
 
 Do not continue repeatedly searching the same public manifests for an exporter. Reopen this provenance question only if a new identifiable source is found (for example, a separately indexed export script, original acquisition file, or dataset revision artifact). Otherwise, move to a different explicit ADR-014 requirement while keeping all v1.0 deactivation fields out of the Rust model.
+
+
+## Latest handoff — Dalley human neocortical nucleated-patch K-current NWB data found (2026-11-18)
+
+### Verified starting main state
+
+- Repository codexclai/HumanJS; default branch main.
+- Starting live HEAD: 439a002ccd53840f74a74f9a98309a99a65f4689.
+- Recursive tree: 130 entries, non-truncated.
+- One actual branch (main); GitHub-managed pull-request refs are not project branches.
+- Zero open issues and zero open pull requests.
+- Exact-head workflow 44201206013 passed all 37 steps.
+
+### Additional direct human K-current source
+
+- Retrieved the final Cell Reports article by Dalley et al., published 2026-11-12, DOI 10.1016/j.celrep.2026.118269.
+- Its final Data and Code Availability statement points to NWB electrophysiology in DANDI:002018 and original code/features in AllenInstitute/human_patchseq_excitatory.
+- Inspected DANDI release 0.261117.2218 (published 2026-11-17; CC BY 4.0), which contains 163 NWB assets.
+- Completed an HDF5/NWB metadata-only HTTP byte-range scan of all 163 assets: every file opened, each contained a VoltageClampSeries, and zero scan errors occurred.
+- Seven assets contain nucleated-patch voltage-clamp protocol families. Six have session metadata dated 2022–2025; a seventh dated 2018 is retained as a legacy candidate, not assumed to belong to the 2026 article's analyzed cohort.
+- One 2022 asset was examined at acquisition/stimulus-series and raw waveform level. It contains paired VoltageClampSeries and VoltageClampStimulusSeries, 12.5-kHz sampling, and multiple nucleated-patch protocol families for step, leak, prepulse, sustained and recovery conditions.
+- The paper's published protocol is a 1-s step family from −65 to +70 mV in 15-mV increments, leak scaling/subtraction, a 125-ms +70-mV prepulse to isolate delayed-rectifier current, A-current by subtraction, and current-density normalization by nucleus surface area.
+- The inspected file shows a nine-sweep activation family and an approximately 100-ms prepulse. The NWB metadata reviewed does not expose an absolute clamp-command offset. The step-count and prepulse-duration discrepancies, per-file calibration and cell-subclass mapping remain unresolved.
+- No current extraction/refit, leak correction, area normalization or mapping to L4 IT subclasses has been completed.
+
+### Changed paths in this continuation
+
+- research/HUMAN-L4-IT-NUCLEATED-PATCH-K-CURRENT-EVIDENCE.md (new)
+- research/HUMAN-K-CURRENT-VOLTAGE-CLAMP-EVIDENCE.md
+- docs/BOOT.md
+- docs/status/STATUS.md
+- docs/decisions/DECISIONS.md
+- docs/status/SESSION-HANDOFF.md
+
+### Scientific boundary and verification
+
+- Corrected the broad claim that no raw human neocortical K-current NWB data are public. Wilbers' Dataverse-specific raw-sweep gap remains; the Dalley DANDI release is a separate raw human neocortical nucleated-patch dataset.
+- The six 2022–2025 assets and one 2018 asset are candidate NWB files based on protocol series labels. No donor/pseudonymous subject identifiers or NWB paths are copied into HumanJS.
+- Raw current traces were not refitted; no current densities, kinetic gates, Kv subtype assignments or HumanJS parameters are inferred.
+- No Rust equations, production gates, conductance densities, temperature settings or spike-model parameters changed.
+- This continuation is research/documentation only. The inherited exact-head workflow passed 37/37 steps; the new documentation commit requires its own exact-head workflow check after push. No local source checkout or Rust test run was performed in this continuation.
+
+### Next concrete step
+
+Map the six 2022–2025 candidate assets to the paper's released L4 IT electrophysiology/cell-class data and corresponding nucleus images, without retaining donor identifiers. In parallel, resolve the per-file clamp voltage offset and the nine-versus-ten activation-step and 100-versus-125-ms prepulse discrepancies. Only then implement a Python raw-waveform replay of leak correction, I_K/I_A subtraction and nucleus-area current-density normalization; leave Rust model parameters unchanged until the comparison is protocol-matched and independently validated.
