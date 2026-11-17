@@ -1240,3 +1240,55 @@ No new public raw human cortical Kv sweep/per-cell dataset suitable for independ
 ### Next concrete step
 
 Compare the adult temporal-neocortical A-current method of Rüschenschmidt et al. with the Wilbers somatic K voltage-clamp protocol, including exact holding/prepulse/test steps, preparation, temperature, blockers, voltage errors and nonlinear fitting definitions. Investigate whether original per-cell kinetic CSVs or raw traces are publicly retrievable. Keep KATP/BK, AHP, fetal-culture and hippocampal evidence separate; no parameter transfer without matched cell and protocol provenance.
+
+
+## Latest handoff — Wilbers per-recording K workbook recovered from the public release (2026-11-18)
+
+### Verified starting state
+
+- Canonical repository: codexclai/HumanJS, default branch main.
+- Starting live HEAD: f34fe03ebff65a7a35f0c52eb856f6f5ec7adabd.
+- Recursive tree: 127 entries, truncated=false; exactly one branch (main); open issues: 0; open PRs: 0.
+- Exact-head GitHub Actions run 43941574837 passed all 37 job steps with zero failures and zero skips.
+
+### Main finding and correction
+
+A new direct Dataverse v3.0 API audit found that the public Wilbers data_fig4.xlsx (file 318667, 108,029 bytes, SHA-1 30ba48520d8d27a7f4db8aaa6abc7ae0f80ba7d3) contains per-recording processed K-current fit summaries, not just one aggregate table. It is unrestricted in the CC0-1.0 dataset. The workbook has 43 recording rows (13 Human, 30 Mouse) and 241 fields. Human records include per-record activation/inactivation fit values, goodness-of-fit fields, conductance-voltage arrays, voltage-dependent activation and fast/slow inactivation time constants, and recovery curves/fit parameters.
+
+Human-only reaggregation (sample SD, excluding blanks) returns:
+- Activation Vhalf −3.0315±5.9490 mV and slope 13.8708±1.3453 mV, n=13.
+- Inactivation Vhalf −52.6861±5.9748 mV and slope 12.8032±1.8705 mV, n=11.
+- Activation tau means at +10/+20/+30/+40/+50 mV: 1.6879/1.3564/1.0814/0.9639/0.8836 ms (n=13 at each).
+- Fast inactivation tau at +20/+30/+40/+50/+60 mV: 43.1640/21.8447/23.5436/19.2841/26.1600 ms (n=13 each).
+- Slow inactivation tau at +30/+40/+50/+60 mV: 332.68/308.22/197.39/290.00 ms (n=13,13,13,12).
+- Recovery fit constants rec_tau1: 254.54±144.56 ms (n=12); rec_tau2: 2483.91±1843.47 ms (n=11).
+
+These workbook rows are processed per-recording fit data, not raw voltage-clamp sweeps. The associated NWB filename strings are present, but the original raw human K-current NWB recordings are not included in the inspected 65-file v3.0 manifest. The separate Experimental means/k_tau_act.csv, k_tau_inact_fast.csv and k_tau_inact_slow.csv files read by the fitting helper are also absent; these are distinct from the per-recording workbook arrays. The earlier broad statement that no per-cell K fit summary existed is retracted.
+
+### Protocol comparability
+
+Wilbers measured an aggregate pharmacologically isolated K current in nucleated somatic patches from adult human L2/L3 pyramidal neurons, at 34 °C, with 1 μM TTX and 1 μM CdCl2 in the external recording solution, KCl internal solution, 3–5 MΩ access resistance and 60–85% compensation. The original helper's K_IV model/analysis sequence uses a −140 mV starting level, 500 ms test steps, 50 ms at +60 mV, and 34 °C; its paired-pulse recovery helper conditions for 5 s at +40 mV before recovery/test pulses. The workbook provides per-record fit summaries and arrays, not raw current samples.
+
+Rüschenschmidt et al. (2004) describe a fast A-type current in acutely dissociated temporal neocortical neurons, isolated by subtraction with 10 mM TEA to reduce delayed currents; the accessible publisher abstract does not identify the detailed voltage protocol, temperature, solutions, layer, cell subtype or total cohort count. Its n=5 A-current fits and very negative steady-state inactivation must not be averaged with Wilbers' n=11 mixed-somatic-K inactivation fits. Their preparations and current definitions differ.
+
+### Changed paths
+
+- research/HUMAN-K-CURRENT-VOLTAGE-CLAMP-EVIDENCE.md
+- research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md
+- docs/BOOT.md
+- docs/status/STATUS.md
+- docs/decisions/DECISIONS.md
+- docs/roadmap/MASTER-ROADMAP.md
+- docs/status/SESSION-HANDOFF.md
+- docs/operations/GITHUB-SECURITY.md
+
+### Scientific boundary and verification
+
+- No Rust file, equation, channel parameter, conductance density, temperature setting or spike-model gate changed.
+- data_fig4.xlsx supports a processed per-recording comparison but not independent raw-sweep refitting; no biological validation is claimed.
+- ADR-014 remains open. The HumanJS single-compartment spike-capable mechanism remains exploratory and scientifically unaccepted.
+- Parent exact-head Actions run 43941574837 passed 37/37 steps. The resulting documentation/research commit and its exact-head workflow still need final verification.
+
+### Next concrete step
+
+Run a transparent Rust-versus-workbook comparison at matched command voltages and 34 °C. Preserve the 13/11 sample counts, missing fits and per-recording spread; compare activation, fast/slow inactivation and recovery distributions separately. Do not treat the workbook's aggregate outward current as a named Kv subfamily or retune HumanJS parameters until model and assay definitions, temperature, series resistance and fit equations are matched. Raw NWB trace refitting remains open.

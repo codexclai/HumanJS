@@ -2,7 +2,7 @@
 
 **Canonical repository:** `codexclai/HumanJS`  
 **Canonical branch:** `main`  
-**Last inspected:** 2026-11-15
+**Last inspected:** 2026-11-18
 
 ## Permanent main-only policy
 
@@ -16,7 +16,7 @@
 
 ## Verified branch state
 
-The live GitHub branch listing on 2026-11-17 returned exactly one branch: main; no non-main refs were present. At the beginning of this documentation update, main HEAD was c781442b64d275b7d1642220df53936682692da4, its complete recursive tree had 127 entries and was not truncated, and there were zero open issues and PRs. The parent research commit 6c56ebeb55efab15556f3317bd5294bb65e62d14 passed exact-head workflow 43940242441 (37/37 steps). Workflow 43941344405 on c781442 was in progress when this update was prepared. Recheck live refs and exact-head CI at the end of the task.
+The live GitHub branch listing on 2026-11-18 returned exactly one branch (main); no non-main refs were present. Live HEAD at verification was f34fe03ebff65a7a35f0c52eb856f6f5ec7adabd, with a complete 127-entry recursive tree (truncated=false), zero open issues and zero open PRs. Exact-head workflow 43941574837 passed all 37 steps with no failures or skips. The new research/documentation update corrects the Wilbers K evidence inventory: data_fig4.xlsx supplies processed per-recording human fit data; raw K-current NWB sweeps and the separate group-mean K tau CSVs remain absent.
 
 ## Repository and delivery
 

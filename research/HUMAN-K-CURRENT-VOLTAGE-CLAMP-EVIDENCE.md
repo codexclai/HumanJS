@@ -1,17 +1,18 @@
 # Human neuronal potassium-current voltage-clamp evidence: neocortical A-type and hippocampal currents
 
-**Reviewed:** 2026-11-17  
-**Scope:** Published human neuronal voltage-clamp current summaries and related human network-level KCNQ evidence.  
-**Status:** Direct human neocortical A-type current kinetics and human hippocampal K-current measurements are documented below. Public raw sweeps and per-cell records sufficient for an independent refit were not located in this review. This note does not authorize parameter transfer into HumanJS.
+**Reviewed:** 2026-11-18  
+**Scope:** Published human neuronal voltage-clamp current summaries, the public per-recording Wilbers K-current fit workbook, and related human network-level KCNQ evidence.  
+**Status:** Direct human neocortical A-type and somatic mixed K-current measurements are documented below. Wilbers et al. provide a public per-recording fit workbook, but the original raw K-current NWB sweeps and several separate fitting-target CSVs are absent from the inspected DataverseNL v3.0 inventory. No raw-trace refit was performed. This note does not authorize parameter transfer into HumanJS.
 
 ## Executive finding
 
-The previous 2026-11-15 literature screen was too narrow in its wording. A follow-up search located two primary studies reporting direct human voltage-clamp potassium currents:
+The previous literature screen was incomplete in two different ways. Direct human neocortical A-type and hippocampal K-current studies had been missed; a subsequent file-level audit also establishes that the public Wilbers Dataverse release contains per-recording processed K-current fits, although the raw K-current sweeps are absent. The main direct voltage-clamp sources are:
 
 1. Rüschenschmidt et al. (2004) characterize a fast transient A-type current in acutely dissociated human temporal neocortical neurons from epilepsy surgery tissue. The PubMed abstract reports activation, steady-state inactivation and recovery summaries from five cells.
 2. Beck et al. (1997) characterize voltage- and calcium-dependent K currents in acutely isolated human hippocampal dentate granule cells. Their open full-text article reports a delayed outward current in all 34 recorded neurons and an A-type current in six neurons from three patients with Ammon's horn sclerosis.
+3. Wilbers et al. (2023) measure pharmacologically isolated aggregate voltage-gated K currents in nucleated somatic patches from adult human L2/L3 pyramidal neurons. The unrestricted Dataverse data_fig4.xlsx workbook contains per-recording steady-state and voltage-dependent kinetic fit summaries for 13 human recordings, with activation fits in 13 and inactivation fits in 11.
 
-These papers establish that direct human neuronal K-current measurements and published kinetic summaries exist beyond the previously considered Wilbers and Mittermaier sources. They do **not** supply a public raw-trace/per-cell repository in the sources reviewed here. The neocortical A-type study has small reported kinetic-fit samples and does not identify a molecular Kv subunit or a specific cortical layer/cell class in its abstract. The Beck study is hippocampal dentate-granule-cell evidence, with important pathology-dependent differences; it is not cortical pyramidal-cell evidence.
+These sources establish complementary human K-current evidence but are not interchangeable. Rüschenschmidt provides an A-type current summary from five cells without a resolved cortical layer or molecular channel identity. Beck provides pathology-dependent hippocampal dentate-granule-cell currents, not cortical pyramidal-cell evidence. Wilbers provides adult human L2/L3 somatic mixed-K-current voltage-clamp measurements plus processed per-recording fit arrays; however, the workbook is not a raw-sweep archive. No original human K-current NWB traces were found in the 65-file DataverseNL v3.0 inventory, and a raw-trace refit is therefore still unavailable. Neither a mixed K-current fit nor a pharmacological A-current phenotype identifies an individual Kv molecular subtype.
 
 A further 2026 human L2/3 study shows that KCNQ2–5 activation can suppress 4-AP-induced network oscillations, but it uses current clamp and pharmacology, not isolated Kv7 voltage-clamp protocols.
 
@@ -146,12 +147,84 @@ The data-availability statement is “Data will be made available on request.”
 | Beck et al. (1997), J Physiol | Acutely isolated human hippocampal dentate granule cells | Yes, delayed \(I_K\), \(I_A\), and calcium-dependent currents | Multiple voltage-dependence and time-constant summaries | No raw trace archive located | TLE tissue; \(I_A\) found only in a subset with AHS; not cortical pyramidal neurons |
 | Kushner et al. (2026), Neurobiol Dis | Pediatric human neocortical L2/3 pyramidal neurons in acute slices | No isolated Kv current; network-level K-related oscillations | No Kv gate kinetics | No; available on request | Current clamp and network pharmacology, not voltage clamp |
 | Mittermaier et al. (2024) | Human axonal whole-bleb Kv1 | Yes, axonal Kv1 | Processed activation/inactivation/recovery summaries | Raw human traces are not public | Axonal, processed/pseudonymized observations; not somatic L2/3 |
-| Wilbers et al. (2023) | Human somatic nucleated-patch Na/K source study | Published measurements and deposited source/model protocols | Model/source reproductions and published summaries | Raw human K NWB sweeps not found in inspected DataverseNL v3 inventory | Model-generated protocol replay is not raw experimental trace refitting |
+| Wilbers et al. (2023) | Adult human L2/L3 pyramidal-cell nucleated somatic patches | Yes, pharmacologically isolated aggregate voltage-gated K current | Activation/inactivation V1/2 and slopes; per-recording activation, fast/slow inactivation and recovery fit summaries | Public per-recording workbook data_fig4.xlsx; raw human K NWB sweeps not found | Mixed somatic K-current population without Kv subtype-selective isolation; excised soma is not AIS |
 
-The Rüschenschmidt neocortical A-current study is now the most directly relevant located human cortical voltage-clamp kinetic summary for a transient outward current. Beck et al. add direct human hippocampal \(I_K\) and \(I_A\) evidence, but must remain anatomically and pathologically separate. Kushner et al. (2026) add an independent type of evidence: KCNQ modulation of human L2/3 network excitability, not direct Kv7 gate measurements.
+The Rüschenschmidt neocortical A-current study remains the most directly targeted human cortical transient-current summary, but its n=5 phenotype must not be equated with the broader K-current population measured by Wilbers in adult L2/L3 somatic patches. Wilbers' processed per-recording workbook is the strongest openly accessible quantitative human somatic K dataset found in this audit; it supports distribution-level comparisons to the published fit outputs, but does not allow independent refitting of the underlying currents. Beck's hippocampal data and Kushner's human L2/3 network-level KCNQ pharmacology remain distinct evidence classes.
 
 The Rüschenschmidt A-current inactivation \(V_{1/2}\) (−98.9 ± 8.3 mV) and the small Beck figure-specific TEA-resistant transient-current estimate (−58.0 mV) differ substantially. They come from different preparations, sampling and protocols, and must not be averaged or treated as a single common parameter. The Beck A-current summary also depends on AHS pathology, and its tiny two-cell figure-specific parameter fit is not interchangeable with the Rüschenschmidt n=5 group summary.
 
+
+## 6. Wilbers et al. (2023): adult human L2/L3 somatic K-current measurements and per-recording fit workbook
+
+**Citation:** “Human voltage-gated Na+ and K+ channel properties underlie sustained fast AP signaling,” Science Advances 9 (2023), eade3300. DOI [10.1126/sciadv.ade3300](https://doi.org/10.1126/sciadv.ade3300); PMCID [PMC10569700](https://pmc.ncbi.nlm.nih.gov/articles/PMC10569700/). Public data/model/code deposit: [DataverseNL DOI 10.34894/L5J0SD](https://doi.org/10.34894/L5J0SD), version 3.0, CC0-1.0.
+
+### Human preparation and voltage-clamp method
+
+The paper reports 19 adult human donors aged 21–70 years. Cortex was surgically removed to access a deeper lesion (medial temporal sclerosis or tumour); source regions were temporal (10 donors), frontal (5) and parietal (4). Human L2/L3 pyramidal neurons were identified morphologically and confirmed post hoc. The whole-cell current-clamp/AP cohort included 36 human L2/L3 cells; the K-current results below came from separate nucleated somatic patch recordings and have smaller recording counts.
+
+For nucleated-patch K-current recordings, the Methods specify KCl internal solution, 1 μM TTX and 1 μM CdCl2 in the external recording solution, 34 °C, access resistance typically 3–5 MΩ and 60–85% series-resistance compensation. K-current traces were low-pass filtered at 2 kHz for analysis. This preparation samples excised somatic membrane; it does not include the AIS, dendrites or their spatial channel distributions. The pharmacological protocol blocks Na+ and Ca2+ currents but does not selectively isolate a named Kv subfamily, so the measured outward current should be treated as an aggregate somatic voltage-gated K-current phenotype.
+
+The authors' public channel_tools.py source (Dataverse file 326242) implements K_IV with a 20-ms −140-mV starting segment, a 500-ms test step, a 50-ms +60-mV segment and a 100-ms final −140-mV segment; test commands in that helper run from −110 to +55 mV in 5-mV increments at 34 °C with a 0.1-ms integration step. This documents the deposited analysis/model protocol, not a recovery of the original acquisition files. The separate recovery helper uses a 2-ms −120-mV segment, a 5-s +40-mV conditioning period, variable recovery intervals and a 5-ms +40-mV test.
+
+### What the public data_fig4.xlsx contains
+
+The DataverseNL v3.0 inventory contains unrestricted Figure4/data_fig4.xlsx (file ID 318667; 108,029 bytes; SHA-1 30ba48520d8d27a7f4db8aaa6abc7ae0f80ba7d3). The workbook is publicly downloadable at [the Dataverse file-access endpoint](https://dataverse.nl/api/access/datafile/318667). Its tabular preview contains 43 recording rows (13 Human, 30 Mouse) and 241 fields. Human rows include the source NWB filename, steady-state activation/inactivation fits, goodness-of-fit fields, normalized conductance-versus-voltage arrays, per-voltage activation/inactivation time-constant arrays, fast/slow inactivation fractions and time constants, and paired-pulse recovery amplitudes and fitted recovery constants.
+
+The 13 human rows are per-recording fitted summaries, not 13 confirmed independent donors. Their filenames reference original NWB files, but those original human K-current voltage-clamp NWB sweeps are not included in the inspected 65-file v3.0 deposit. The workbook therefore supports analysis of the released fit distributions but cannot reproduce the filtering, fitting or quality control from the raw acquisition traces.
+
+### Human-only per-recording steady-state fits
+
+The following statistics were recalculated from the 13 Human rows only, excluding blank cells and using sample standard deviation:
+
+| Quantity | Per-recording mean ± SD | n |
+|---|---:|---:|
+| Activation V1/2 | −3.03 ± 5.95 mV | 13 |
+| Activation Boltzmann slope | 13.87 ± 1.35 mV | 13 |
+| Inactivation V1/2 | −52.69 ± 5.97 mV | 11 |
+| Inactivation Boltzmann slope | 12.80 ± 1.87 mV | 11 |
+
+These independently aggregated workbook entries reproduce the published human sample counts and closely match the group summaries in the paper (activation n=13; inactivation n=11). They are the mean and SD of per-recording nonlinear fit outputs; do not conflate them with a fit to the mean current/conductance curve or with the separate parameter values hard-coded as optimization targets in the deposited fitting script.
+
+### Per-recording voltage-dependent kinetic summaries
+
+The workbook also contains voltage-indexed fit arrays. The values below are recalculated as mean ± sample SD across available human recording rows; n varies where a fit is blank.
+
+| Current-fit quantity | Command voltage | Mean ± SD | n |
+|---|---:|---:|---:|
+| Activation tau | +10 mV | 1.69 ± 0.71 ms | 13 |
+| Activation tau | +20 mV | 1.36 ± 0.49 ms | 13 |
+| Activation tau | +30 mV | 1.08 ± 0.33 ms | 13 |
+| Activation tau | +40 mV | 0.96 ± 0.24 ms | 13 |
+| Activation tau | +50 mV | 0.88 ± 0.21 ms | 13 |
+| Fast inactivation tau | +20 mV | 43.16 ± 24.62 ms | 13 |
+| Fast inactivation tau | +30 mV | 21.84 ± 7.07 ms | 13 |
+| Fast inactivation tau | +40 mV | 23.54 ± 6.47 ms | 13 |
+| Fast inactivation tau | +50 mV | 19.28 ± 4.69 ms | 13 |
+| Fast inactivation tau | +60 mV | 26.16 ± 15.50 ms | 13 |
+| Slow inactivation tau | +30 mV | 332.68 ± 205.01 ms | 13 |
+| Slow inactivation tau | +40 mV | 308.22 ± 174.90 ms | 13 |
+| Slow inactivation tau | +50 mV | 197.39 ± 55.45 ms | 13 |
+| Slow inactivation tau | +60 mV | 290.00 ± 205.75 ms | 12 |
+
+The slow component has wide between-recording variability, and at +60 mV one recording has no stored slow-fit value. The workbook includes lower-voltage fit entries as well, but their availability is more limited and some individual estimates are conspicuously large; the values above are a selected, transparent subset, not a new fit or a population-wide kinetic law.
+
+The recovery fields contain per-recording biexponential summaries. Across available human rows, rec_tau1 is 254.54 ± 144.56 ms (n=12) and rec_tau2 is 2483.91 ± 1843.47 ms (n=11). These fits are descriptive workbook outputs; they should not be relabelled as a clean human-only recovery target without checking each recording's protocol and fit quality and the exact semantics of the helper.
+
+### Remaining repository gaps and comparability
+
+The same v3.0 inventory still does **not** contain the separate Experimental means/k_tau_act.csv, k_tau_inact_fast.csv and k_tau_inact_slow.csv files read by the original fit helper, data_fig5.xlsx referenced by the plotting code, or the raw human K-current NWB sweeps. The paper and repository provide the aggregate fit workbook and code, but not the complete raw-data chain needed for an independent trace-level refit and a bitwise reproduction of every plotted curve.
+
+Do not combine these Wilbers aggregate somatic K-current fits with the Rüschenschmidt A-current n=5 values. The Rüschenschmidt abstract does not resolve its cortical layer/subtype, full voltage protocol, temperature or internal/external solution in the accessible text retrieved here. Its A-current was isolated by subtraction in acutely dissociated temporal neocortical tissue with TEA to reduce delayed K currents, whereas Wilbers measured a pharmacologically isolated aggregate somatic K-current in nucleated patches at 34 °C. Their steady-state inactivation midpoints (−98.9±8.3 versus −52.7±6.0 mV) describe different evidence definitions and should not be averaged or treated as a direct biological discrepancy between matched channel populations.
+
+### Decision for HumanJS
+
+- Correct the earlier repository-audit wording: a public per-recording Wilbers K-current fit workbook does exist; what is absent from the inspected v3.0 deposit is the original raw human K-current NWB sweeps and the separate Experimental means/k_tau_*.csv files.
+- Use data_fig4.xlsx only as processed per-recording evidence, retaining each recording's fit quality and missing-value pattern. It is sufficient for a new transparent comparison against model-predicted steady-state and tau distributions, but not for independent raw-trace refitting.
+- Do not identify the aggregate K-current as Kv1, Kv4 or Kv7, or infer subcellular AIS/dendritic densities from the nucleated-soma recording.
+- Do not transfer the current workbook means directly into Rust. First compare equivalent command voltages, 34 °C kinetics, recorded fit definitions, series-resistance conditions and the distribution—not just one grand mean—of HumanJS gate outputs.
+- ADR-014 remains open; no HumanJS Rust equation, gate, conductance density or spike-model parameter was changed by this source audit. The single-compartment mechanism remains exploratory and scientifically unaccepted.
+
+This was a targeted source-repository audit, not a complete reanalysis of all 13 human recordings. The workbook summary values were parsed and aggregated from the public Dataverse tabular preview; the raw NWB sweeps and source Experimental means CSV inputs were not obtained.
 
 ## Additional human neocortical K conductances and developmental evidence (2026-11-17)
 
