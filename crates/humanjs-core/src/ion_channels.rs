@@ -1994,8 +1994,7 @@ mod tests {
         for index in 0..voltages_mv.len() {
             let tau_column = index * 2;
             let r_squared_column = tau_column + 1;
-            let tau_values: Vec<f64> =
-                records.iter().map(|record| record[tau_column]).collect();
+            let tau_values: Vec<f64> = records.iter().map(|record| record[tau_column]).collect();
             let r_squared_values: Vec<f64> = records
                 .iter()
                 .map(|record| record[r_squared_column])
@@ -2007,8 +2006,10 @@ mod tests {
                 .sum::<f64>()
                 / (tau_values.len() - 1) as f64)
                 .sqrt();
-            let minimum_fit_r_squared =
-                r_squared_values.iter().copied().fold(f64::INFINITY, f64::min);
+            let minimum_fit_r_squared = r_squared_values
+                .iter()
+                .copied()
+                .fold(f64::INFINITY, f64::min);
 
             assert_eq!(tau_values.len(), 13);
             assert!(
