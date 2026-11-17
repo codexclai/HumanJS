@@ -160,6 +160,14 @@ A new Rust unit test compares the Human K_IV source-equivalent activation-curren
 
 This test compares model-produced current-fit outputs with processed per-recording summaries from the same publication. The workbook-export source is not deposited, original raw K NWB sweeps are absent, and the fit equivalence is therefore not independently established. No fast/slow inactivation or recovery comparison was added. The independently digitized S5 panel-I group markers diverge from the workbook activation means at +40/+50 mV by ~0.274/~0.304 ms (digitization estimate ±0.25 ms); the two summaries remain separate. This is a limited regression/source-consistency check, not empirical raw-current reproduction, a new biological validation result, or evidence for a named Kv subtype. No production Rust model equation or parameter changed. ADR-014 remains open.
 
+### ADR-014 follow-up — historical v1.0 Wilbers K deactivation fields recovered (2026-11-18)
+
+A complete version-history audit of DataverseNL DOI 10.34894/L5J0SD found that the v1.0 release of data_fig4.xlsx (file 318537, SHA-1 9a35cd30552efff3b5bf548d7313f71238a3a886) includes 31 extra processed fields removed in v2.0/v3.0: deactivation voltage/tau/gof arrays and the legacy scalars reversal, amp1to200, tau_rec and ss_rec. All 241 fields shared with the v3.0 workbook match exactly across the 43 recording rows. The complete 13-row Human subset is preserved in research/HUMAN-L23-WILBERS-FIG4-V1-HISTORICAL-EXTRA-K-FITS.csv; four Python tests verify row count, voltage grid, missingness, descriptive aggregates and scalar-field completeness.
+
+This adds a human-only processed deactivation summary to the evidence record, but its exporter is still unknown. The available K_deact helper uses a different voltage grid and R-squared >0.9 criterion, its invocation in K_IV is commented out, and the historical workbook retains deactivation fits with lower gof. The legacy scalars have unverified semantics/units. The supplementary Figure 4 plotting/statistics scripts read missing data_fig5.xlsx and do not create data_fig4.xlsx. Raw human K acquisition sweeps remain absent from the inspected v1/v2/v3 manifests.
+
+Do not map tau_deact or the legacy scalars to microscopic channel gates, and do not infer their precise source-fit protocol. No HumanJS equation or model parameter changed. This is processed evidence recovery and provenance documentation, not raw-trace refitting or biological validation. ADR-014 remains open.
+
 ## ADR-015 — Published-model reproduction is evidence, not HumanJS implementation
 
 **Status:** Accepted · **Date:** 2026-11-11

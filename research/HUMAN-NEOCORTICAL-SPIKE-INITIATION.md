@@ -390,6 +390,11 @@ Do not confuse the per-recording workbook means with the separate manual digitiz
 
 
 
+#### Historical v1.0 Figure 4 K deactivation summaries
+
+A source-version comparison found 31 additional processed fields in the v1.0 (released 2022-11-10) data_fig4.xlsx that were removed before v2.0: per-recording deactivation tau/gof pairs at -120 to -40 mV plus four legacy scalar fields. The 13 Human rows are preserved in research/HUMAN-L23-WILBERS-FIG4-V1-HISTORICAL-EXTRA-K-FITS.csv and summarized in the dedicated Human K evidence note. Their source exporter is unidentified. The available K_deact helper has a different voltage grid and a strict R-squared >0.9 return criterion, while the workbook contains stored fits below that threshold; its call in K_IV is commented out. These historical fields are processed summaries only and are not used to add or retune a Rust gate. Their presence does not close ADR-014 or remove the raw human K-current NWB evidence gap.
+
+
 The pure Wilbers mechanisms were compiled in the cloud VM using NEURON 9.0.2 and their direct rate-function and lookup-grid behavior was exercised. The full Wilbers voltage-clamp analysis workflow and current-clamp hybrid AP fit were not rerun from raw experimental sweeps. The public data_fig4.xlsx workbook exposes 13 human per-recording K fit summaries and voltage-dependent tau/recovery arrays, but the corresponding original NWB traces were not present in the 65-file Dataverse v3.0 listing inspected. The NEURON runtime audit is therefore a compiled-source edge-case test, not a reproduction of the paper's channel-fitting experiments.
 
 The current-clamp helper uses a separate single-compartment model with 10 μm length/diameter, 200 Ω·cm axial resistivity, 1 μF/cm² capacitance, Rm=10,000 Ω·cm², g_pas=1/Rm, h.celsius=34, and E_K=-101+15 mV, E_Na=53+15 mV, E_pas=-85+15 mV. It applies −10 mV voltage shifts to the channels to account for the 15 mV current-clamp liquid-junction potential versus 5 mV during voltage clamp. The current-clamp helper fits conductance densities to AP features averaged 50/50 between human and mouse data; those resulting densities are model-fit quantities, not direct human channel-density measurements. The pure channel defaults gbar=40 pS/μm² must therefore not be substituted for final AP-fit conductance densities.

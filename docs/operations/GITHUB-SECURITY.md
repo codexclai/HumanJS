@@ -16,7 +16,7 @@
 
 ## Verified branch state
 
-The live GitHub branch listing on 2026-11-18 returned exactly one branch (`main`); no non-main refs were present. Live HEAD was `efebd9452b3b3a8c88d6522f34e6578e8bd3e226`, with a complete 127-entry recursive tree (`truncated=false`), zero open issues and zero open PRs. Exact-head workflow [44194297028](https://github.com/codexclai/HumanJS/actions/runs/44194297028) passed all 37 steps with no failures or skips. This continuation adds a Rust activation-current distribution regression test and updates the evidence record; raw human K-current NWB sweeps and the separate K tau CSVs remain absent.
+The live GitHub branch listing on 2026-11-18 returned exactly one branch (main); no non-main refs were present. Live HEAD was fe059b56d76ffdc7f4d20b8a90d67516fb6f2a27, with a complete 130-entry recursive tree (truncated=false), zero open issues and zero open PRs. Exact-head workflow 44197727657 passed all 37 steps with no failures or skips. The delivered continuation adds the historical v1.0 Wilbers K deactivation subset and four validation tests, alongside updated research/status/decision/roadmap/handoff documentation.
 
 ## Repository and delivery
 

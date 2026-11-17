@@ -1356,3 +1356,79 @@ No local clean clone was available because the execution environment could not r
 ### Next concrete step
 
 Keep ADR-014 open and continue the raw-data audit only if a publicly retrievable original NWB source or equivalent raw trace becomes identifiable. In parallel, inspect the source exporter/selection provenance for the processed data_fig4 workbook if an authoritative file outside the 65-file release is publicly indexed; do not infer or transfer new fast/slow/recovery gates from the aggregate workbook.
+
+
+## Latest handoff — recover historical v1.0 Wilbers Figure 4 deactivation fields (2026-11-18)
+
+### Verified main state
+
+- Canonical repository: codexclai/HumanJS, default branch main.
+- Main HEAD at verification: fe059b56d76ffdc7f4d20b8a90d67516fb6f2a27.
+- Recursive tree: 130 entries, truncated=false; exactly one branch (main); open issues: 0; open PRs: 0.
+- Exact-head Actions run 44197727657 passed all 37 steps with zero failures and zero skips.
+
+### New historical dataset finding
+
+The full public DataverseNL version history for DOI 10.34894/L5J0SD was audited:
+
+- v1.0 released 2022-11-10 10:59:42 UTC: 126 files; Figure4/data_fig4.xlsx file 318537, 115,221 bytes, SHA-1 9a35cd30552efff3b5bf548d7313f71238a3a886, 272 columns, 43 recording rows (13 Human / 30 Mouse).
+- v2.0 released 2022-11-10 14:34:35 UTC: 65 files.
+- v3.0 released 2022-12-13 12:12:16 UTC: 65 files; Figure4/data_fig4.xlsx file 318667, 108,029 bytes, SHA-1 30ba48520d8d27a7f4db8aaa6abc7ae0f80ba7d3, 241 columns.
+- All 241 fields shared by v1.0 and v3.0 match exactly in all 43 rows. v1.0 therefore has 31 additive historical fields removed before v2.0.
+
+The 31 extra fields are nine command voltages (−120 to −40 mV in 10-mV increments), nine tau_deact values, nine gof_deact values, and scalar reversal, amp1to200, tau_rec and ss_rec. The four scalar fields have unresolved exact meaning/units; one reversal entry is literal 0. All 13 Human rows and their original missingness are preserved in:
+research/HUMAN-L23-WILBERS-FIG4-V1-HISTORICAL-EXTRA-K-FITS.csv
+
+The Human tau_deact mean ± sample SD, unfiltered except for blank values, is:
+- −120 mV: 23.33 ± 7.75 ms (n=4)
+- −110 mV: 25.96 ± 10.86 ms (n=5)
+- −100 mV: 29.77 ± 11.71 ms (n=2)
+- −90 mV: 42.07 ± 34.28 ms (n=4)
+- −80 mV: 43.76 ± 23.81 ms (n=4)
+- −70 mV: 30.15 ± 15.40 ms (n=3)
+- −60 mV: 31.51 ± 15.22 ms (n=8)
+- −50 mV: 53.48 ± 22.64 ms (n=10)
+- −40 mV: 77.74 ± 33.09 ms (n=10)
+
+### Protocol/export provenance limits
+
+The released v1.0 and v3.0 channel_tools.py both contain K_deact, but that helper is not a verified exporter for these historical workbook rows:
+- Its protocol is 2 ms at −120 mV, 5 ms at +60 mV, then 200 ms at variable −90 to −35 mV commands in 5-mV increments at 34 °C and 0.2-ms steps.
+- It fits a single exponential plus offset over 7.2–207 ms and returns tau only when R-squared >0.9.
+- K_deact is commented out at the K_IV call site.
+- The v1.0 workbook grid differs (−120 to −40 mV in 10-mV steps) and contains gof_deact <0.9 records.
+
+Thus, the v1.0 stored tau_deact rows cannot be claimed to have been created by this K_deact function. The exact workbook exporter is not identified. The unchanged plots_fig4.py/stats_fig4.py instead read missing data_fig5.xlsx. The scalar legacy fields are also not reinterpreted as fitted recovery constants.
+
+All three Dataverse version manifests were checked. None contains raw NWB, ABF, IBW or SMR acquisition files, data_fig5.xlsx, or the separate Experimental means/k_tau_*.csv inputs. The recovered v1.0 asset is processed evidence only; it does not supply raw sweeps or resolve the fit provenance.
+
+### Tests and scientific boundary
+
+A new test file experiments/test_wilbers_v1_figure4_historical_fields.py adds four standard-library tests for the 13 Human rows, nine-voltage grid, tau/gof missingness, per-voltage means/SDs and legacy scalar completeness. The historical fields remain descriptive only; no deactivation gate, reversal potential, recovery gate or model parameter was changed. No new human/model parameter transfer or biological validation is claimed. ADR-014 remains open.
+
+Exact-head workflow 44197727657 passed all 37 steps:
+- Rust formatting and Clippy
+- 42 Rust core unit tests, 3 synapse integration tests and 6 passive-membrane integration tests
+- 63 Python tests (including the four new historical-workbook tests) and Python syntax checks
+- Mittermaier/Wilbers data validators
+- NEURON 9.0.2 original Na/K VClamp replays and the full K_IV profile/surface/residual validators
+- repository policy (16 required files, zero JSON files, no prohibited archives/generated output)
+
+No local clean clone was available due github.com DNS resolution failure; the exact pushed main SHA was verified by the hosted workflow.
+
+### Changed paths in this continuation
+
+- research/HUMAN-L23-WILBERS-FIG4-V1-HISTORICAL-EXTRA-K-FITS.csv (new)
+- experiments/test_wilbers_v1_figure4_historical_fields.py (new)
+- research/HUMAN-K-CURRENT-VOLTAGE-CLAMP-EVIDENCE.md
+- research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md
+- docs/BOOT.md
+- docs/status/STATUS.md
+- docs/decisions/DECISIONS.md
+- docs/roadmap/MASTER-ROADMAP.md
+- docs/status/SESSION-HANDOFF.md
+- docs/operations/GITHUB-SECURITY.md
+
+### Next concrete step
+
+Continue source provenance review only where it resolves an identifiable method or file. The immediate evidence boundary is now specific: historical per-recording deactivation-fit values exist in v1.0, but the exporter and protocol mapping remain unresolved. Do not infer gates from tau_deact or the ambiguous scalar fields. ADR-014's remaining scientific requirements and raw sweep gap stay open.

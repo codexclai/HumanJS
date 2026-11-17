@@ -234,9 +234,55 @@ For context, the separate manual digitizations for Supplementary Figure S5 panel
 
 No regression comparison is added for fast/slow inactivation or recovery. The deposited source-model K_IV helper fixes the slow inactivation component to 450 ms during its four-free-parameter fit, whereas the workbook stores per-recording fast and slow fit arrays whose export implementation is unavailable; the slow workbook means also vary widely with voltage. The workbook recovery protocol identifier and delay schedule likewise cannot be demonstrated to match the source helper's 5-s +40-mV conditioning sequence and recovery/test timing. These are useful evidence summaries, but a matched fit/protocol contract has not been established. No per-recording fast/slow or recovery summary is used as a HumanJS gate target.
 
+## Historical Wilbers Dataverse v1.0 Figure 4 fields removed from v2/v3
+
+A comparison of all three released Dataverse manifests found an additional, previously overlooked historical K-current summary layer in version 1.0.
+
+| Release | Release time (UTC) | Manifest files | Figure 4 workbook |
+|---|---|---:|---|
+| v1.0 | 2022-11-10 10:59:42 | 126 | file 318537, 115,221 bytes, SHA-1 9a35cd30552efff3b5bf548d7313f71238a3a886 |
+| v2.0 | 2022-11-10 14:34:35 | 65 | file 318667, 108,029 bytes in the later v3 release |
+| v3.0 | 2022-12-13 12:12:16 | 65 | file 318667, 108,029 bytes, SHA-1 30ba48520d8d27a7f4db8aaa6abc7ae0f80ba7d3 |
+
+The v1.0 workbook has 43 recordings (13 Human and 30 Mouse) and 272 fields. The v2/v3 workbook has the same 43 rows and 241 fields. A field-by-field comparison of all 241 shared columns across all 43 rows found **zero value differences**. Thus, the historical v1.0 workbook is an additive extension, not a different set of values for the shared activation, inactivation and recovery summaries.
+
+The 31 fields present only in v1.0 consist of nine deactivation command-voltage labels, nine deactivation time-constant values, nine corresponding goodness-of-fit values, and four legacy scalar fields: reversal, amp1to200, tau_rec and ss_rec. All 13 Human rows are preserved, including missing values, in the CC0-derived subset at research/HUMAN-L23-WILBERS-FIG4-V1-HISTORICAL-EXTRA-K-FITS.csv. The file deliberately retains the legacy scalar field names rather than assigning unverified units or physiological meanings. The row index denotes workbook order after filtering Species=Human, not donor identity.
+
+### Human v1.0 deactivation fit summaries
+
+The v1.0 deactivation voltage grid is -120, -110, -100, -90, -80, -70, -60, -50 and -40 mV. The table below includes every nonblank Human tau_deact entry; no post hoc quality filtering is applied. Values are mean ± sample SD in milliseconds.
+
+| Command voltage | Mean ± SD (ms) | n | Minimum stored gof_deact |
+|---:|---:|---:|---:|
+| -120 mV | 23.33 ± 7.75 | 4 | 0.81131 |
+| -110 mV | 25.96 ± 10.86 | 5 | 0.83212 |
+| -100 mV | 29.77 ± 11.71 | 2 | 0.80619 |
+| -90 mV | 42.07 ± 34.28 | 4 | 0.87312 |
+| -80 mV | 43.76 ± 23.81 | 4 | 0.83193 |
+| -70 mV | 30.15 ± 15.40 | 3 | 0.82367 |
+| -60 mV | 31.51 ± 15.22 | 8 | 0.86517 |
+| -50 mV | 53.48 ± 22.64 | 10 | 0.91328 |
+| -40 mV | 77.74 ± 33.09 | 10 | 0.88109 |
+
+The corresponding stored gof_deact values vary considerably; the minimum at six of the nine command voltages is below 0.9. The source deactivation helper described below accepts a fit only for R-squared greater than 0.9, so it cannot simply be assumed that every stored v1.0 row was produced by that helper. The legacy scalar-field completeness is reversal 13/13, amp1to200 12/13, tau_rec 12/13 and ss_rec 12/13. One reversal entry is literally zero and is retained unchanged. The semantics and units of these scalar fields are not established by the released workbook and inspected analysis scripts; do not reinterpret tau_rec as the later double-exponential recovery tau pair.
+
+### What the deposited deactivation helper does—and does not establish
+
+The v1.0 and v3.0 channel_tools.py sources both contain a K_deact helper. It uses 34 °C, a 0.2-ms step, a 2-ms -120-mV segment, a 5-ms +60-mV segment and a 200-ms variable return-voltage segment. Its return-voltage array spans -90 to -35 mV in 5-mV increments. It fits a single exponential plus offset over 7.2 < t < 207 ms and returns tau only when R-squared exceeds 0.9. However:
+
+- The K_deact call inside K_IV is commented out.
+- The helper voltage grid (-90 to -35 mV by 5 mV) differs from the historical workbook grid (-120 to -40 mV by 10 mV).
+- The workbook retains nonblank deactivation fits with gof_deact below 0.9.
+
+Consequently, the historical workbook deactivation values cannot be attributed to this helper without further source provenance. Do not present the table above as an independent replay of K_deact or as a matched experimental gate-kinetic target.
+
+The deposited plots_fig4.py and stats_fig4.py are downstream consumers of Data/data_fig5.xlsx; both scripts read that file rather than creating the v1.0 data_fig4 workbook. data_fig5.xlsx is absent from all three released manifests. The specific exporter that created data_fig4.xlsx and the precise processing path behind its v1-only fields therefore remain unidentified.
+
+The full v1.0, v2.0 and v3.0 manifests were checked. None contains files with NWB, ABF, IBW or SMR acquisition extensions, data_fig5.xlsx, or the separate K tau Experimental means CSV filenames. This reinforces the distinction between the public processed workbook summaries and the still-unavailable original human K-current acquisition sweeps. The historical data expands the processed evidence catalogue; it does not provide raw-sweep refitting, a matched recording protocol, a named Kv subtype or grounds to change a HumanJS parameter.
+
 ### Remaining repository gaps and comparability
 
-The same v3.0 inventory still does **not** contain the separate Experimental means/k_tau_act.csv, k_tau_inact_fast.csv and k_tau_inact_slow.csv files read by the original fit helper, data_fig5.xlsx referenced by the plotting code, or the raw human K-current NWB sweeps. The paper and repository provide the aggregate fit workbook and code, but not the complete raw-data chain needed for an independent trace-level refit and a bitwise reproduction of every plotted curve.
+Neither the v1.0, v2.0 nor v3.0 inventory contains the separate Experimental means/k_tau_act.csv, k_tau_inact_fast.csv or k_tau_inact_slow.csv files read by the original fitting helper, data_fig5.xlsx referenced by the plotting/statistics scripts, or the original human K-current NWB acquisition sweeps. Version 1.0 additionally contains 31 processed deactivation/legacy scalar fields, now preserved in the historical subset above; those fields do not supply raw sweeps. The paper and repository provide the aggregate fit workbook and code, but not the complete raw-data chain needed for an independent trace-level refit and a bitwise reproduction of every plotted curve.
 
 Do not combine these Wilbers aggregate somatic K-current fits with the Rüschenschmidt A-current n=5 values. The Rüschenschmidt abstract does not resolve its cortical layer/subtype, full voltage protocol, temperature or internal/external solution in the accessible text retrieved here. Its A-current was isolated by subtraction in acutely dissociated temporal neocortical tissue with TEA to reduce delayed K currents, whereas Wilbers measured a pharmacologically isolated aggregate somatic K-current in nucleated patches at 34 °C. Their steady-state inactivation midpoints (−98.9±8.3 versus −52.7±6.0 mV) describe different evidence definitions and should not be averaged or treated as a direct biological discrepancy between matched channel populations.
 
