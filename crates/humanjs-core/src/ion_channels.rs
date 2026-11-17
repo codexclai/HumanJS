@@ -1928,6 +1928,122 @@ mod tests {
     }
 
     #[test]
+    fn human_k_current_fit_taus_fall_within_dataverse_per_recording_summary_spread() {
+        let model = wilbers_voltage_clamp_model();
+
+        // Source: DataverseNL v3.0, data_fig4.xlsx, file 318667,
+        // SHA-1 30ba48520d8d27a7f4db8aaa6abc7ae0f80ba7d3.
+        // These Human-only means and sample SDs were recalculated from the
+        // nonblank per-recording fit fields. They are processed current-fit
+        // summaries (not raw traces, not microscopic gate taus); n is 13 for
+        // activation and varies for fast inactivation at the low voltages.
+        let activation_voltages_mv = [-10.0, 0.0, 10.0, 20.0, 30.0, 40.0, 50.0];
+        let activation_mean_ms = [
+            3.356_764_345_809_124_5,
+            2.417_445_141_880_592,
+            1.687_869_061_011_281_4,
+            1.356_393_532_612_615_3,
+            1.081_361_396_932_848_4,
+            0.963_948_945_536_779_2,
+            0.883_612_192_062_682,
+        ];
+        let activation_sd_ms = [
+            2.373_427_262_517_900_3,
+            1.150_558_419_875_953_3,
+            0.707_273_637_489_374_8,
+            0.489_665_009_405_290_1,
+            0.331_560_842_299_137_7,
+            0.242_189_714_429_909_55,
+            0.212_821_052_607_411_05,
+        ];
+        let activation_model_tau_ms = [
+            3.284_746_40,
+            2.298_529_85,
+            1.700_318_83,
+            1.330_597_10,
+            1.082_613_13,
+            0.902_015_07,
+            0.771_108_13,
+        ];
+        let mut activation_squared_error = 0.0;
+
+        for index in 0..activation_voltages_mv.len() {
+            let current = replay_k_activation_current(model, activation_voltages_mv[index]);
+            let (tau_ms, r_squared) = fit_k_activation_current_tau(&current, 0.1).unwrap();
+            assert!(
+                (tau_ms - activation_model_tau_ms[index]).abs() < 0.01,
+                "source-equivalent activation fit changed at {} mV: {tau_ms} ms",
+                activation_voltages_mv[index]
+            );
+            assert!(
+                (tau_ms - activation_mean_ms[index]).abs() <= activation_sd_ms[index],
+                "model activation tau at {} mV lies outside the Human per-recording mean ± SD: model={tau_ms}, mean={}, SD={}",
+                activation_voltages_mv[index],
+                activation_mean_ms[index],
+                activation_sd_ms[index]
+            );
+            assert!(r_squared > 0.99);
+            activation_squared_error += (tau_ms - activation_mean_ms[index]).powi(2);
+        }
+        let activation_rmse_ms =
+            (activation_squared_error / activation_voltages_mv.len() as f64).sqrt();
+        assert!((activation_rmse_ms - 0.072_350_752_390_502_4).abs() < 1.0e-6);
+
+        // The recorded fast component is a biexponential current-fit output
+        // using a fixed 450-ms slow component in the source-analysis family.
+        // It must not be reinterpreted as a single microscopic Kv gate tau.
+        let inactivation_voltages_mv = [0.0, 10.0, 20.0, 30.0, 40.0, 50.0];
+        let inactivation_mean_ms = [
+            60.479_154_617_299_57,
+            43.240_939_212_879_04,
+            43.163_998_313_873_77,
+            21.844_729_307_650_695,
+            23.543_563_904_729_556,
+            19.284_110_945_371_67,
+        ];
+        let inactivation_sd_ms = [
+            22.231_093_450_601_385,
+            32.906_049_276_903_58,
+            24.615_268_413_014_24,
+            7.066_122_061_855_845,
+            6.473_968_085_869_727_5,
+            4.690_524_657_828_858,
+        ];
+        let inactivation_model_tau_ms = [
+            52.280_407_80,
+            41.563_484_62,
+            33.463_646_61,
+            27.264_606_91,
+            22.469_336_83,
+            18.745_079_68,
+        ];
+        let mut inactivation_squared_error = 0.0;
+
+        for index in 0..inactivation_voltages_mv.len() {
+            let current = replay_k_activation_current(model, inactivation_voltages_mv[index]);
+            let (tau_ms, r_squared) =
+                fit_k_inactivation_current_tau1(&current, 0.1, 450.0).unwrap();
+            assert!(
+                (tau_ms - inactivation_model_tau_ms[index]).abs() < 0.1,
+                "source-equivalent fast-inactivation fit changed at {} mV: {tau_ms} ms",
+                inactivation_voltages_mv[index]
+            );
+            assert!(
+                (tau_ms - inactivation_mean_ms[index]).abs() <= inactivation_sd_ms[index],
+                "model fast current-fit tau at {} mV lies outside the Human per-recording mean ± SD: model={tau_ms}, mean={}, SD={}",
+                inactivation_voltages_mv[index],
+                inactivation_mean_ms[index],
+                inactivation_sd_ms[index]
+            );
+            assert!(r_squared > 0.99);
+            inactivation_squared_error += (tau_ms - inactivation_mean_ms[index]).powi(2);
+        }
+        let inactivation_rmse_ms =
+            (inactivation_squared_error / inactivation_voltages_mv.len() as f64).sqrt();
+        assert!((inactivation_rmse_ms - 5.700_142_077_202_630_6).abs() < 1.0e-5);
+    }
+
+    #[test]
     fn deposited_k_voltage_clamp_protocols_replay_with_stable_gate_dynamics() {
         let model = wilbers_voltage_clamp_model();
 
