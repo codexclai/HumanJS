@@ -1930,30 +1930,52 @@ mod tests {
     #[test]
     fn human_k_activation_current_fit_taus_fall_within_dataverse_per_recording_summary_spread() {
         let model = wilbers_voltage_clamp_model();
+        const HUMAN_ACTIVATION_FITS: &str = include_str!(
+            "../../../research/HUMAN-L23-WILBERS-FIG4-HUMAN-K-ACTIVATION-PER-RECORDING.csv"
+        );
 
         // Source: DataverseNL v3.0, data_fig4.xlsx, file 318667,
         // SHA-1 30ba48520d8d27a7f4db8aaa6abc7ae0f80ba7d3.
-        // Human-only nonblank per-recording activation current-fit summaries.
-        // The five selected voltages have n=13 and minimum per-recording
-        // activation-fit R² > 0.95. The workbook export script is unavailable,
-        // so this is a distribution-level consistency check, not a claim that
-        // its experimental fit implementation is identical to this replay.
+        // This is the complete Human-only 13-record subset at five selected
+        // command voltages, including per-recording goodness-of-fit.
+        // These are processed current-fit outputs, not raw current samples
+        // or microscopic channel-gating time constants. The workbook exporter
+        // is unavailable, so this is distribution-level consistency only.
+        let records: Vec<[f64; 10]> = HUMAN_ACTIVATION_FITS
+            .lines()
+            .filter(|line| {
+                !line.is_empty() && !line.starts_with('#') && !line.starts_with("record_index")
+            })
+            .map(|line| {
+                let fields: Vec<f64> = line
+                    .split(',')
+                    .skip(1)
+                    .map(|field| field.parse::<f64>().expect("valid numeric workbook subset"))
+                    .collect();
+                assert_eq!(fields.len(), 10, "each Human row needs 5 tau/R² pairs");
+                let mut row = [0.0; 10];
+                row.copy_from_slice(&fields);
+                row
+            })
+            .collect();
+        assert_eq!(records.len(), 13, "preserve all 13 Human recordings");
+
         let voltages_mv = [10.0, 20.0, 30.0, 40.0, 50.0];
-        let human_mean_tau_ms = [
+        let expected_human_mean_tau_ms = [
             1.687_869_061_011_281_4,
             1.356_393_532_612_615_3,
             1.081_361_396_932_848_4,
             0.963_948_945_536_779_2,
             0.883_612_192_062_682,
         ];
-        let human_sample_sd_tau_ms = [
+        let expected_human_sample_sd_tau_ms = [
             0.707_273_637_489_374_8,
             0.489_665_009_405_290_1,
             0.331_560_842_299_137_7,
             0.242_189_714_429_909_55,
             0.212_821_052_607_411_05,
         ];
-        let human_minimum_fit_r_squared = [
+        let expected_human_minimum_fit_r_squared = [
             0.955_301_683_815_748,
             0.980_917_074_133_173,
             0.984_841_222_812_972,
@@ -1970,29 +1992,66 @@ mod tests {
         let mut squared_error = 0.0;
 
         for index in 0..voltages_mv.len() {
-            assert!(human_minimum_fit_r_squared[index] > 0.95);
-            let current = replay_k_activation_current(model, voltages_mv[index]);
-            let (tau_ms, r_squared) = fit_k_activation_current_tau(&current, 0.1).unwrap();
+            let tau_column = index * 2;
+            let r_squared_column = tau_column + 1;
+            let tau_values: Vec<f64> =
+                records.iter().map(|record| record[tau_column]).collect();
+            let r_squared_values: Vec<f64> = records
+                .iter()
+                .map(|record| record[r_squared_column])
+                .collect();
+            let mean_tau_ms = tau_values.iter().sum::<f64>() / tau_values.len() as f64;
+            let sample_sd_tau_ms = (tau_values
+                .iter()
+                .map(|tau_ms| (tau_ms - mean_tau_ms).powi(2))
+                .sum::<f64>()
+                / (tau_values.len() - 1) as f64)
+                .sqrt();
+            let minimum_fit_r_squared =
+                r_squared_values.iter().copied().fold(f64::INFINITY, f64::min);
+
+            assert_eq!(tau_values.len(), 13);
             assert!(
-                (tau_ms - source_model_reference_tau_ms[index]).abs() < 0.01,
-                "source-equivalent activation fit changed at {} mV: {tau_ms} ms",
+                (mean_tau_ms - expected_human_mean_tau_ms[index]).abs() < 1.0e-12,
+                "workbook mean changed at {} mV: {mean_tau_ms}",
                 voltages_mv[index]
             );
             assert!(
-                (tau_ms - human_mean_tau_ms[index]).abs() <= human_sample_sd_tau_ms[index],
-                "model activation tau at {} mV lies outside the Human per-recording mean ± SD: model={tau_ms}, mean={}, SD={}",
-                voltages_mv[index],
-                human_mean_tau_ms[index],
-                human_sample_sd_tau_ms[index]
+                (sample_sd_tau_ms - expected_human_sample_sd_tau_ms[index]).abs() < 1.0e-12,
+                "workbook sample SD changed at {} mV: {sample_sd_tau_ms}",
+                voltages_mv[index]
             );
-            assert!(r_squared > 0.99);
-            squared_error += (tau_ms - human_mean_tau_ms[index]).powi(2);
+            assert!(
+                (minimum_fit_r_squared - expected_human_minimum_fit_r_squared[index]).abs()
+                    < 1.0e-12
+            );
+            assert!(
+                minimum_fit_r_squared > 0.95,
+                "at least one selected Human fit has R² <= 0.95 at {} mV",
+                voltages_mv[index]
+            );
+
+            let current = replay_k_activation_current(model, voltages_mv[index]);
+            let (model_tau_ms, model_fit_r_squared) =
+                fit_k_activation_current_tau(&current, 0.1).unwrap();
+            assert!(
+                (model_tau_ms - source_model_reference_tau_ms[index]).abs() < 0.01,
+                "source-equivalent activation fit changed at {} mV: {model_tau_ms} ms",
+                voltages_mv[index]
+            );
+            assert!(
+                (model_tau_ms - mean_tau_ms).abs() <= sample_sd_tau_ms,
+                "model tau at {} mV is outside the Human mean ± SD: model={model_tau_ms}, mean={mean_tau_ms}, SD={sample_sd_tau_ms}",
+                voltages_mv[index]
+            );
+            assert!(model_fit_r_squared > 0.99);
+            squared_error += (model_tau_ms - mean_tau_ms).powi(2);
         }
 
         let rmse_ms = (squared_error / voltages_mv.len() as f64).sqrt();
         assert!(
-            rmse_ms < 0.08,
-            "Human-only activation current-fit RMSE {rmse_ms} ms is unexpectedly large"
+            (rmse_ms - 0.058_847_240_272_913_62).abs() < 1.0e-6,
+            "Human-only activation current-fit RMSE changed: {rmse_ms} ms"
         );
     }
 
