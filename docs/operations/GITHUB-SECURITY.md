@@ -16,7 +16,7 @@
 
 ## Verified branch state
 
-The live GitHub branch listing on 2026-11-18 returned exactly one branch (main); no non-main refs were present. Live HEAD was fe059b56d76ffdc7f4d20b8a90d67516fb6f2a27, with a complete 130-entry recursive tree (truncated=false), zero open issues and zero open PRs. Exact-head workflow 44197727657 passed all 37 steps with no failures or skips. The delivered continuation adds the historical v1.0 Wilbers K deactivation subset and four validation tests, alongside updated research/status/decision/roadmap/handoff documentation.
+The live GitHub branch listing on 2026-11-18 returned exactly one branch (main); no non-main refs were present. Live HEAD was b87d97e77c50dcc0febc511e829eb6870b1d037c, with a complete 130-entry recursive tree (truncated=false), zero open issues and zero open PRs. Exact-head workflow 44198727162 passed all 37 steps with no failures or skips. The latest verified work includes the historical v1.0 Wilbers K deactivation subset and a follow-up check of the primary article and Dataverse version metadata; exporter/protocol provenance remains unresolved.
 
 ## Repository and delivery
 

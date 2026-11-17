@@ -1432,3 +1432,43 @@ No local clean clone was available due github.com DNS resolution failure; the ex
 ### Next concrete step
 
 Continue source provenance review only where it resolves an identifiable method or file. The immediate evidence boundary is now specific: historical per-recording deactivation-fit values exist in v1.0, but the exporter and protocol mapping remain unresolved. Do not infer gates from tau_deact or the ambiguous scalar fields. ADR-014's remaining scientific requirements and raw sweep gap stay open.
+
+
+
+## Latest handoff — Wilbers historical deactivation provenance: article and version API audit (2026-11-18)
+
+### Verified starting main state
+
+- Canonical repository: codexclai/HumanJS, default branch main.
+- Starting main HEAD for this continuation: b87d97e77c50dcc0febc511e829eb6870b1d037c.
+- Recursive tree: 130 entries, `truncated=false`; exactly one branch (`main`); zero open issues and zero open PRs.
+- Exact-head workflow 44198727162 passed all 37 job steps on the starting HEAD, with zero failures and zero skips.
+
+### Additional provenance review
+
+- Retrieved the primary article full text, “Human voltage-gated Na+ and K+ channel properties underlie sustained fast AP signaling” (Wilbers et al., 2023; DOI 10.1126/sciadv.ade3300; PMCID PMC10569700).
+- Its Figure 4 caption describes K-current activation and steady-state inactivation/availability, activation time constants, fast/slow inactivation time constants, and paired-pulse recovery. The targeted full-text Methods review did not identify a K-current deactivation/tail-current acquisition protocol or a reported Figure 4 deactivation panel. This is a reporting gap, not proof that such recordings were never made.
+- The article's data/materials statement points to the DataverseNL dataset DOI 10.34894/L5J0SD but does not identify a separate Figure 4 workbook exporter.
+- Retrieved the public Dataverse version API for versions 1.0, 2.0 and 3.0 and the version list. The version records have no version notes or file replacement/removal explanation. They document release dates and file manifests only.
+- Therefore the exact exporter, fit definition and reason for removal of the 31 v1.0-only fields remain unresolved. The values are retained as provenance-limited processed workbook summaries only; they are not a reproduced protocol, microscopic gate target, or evidence for parameter transfer.
+
+### Changed paths in this continuation
+
+- research/HUMAN-K-CURRENT-VOLTAGE-CLAMP-EVIDENCE.md
+- docs/decisions/DECISIONS.md
+- docs/roadmap/MASTER-ROADMAP.md
+- docs/BOOT.md
+- docs/status/STATUS.md
+- docs/operations/GITHUB-SECURITY.md
+- docs/status/SESSION-HANDOFF.md
+
+### Scientific boundary and verification
+
+- No raw human K-current NWB/ABF/IBW/SMR acquisition file was recovered.
+- No Rust equation, ion-channel gate, conductance density, temperature setting or spike-model parameter changed.
+- No model-equivalence, raw-trace-refit, or biological-validation claim is made. ADR-014 remains open; the single-compartment spike-capable model remains exploratory and unaccepted.
+- This continuation is documentation/research only. The starting commit's exact-head hosted workflow passed 37/37 steps. The new documentation commit's own exact-head workflow must be checked after push.
+
+### Next concrete step
+
+Do not continue repeatedly searching the same public manifests for an exporter. Reopen this provenance question only if a new identifiable source is found (for example, a separately indexed export script, original acquisition file, or dataset revision artifact). Otherwise, move to a different explicit ADR-014 requirement while keeping all v1.0 deactivation fields out of the Rust model.
