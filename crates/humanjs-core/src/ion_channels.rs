@@ -1987,7 +1987,10 @@ mod tests {
         }
         let activation_rmse_ms =
             (activation_squared_error / activation_voltages_mv.len() as f64).sqrt();
-        assert!(activation_rmse_ms < 0.1, "Human-only activation current-fit RMSE {activation_rmse_ms} ms is unexpectedly large");
+        assert!(
+            activation_rmse_ms < 0.1,
+            "Human-only activation current-fit RMSE {activation_rmse_ms} ms is unexpectedly large"
+        );
 
         // The recorded fast component is a biexponential current-fit output
         // using a fixed 450-ms slow component in the source-analysis family.
