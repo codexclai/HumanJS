@@ -1292,3 +1292,67 @@ Rüschenschmidt et al. (2004) describe a fast A-type current in acutely dissocia
 ### Next concrete step
 
 Run a transparent Rust-versus-workbook comparison at matched command voltages and 34 °C. Preserve the 13/11 sample counts, missing fits and per-recording spread; compare activation, fast/slow inactivation and recovery distributions separately. Do not treat the workbook's aggregate outward current as a named Kv subfamily or retune HumanJS parameters until model and assay definitions, temperature, series resistance and fit equations are matched. Raw NWB trace refitting remains open.
+
+
+## Latest handoff — Human K_IV activation-fit distribution check added (2026-11-18)
+
+### Verified main state
+
+- Canonical repository: codexclai/HumanJS, default branch main.
+- Main HEAD at this verification: efebd9452b3b3a8c88d6522f34e6578e8bd3e226.
+- Recursive tree: 127 entries, truncated=false; exactly one branch (main); open issues: 0; open PRs: 0.
+- Exact-head Actions run 44194297028 passed all 37 steps, zero failures and zero skips.
+
+### Work completed
+
+The public Wilbers data_fig4.xlsx (Dataverse file 318667, CC0-1.0, SHA-1 30ba48520d8d27a7f4db8aaa6abc7ae0f80ba7d3) was used for a narrow Rust source-model regression check. The workbook has 13 Human per-recording K activation summaries. At +10/+20/+30/+40/+50 mV, all 13 fits per command have \(R^2>0.95\). The Rust Human K_IV replay/current-fit outputs are:
+
+| Voltage | Workbook mean ± SD (ms), n=13 | Minimum per-record \(R^2\) | Rust fit output (ms) |
+|---:|---:|---:|---:|
+| +10 mV | 1.68787 ± 0.70727 | 0.95530 | 1.70032 |
+| +20 mV | 1.35639 ± 0.48967 | 0.98092 | 1.33060 |
+| +30 mV | 1.08136 ± 0.33156 | 0.98484 | 1.08261 |
+| +40 mV | 0.96395 ± 0.24219 | 0.98420 | 0.90202 |
+| +50 mV | 0.88361 ± 0.21282 | 0.98741 | 0.77111 |
+
+The 5-command RMSE against workbook means is 0.05885 ms; all five model outputs fall within one sample SD. The regression is implemented in crates/humanjs-core/src/ion_channels.rs as human_k_activation_current_fit_taus_fall_within_dataverse_per_recording_summary_spread.
+
+### Data interpretation safeguards
+
+- These are activation current-fit outputs from model waveforms compared with processed per-recording workbook fit outputs; they are not direct microscopic gate time constants.
+- The workbook-export code is missing from the 65-file v3.0 Dataverse release. Exact fit algorithm identity cannot be independently confirmed; test code explicitly describes this as distribution-level consistency, not equivalence of experimental and replay algorithms.
+- The Rust model and workbook data come from the same Wilbers study, so this is not independent biological validation.
+- The published S5 panel-I group markers are a separate manual digitization: +40/+50 mV markers 0.69/0.58 ms, versus workbook means 0.96395/0.88361 ms, differences ~0.274/~0.304 ms and larger than the stated ±0.25-ms plot-reading estimate. Missing Experimental means/k_tau_act.csv and data_fig5.xlsx leave the aggregation discrepancy unresolved; neither series is overwritten.
+- Panel J fast-inactivation and panel K slow-inactivation markers broadly match the workbook per-recording means on shared voltage points, but this is not used as a code parameter or transfer. No fast/slow inactivation test is included because the source model fixes a 450-ms slow term and the workbook exporter is unavailable. No recovery test is included because recording protocol equivalence is not established.
+- Raw human K-voltage-clamp NWB sweeps and separate Experimental means/k_tau_*.csv inputs remain unavailable. ADR-014 remains open.
+
+### Verification
+
+Exact-head workflow 44194297028 passed all 37 steps:
+- cargo fmt --all -- --check
+- cargo clippy --workspace --all-targets -- -D warnings
+- Rust tests: 42 humanjs-core unit tests, 3 synapse integration tests, 6 passive-membrane integration tests
+- syntax checks of 34 Python experiment scripts; 59 Python tests
+- Mittermaier data/hash/reference checks
+- Wilbers Figure S5 and current-clamp/grid validators; NEURON 9.0.2 Na/K VClamp replays; K_IV fit-start/profile/surface/residual checks
+- repository policy: 16 required files, 0 JSON files, no prohibited archive/generated output
+
+Two intermediate CI failures in superseded test commits were repaired before this passing run: an over-strict rounded-RMSE equality was relaxed to a bounded diagnostic criterion, and a formatting-only failure was corrected. The first attempted test also included a fast-inactivation comparison; that comparison was removed once the source fixed-\(\tau_2\) versus missing workbook-exporter mismatch was recognized. The final test is deliberately activation-only and uses the five high-fit-quality commands.
+
+No local clean clone was available because the execution environment could not resolve github.com; the verified checks above were run by GitHub Actions on the exact pushed main SHA. No production Rust equation, gate, parameter, conductance density, or temperature convention was changed.
+
+### Changed paths in this continuation
+
+- crates/humanjs-core/src/ion_channels.rs (test only)
+- research/HUMAN-K-CURRENT-VOLTAGE-CLAMP-EVIDENCE.md
+- research/HUMAN-NEOCORTICAL-SPIKE-INITIATION.md
+- docs/BOOT.md
+- docs/status/STATUS.md
+- docs/decisions/DECISIONS.md
+- docs/roadmap/MASTER-ROADMAP.md
+- docs/status/SESSION-HANDOFF.md
+- docs/operations/GITHUB-SECURITY.md
+
+### Next concrete step
+
+Keep ADR-014 open and continue the raw-data audit only if a publicly retrievable original NWB source or equivalent raw trace becomes identifiable. In parallel, inspect the source exporter/selection provenance for the processed data_fig4 workbook if an authoritative file outside the 65-file release is publicly indexed; do not infer or transfer new fast/slow/recovery gates from the aggregate workbook.

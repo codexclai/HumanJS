@@ -210,6 +210,30 @@ The slow component has wide between-recording variability, and at +60 mV one rec
 
 The recovery fields contain per-recording biexponential summaries. Across available human rows, rec_tau1 is 254.54 ± 144.56 ms (n=12) and rec_tau2 is 2483.91 ± 1843.47 ms (n=11). These fits are descriptive workbook outputs; they should not be relabelled as a clean human-only recovery target without checking each recording's protocol and fit quality and the exact semantics of the helper.
 
+### HumanJS activation-current fit consistency check (2026-11-18)
+
+A new regression test in crates/humanjs-core/src/ion_channels.rs, named human_k_activation_current_fit_taus_fall_within_dataverse_per_recording_summary_spread, compares the Rust reproduction of the Wilbers K_IV activation current waveform with Human-only processed per-recording activation-fit summaries. It selects +10 through +50 mV, where all 13 workbook records have activation-fit \(R^2>0.95\) at each command voltage. The Rust replay uses the 34 °C Human K-channel model and the rising-phase exponential current-fit helper; it is not comparing microscopic channel-gate \(\tau_m\) values directly.
+
+| Command | Human workbook mean ± SD (ms), n=13 | Minimum per-record fit \(R^2\) | Rust source-equivalent current-fit (ms) | Difference from workbook mean (ms) |
+|---:|---:|---:|---:|---:|
+| +10 mV | 1.6879 ± 0.7073 | 0.95530 | 1.70032 | +0.01245 |
+| +20 mV | 1.3564 ± 0.4897 | 0.98092 | 1.33060 | −0.02580 |
+| +30 mV | 1.0814 ± 0.3316 | 0.98484 | 1.08261 | +0.00125 |
+| +40 mV | 0.9639 ± 0.2422 | 0.98420 | 0.90202 | −0.06193 |
+| +50 mV | 0.8836 ± 0.2128 | 0.98741 | 0.77111 | −0.11250 |
+
+The five-point RMSE of these rounded Rust fit references against the workbook means is 0.05885 ms. Every model output lies within one sample SD of the corresponding 13-recording Human distribution. This is a limited distribution-level consistency check, not an external validation: the model and workbook arise from the same Wilbers study, the recorded raw K-current NWB sweeps are unavailable, and the script that exported the per-recording workbook arrays was not found in the 65-file deposit. The regression test therefore checks that the already implemented source-equivalent activation replay remains in a plausible region of the released Human fit distribution; it does not independently reproduce the experimental current filtering/export algorithm.
+
+#### Why the published Figure S5 activation markers are a separate comparator
+
+The repository's existing HUMAN-L23-WILBERS-FIG-S5-I-ACTIVATION.csv is a manual digitization of human red markers from Supplementary Figure S5 panel I, not an arithmetic aggregation of the data_fig4.xlsx rows. Its approximate plotted human means are 3.36, 2.41, 1.68, 1.25, 0.88, 0.69 and 0.58 ms at −10, 0, +10, +20, +30, +40 and +50 mV, respectively, with conservative plot-reading uncertainty ±0.25 ms and ±1 mV (not biological SD). The workbook's first three means are close to the plotted markers, while its +40 and +50 mV means (0.9639 and 0.8836 ms) are higher than the digitized markers (0.69 and 0.58 ms) by approximately 0.274 and 0.304 ms. These differences modestly exceed the stated marker-reading uncertainty. The missing Experimental means/k_tau_act.csv, data_fig5.xlsx and workbook-export script prevent resolution of the aggregation/provenance difference. Neither data source should silently overwrite the other.
+
+For context, the separate manual digitizations for Supplementary Figure S5 panels J and K broadly agree with the corresponding workbook means over their overlapping positive commands: the panel J human fast-inactivation markers are approximately 60.9, 43.4, 43.4, 21.7, 23.8 and 19.6 ms at 0 through +50 mV, while the workbook means are approximately 60.48, 43.24, 43.16, 21.84, 23.54 and 19.28 ms. The panel K slow-inactivation markers at +30/+40/+50/+60 mV are approximately 332.7/308.3/197.0/290.2 ms, versus workbook means 332.68/308.22/197.39/290.00 ms. Those plots are themselves manual group-mean digitizations with stated pixel-reading uncertainty, not raw observations or independent fits.
+
+#### Scope deliberately not compared
+
+No regression comparison is added for fast/slow inactivation or recovery. The deposited source-model K_IV helper fixes the slow inactivation component to 450 ms during its four-free-parameter fit, whereas the workbook stores per-recording fast and slow fit arrays whose export implementation is unavailable; the slow workbook means also vary widely with voltage. The workbook recovery protocol identifier and delay schedule likewise cannot be demonstrated to match the source helper's 5-s +40-mV conditioning sequence and recovery/test timing. These are useful evidence summaries, but a matched fit/protocol contract has not been established. No per-recording fast/slow or recovery summary is used as a HumanJS gate target.
+
 ### Remaining repository gaps and comparability
 
 The same v3.0 inventory still does **not** contain the separate Experimental means/k_tau_act.csv, k_tau_inact_fast.csv and k_tau_inact_slow.csv files read by the original fit helper, data_fig5.xlsx referenced by the plotting code, or the raw human K-current NWB sweeps. The paper and repository provide the aggregate fit workbook and code, but not the complete raw-data chain needed for an independent trace-level refit and a bitwise reproduction of every plotted curve.

@@ -154,6 +154,12 @@ Earlier notes saying “no per-cell K summary data” or that the public deposit
 
 This improves the evidence available for distribution-level model comparison but does not alone satisfy ADR-014. It does not identify a molecular Kv subtype, and the recorded outward current is not subtype-selectively isolated. No Rust equation, channel gate, parameter, conductance density, temperature convention or model acceptance status changed. ADR-014 remains open and the spike-capable single-compartment code remains exploratory and unaccepted.
 
+### ADR-014 follow-up — K_IV activation current-fit distribution consistency test (2026-11-18)
+
+A new Rust unit test compares the Human K_IV source-equivalent activation-current fit at +10/+20/+30/+40/+50 mV with the public per-recording data_fig4.xlsx Human fit distribution (13 recordings per voltage; minimum fit \(R^2>0.95\)). Rust outputs are 1.70032/1.33060/1.08261/0.90202/0.77111 ms; workbook means are 1.68787/1.35639/1.08136/0.96395/0.88361 ms. All five outputs fall within one sample SD; five-command RMSE is 0.05885 ms. Exact-head workflow [44194297028](https://github.com/codexclai/HumanJS/actions/runs/44194297028) passes with 42 Rust core unit tests, 3 synapse integration tests, 6 passive-membrane integration tests and the full existing Python/source-replay/data-validation suite.
+
+This test compares model-produced current-fit outputs with processed per-recording summaries from the same publication. The workbook-export source is not deposited, original raw K NWB sweeps are absent, and the fit equivalence is therefore not independently established. No fast/slow inactivation or recovery comparison was added. The independently digitized S5 panel-I group markers diverge from the workbook activation means at +40/+50 mV by ~0.274/~0.304 ms (digitization estimate ±0.25 ms); the two summaries remain separate. This is a limited regression/source-consistency check, not empirical raw-current reproduction, a new biological validation result, or evidence for a named Kv subtype. No production Rust model equation or parameter changed. ADR-014 remains open.
+
 ## ADR-015 — Published-model reproduction is evidence, not HumanJS implementation
 
 **Status:** Accepted · **Date:** 2026-11-11

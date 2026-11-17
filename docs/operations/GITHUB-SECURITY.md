@@ -16,7 +16,7 @@
 
 ## Verified branch state
 
-The live GitHub branch listing on 2026-11-18 returned exactly one branch (main); no non-main refs were present. Live HEAD at verification was f34fe03ebff65a7a35f0c52eb856f6f5ec7adabd, with a complete 127-entry recursive tree (truncated=false), zero open issues and zero open PRs. Exact-head workflow 43941574837 passed all 37 steps with no failures or skips. The new research/documentation update corrects the Wilbers K evidence inventory: data_fig4.xlsx supplies processed per-recording human fit data; raw K-current NWB sweeps and the separate group-mean K tau CSVs remain absent.
+The live GitHub branch listing on 2026-11-18 returned exactly one branch (`main`); no non-main refs were present. Live HEAD was `efebd9452b3b3a8c88d6522f34e6578e8bd3e226`, with a complete 127-entry recursive tree (`truncated=false`), zero open issues and zero open PRs. Exact-head workflow [44194297028](https://github.com/codexclai/HumanJS/actions/runs/44194297028) passed all 37 steps with no failures or skips. This continuation adds a Rust activation-current distribution regression test and updates the evidence record; raw human K-current NWB sweeps and the separate K tau CSVs remain absent.
 
 ## Repository and delivery
 
