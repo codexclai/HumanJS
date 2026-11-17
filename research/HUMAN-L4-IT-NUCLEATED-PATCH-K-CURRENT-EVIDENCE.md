@@ -72,7 +72,18 @@ The raw metadata inspected so far leaves several important discrepancies:
 
 The presence of similarly named Nuc protocol series in the 2018 legacy asset also does not prove that it was part of the 2026 study's analyzed cohort.
 
-## 6. Evidence boundary and HumanJS implications
+
+## 6. Public Allen Institute cell-crosswalk audit
+
+The public [AllenInstitute/human_patchseq_excitatory](https://github.com/AllenInstitute/human_patchseq_excitatory) repository was inspected at main commit `a80766e28a480cd151761df6d50de6663987419d` (2,148-entry non-truncated tree). The published human electrophysiology feature table (`data/human/electrophysiology/features/20260807/ephys_features.csv`) includes specimen IDs, hierarchical subclass/cluster labels and action-potential/F-I features. It does not provide a per-cell nucleated-patch `I_total`, `I_K`, `I_A`, or nucleus-area table. The main excitatory-neuron figure notebook and electrophysiology helper were also searched; no nucleated-patch voltage-clamp current processing or a DANDI-to-cell join was identified there.
+
+The raw NWB asset's root, subject, intracellular-electrode and device metadata were then inspected directly. Those groups provide session/subject and acquisition metadata but no explicit Allen cell-specimen identifier or cell-class crosswalk. No exact join key from the inspected raw asset to a Patch-seq cell/subclass record was verified. Apparent proximity between numeric identifiers is not evidence of identity and is not used.
+
+The public IPFX stimulus ontology (`AllenInstitute/ipfx/defaults/stimulus_ontology.json`) categorizes the observed nucleated-patch protocol labels (including the step, leak and prepulse series) only as generic `Test` stimuli. It does not independently define the voltage-clamp protocol, absolute holding potential or calibration. Therefore the series names cannot replace the missing acquisition/calibration provenance.
+
+**Consequence:** the six newer DANDI assets remain candidate nucleated-patch recordings, not confirmed L4 IT subclass replicates. Do not assign L4 IT_1–L4 IT_4 labels to them, use a nearby Allen record as a surrogate, or compare them with Figure 4G subclass distributions until an explicit crosswalk and image/area mapping are established.
+
+## 7. Evidence boundary and HumanJS implications
 
 This finding supersedes the broad earlier statement that no public raw human neocortical K-current voltage-clamp sweeps exist. The correctly scoped distinction is:
 
@@ -81,7 +92,7 @@ This finding supersedes the broad earlier statement that no public raw human neo
 - **Analysis completeness:** all 163 NWB assets have had metadata inspected; one candidate has had its series and representative raw waveforms inspected. No trace-level leak correction, I_K/I_A subtraction, nucleus-area normalization, current-density analysis, kinetic fit, or L4 IT subclass mapping has yet been reproduced.
 - **Model implication:** these data broaden the human K-current evidence base, but do not yet supply a calibrated, cell-type-matched and area-normalized kinetic target for the HumanJS L2/L3 exploratory model. Do not infer a Kv subtype, transfer a gate parameter, alter Rust, or claim biological validation.
 
-## 7. Next evidence work
+## 8. Next evidence work
 
 1. Map the six 2022–2025 candidate assets to the released electrophysiology feature and cell-class tables without copying donor identifiers into the repository. Keep the 2018 legacy asset separate until its provenance is resolved.
 2. Recover per-recording amplifier/clamp calibration and holding-offset metadata from original acquisition configuration or other deposited provenance. Resolve the activation-step count and 100-ms-versus-125-ms prepulse discrepancy before assigning absolute voltages.

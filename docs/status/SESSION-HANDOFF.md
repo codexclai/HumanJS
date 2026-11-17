@@ -1517,3 +1517,8 @@ Do not continue repeatedly searching the same public manifests for an exporter. 
 ### Next concrete step
 
 Map the six 2022–2025 candidate assets to the paper's released L4 IT electrophysiology/cell-class data and corresponding nucleus images, without retaining donor identifiers. In parallel, resolve the per-file clamp voltage offset and the nine-versus-ten activation-step and 100-versus-125-ms prepulse discrepancies. Only then implement a Python raw-waveform replay of leak correction, I_K/I_A subtraction and nucleus-area current-density normalization; leave Rust model parameters unchanged until the comparison is protocol-matched and independently validated.
+
+
+### Crosswalk follow-up (2026-11-18)
+
+The public Allen Institute Patch-seq repository was inspected at main commit `a80766e28a480cd151761df6d50de6663987419d`. Its published human ephys feature table exposes AP/F-I traits and cell-class labels but no nucleated-patch K-current fit/area table. The first DANDI NWB asset's root/subject/electrode/device metadata contains no explicit cell-specimen join field; the public IPFX stimulus ontology categorizes these Nuc* series only as generic Test stimuli. No explicit DANDI-to-Patch-seq cell crosswalk was established. Do not use numeric-ID proximity as a join or assign L4 IT subclass labels to the seven candidates. The next research step remains locating public acquisition provenance, a direct cell-recording crosswalk and the paired nucleus images/area data; no authors were contacted.
