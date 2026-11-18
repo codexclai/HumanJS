@@ -13,17 +13,19 @@
 ## 2. Research and experiment records
 
 - Add research notes only when they support a concrete design, parameter, or validation task.
-- Record citations, source version/date, species, method, evidence class, uncertainty, and whether the value is measured, estimated, inferred, hypothesized, or an engineering convention.
+- Record citations, source version/date, species, method, evidence class, cohort/preparation and anatomical scope, uncertainty, and whether the value is measured, estimated, inferred, hypothesized, or an engineering convention.
+- Use neutral synthetic examples and fixtures. Never hard-code a named or particular person's identity, biography, donor/patient identifiers, or individual-specific parameters into general product behavior. Keep any necessary public research identifiers limited to reproducible provenance records and avoid reproducing personal data.
 - Keep reproducible protocols, configuration, raw results, and interpretation distinguishable under `experiments/`.
 - Do not bulk-import unreviewed research, old runtime output, or third-party material. Check relevance, provenance, and redistribution rights before adding it.
 - Do not treat software tests or results from an unrelated implementation as biological validation.
+- Generalization claims require evidence from more than one convenient fixture where appropriate, held-out sources or cohorts, explicit supported ranges, and a record of out-of-distribution limits. Do not claim generality from a single-source fit.
 
 ## 3. Temporary files, builds, and ignore rules
 
 - Keep build output, caches, virtual environments, scratch files, local logs, and generated intermediates outside the tracked tree.
 - `.gitignore` is a convenience, not a security boundary. Review tracked files before committing.
 - Keep ignore rules tied to actual project artifacts; do not add generic environment-file patterns or configuration boilerplate without a demonstrated requirement.
-- Never commit credentials, secrets, private user data, personal data, malware, or third-party material without redistribution rights.
+- Never commit credentials, secrets, private user data, personal data, malware, or third-party material without redistribution rights. Do not add individual-level human data unless the data are lawfully and explicitly redistributable, scientifically necessary, and reviewed for privacy; prefer aggregated or appropriately de-identified evidence.
 
 ## 4. Git and automation
 

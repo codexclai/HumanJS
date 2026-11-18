@@ -101,3 +101,19 @@ This finding supersedes the broad earlier statement that no public raw human neo
 5. Only after the protocol, voltage, current-density and subclass mappings are established should distribution-level comparison against HumanJS mechanism outputs be considered. Do not fit a new Rust gate or conductance from the metadata-only audit.
 
 No authors or researchers were contacted. No Rust equation, gate, conductance density, temperature parameter or spike-model parameter changed. ADR-014 remains open; the single-compartment spike-capable model remains exploratory and unaccepted.
+
+## 9. Follow-up: exact identifier search in the public Allen release
+
+The Allen Institute repository `AllenInstitute/human_patchseq_excitatory` was rechecked at main commit `a80766e28a480cd151761df6d50de6663987419d`. Three public tables were parsed locally as CSV, with exact string comparison across every column against the six DANDI candidate subject identifiers and their six DANDI session identifiers:
+
+| Public table | Rows | Columns | Exact candidate identifier occurrences |
+|---|---:|---:|---:|
+| `data/human/metadata/20260807/human_metadata.csv` | 1,527 | 51 | 0 |
+| `data/human/transcriptomics/20260722/id_translation_patchseq.csv` | 8,657 | 2 | 0 |
+| `data/human/reference/20260722/patchseq_results_23June2026(removed_post_integration).csv` | 95 | 70 | 0 |
+
+The checked values included the public participant and session identifiers returned by the six candidate DANDI asset metadata records. No donor or pseudonymous subject values are reproduced here. This exact search establishes only that these three repository tables do not contain those exact candidate values; it does not prove that no crosswalk exists elsewhere.
+
+The supplementary `media-2.csv` download linked by the article could not be independently retrieved in this environment: direct requests returned the NCBI browser proof-of-work challenge, while extracted/query responses were inconsistent across repeated exact-match questions. Those non-reproducible answers were discarded and are not used as crosswalk evidence.
+
+**Conclusion:** the currently audited Allen repository tables do not establish a direct mapping from the six DANDI candidates to Patch-seq cell records, L4 IT subclass labels, or nucleus images. Do not assign subclass labels, assume identity from numeric similarity, or treat the publisher's inaccessible supplementary table as verified. Keep all six files as unclassified nucleated-patch candidates until an explicit, reproducible mapping and image/area link is available.

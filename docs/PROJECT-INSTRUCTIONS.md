@@ -24,6 +24,12 @@ HumanJS is a scientifically defensible computational model of the **human brain 
 
 Build causal, interacting, evidence-grounded mechanisms. Do not replace biology with fact tables, fixed lexicons or grammar parsers, object-ID cognition, numbered goal slots, fixed task-switch penalties, capped sequence lookup, global scalar neuromodulators, generic sensory transforms, or unsupported anatomy. Distinguish human from animal evidence, measurements from estimates, findings from hypotheses, and biology from engineering conventions. Record sources, methods, provenance, uncertainty, disputes, and validation limits.
 
+## Permanent project-wide generalization requirement
+
+HumanJS must remain a reusable, population-generalizable model of human brain mechanisms, not a digital twin or personalized product for a particular owner, researcher, patient, donor, or end user. Apply this requirement across product design, architecture, Rust/Python/C/C++/WGSL interfaces, model and runtime data, configurations, examples, tests, research workflows, `/docs`, tooling, and future features.
+
+Represent human biological and contextual variation explicitly where evidence supports it. Separate shared causal mechanisms from cell-class, regional, developmental, cohort, and other supported variation; use configurable, typed and provenance-tracked parameterizations. Do not invent a universal average, erase meaningful heterogeneity, or generalize beyond the tested evidence. No individual identity, donor/patient identifier, biography, or personalized profile may be hard-coded into default behavior or fixtures. Individual-specific inputs are outside the default product and require separate approval and appropriate privacy, rights, and validation safeguards. Keep HumanJS's scientific scope human-brain-only.
+
 ## Approved technology and architecture
 - **Rust:** authoritative simulation state, computational core, mechanisms, runtime, APIs, scheduling, resources, concurrency, and persistence.
 - **WGSL:** GPU compute kernels, integrated through a Rust-owned backend.

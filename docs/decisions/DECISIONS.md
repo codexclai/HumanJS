@@ -380,3 +380,34 @@ Dalley et al., “Human neocortical glutamatergic neurons revealed through multi
 A metadata-only audit of all 163 NWB assets completed without scan errors and identified seven assets containing named nucleated-patch voltage-clamp series (six with 2022–2025 session metadata; one 2018 legacy candidate kept separate). A representative asset contains paired raw current and command series plus leak, prepulse, sustained and recovery protocol families. However, the inspected series have nine activation sweeps versus ten nominal levels in the article's inclusive stated range, an approximately 100-ms prepulse versus the reported 125 ms, and no absolute voltage-offset calibration in the NWB acquisition/electrode/device metadata. The raw assets have not yet been mapped to L4 IT subclass labels or nucleus image areas, and no leak-corrected current-density or kinetic refit has been completed.
 
 This source corrects the broad earlier research statement that raw human neocortical K-current sweeps were unavailable. The Wilbers-specific gap remains: raw sweeps and separate fitting-target CSVs remain absent from its inspected DataverseNL deposit. Keep the Dalley and Wilbers studies separate. Do not infer a microscopic Kv gate or transfer current-density/kinetic parameters into Rust from the present metadata audit. Full provenance and asset identifiers are in research/HUMAN-L4-IT-NUCLEATED-PATCH-K-CURRENT-EVIDENCE.md. ADR-014 remains open; the single-compartment spike-capable model remains exploratory and unaccepted.
+
+## ADR-020 — HumanJS is person-independent and population-generalizable (2026-11-18)
+
+**Status:** accepted permanent product and architecture requirement. Implementation is incomplete and must be tracked as staged work in the roadmap.
+
+### Decision
+
+HumanJS is a reusable computational model of human brain mechanisms across supported human biological variation and contexts. It is not a digital twin, biography simulator, patient model, or personalized product for a particular owner, researcher, contributor, donor, or end user. This requirement applies across the complete product: architecture, runtime, model definitions, parameterization, initial and learned state, APIs, bindings, documentation, examples, experiments, tests, tooling, packaging, and future features.
+
+Generalization must preserve scientifically meaningful variation. Shared causal mechanisms are distinct from evidence-specific parameterizations. Where supported, model configuration must represent cell class, region, development, cohort, preparation, state, and other relevant variation with explicit units, provenance, distributions/ranges, uncertainty, and evidence limits. A group mean is a statistic, not a universal human parameter. A fit to one paper, cohort, dataset, or source implementation does not establish population generality.
+
+All defaults and interfaces must be person-neutral, portable, and configurable. Do not encode individual identities, donor/patient identifiers, personal histories, owner profiles, or one-off subject-specific values in general product behavior, default model definitions, shipped state, fixtures, or examples. Individual-specific research profiles are outside the default product and require separate approval, appropriate data rights/consent/privacy review, and explicit validation boundaries.
+
+Hardware, OS, locale, language, culture, and external host assumptions must be explicit and replaceable. The system should use capability discovery and portable contracts rather than binding product behavior to one machine or environment. Tests of generalized behavior must include held-out data and distinct supported contexts when relevant, plus out-of-distribution and boundary reporting.
+
+### Rationale
+
+A scientifically defensible human-brain model must generalize beyond an individual and beyond one laboratory dataset, while retaining real biological heterogeneity. Person-specific defaults would confuse a reusable scientific model with an individualized digital twin and would unnecessarily introduce privacy and data-governance obligations. Conversely, a single universal average would erase biological variation. Separating mechanisms, parameterizations, state, provenance, and validation allows the product to remain reusable without overstating the evidence.
+
+### Consequences and implementation limits
+
+- The current passive-membrane, glutamatergic-synapse, and exploratory human L2/L3 spike mechanisms remain bounded abstractions with study/cell-class-specific evidence contexts. They are not yet a population-complete or generally validated human-brain model.
+- Research-derived presets remain explicit and replaceable; do not relabel them as universal defaults or transfer them to other cell classes without evidence.
+- Future JSON definitions and Python/Rust contracts must keep model identity, evidence profile, configuration, live state, learned state, and checkpoints separate.
+- New generalization requirements and validation work belong in the canonical roadmap and status. Do not claim the whole project has already achieved generalization merely because this requirement is now accepted.
+- HumanJS remains a human-brain-only project; generalization does not expand scope to the whole body or other species.
+- The explicitly owner-requested 10,000 spiking-neuron default remains an engineering configuration requirement, not an individual-specific biological parameter or a claim about human neuron count.
+
+### Repository-wide audit
+
+The current documentation tree contained one explicit personal preferred-name entry in the owner-requirements file; it was removed because it has no product or scientific purpose. The rest of the reviewed core product, architecture, repository, and research records use project, cell-class, study, and evidence provenance rather than a user-specific brain identity. Existing source-specific scientific records were retained where necessary for reproducibility; those records are not general product defaults.

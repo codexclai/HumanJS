@@ -17,6 +17,17 @@ This document defines architectural boundaries and responsibilities. The full bi
 
 Rust owns the authoritative simulation state. Bindings must not duplicate or independently invent biological state transitions.
 
+## 1.1 Generalized model definitions and parameterization
+
+The architecture is population-general and person-independent. It must support reusable biological mechanisms and explicit, evidence-bounded parameterizations without representing one named or particular person as the default brain. Shared mechanism definitions, population/cell-class profiles, initial conditions, live runtime state, learned state, and checkpoints remain distinct.
+
+- Model definitions must be reusable across supported human cell classes, brain regions, developmental contexts, and experimental conditions. Do not encode study-specific donor identities, one-off subject paths, or personal profiles as mechanism definitions.
+- Separate mechanism equations from parameter values and the provenance/uncertainty of those values. Parameterizations must expose units, applicable species and preparation, anatomical/cell-class scope, cohort and sample context, distributions/ranges, and evidence limitations where available.
+- Preserve biological heterogeneity and between-person variation when supported. A population mean is a statistic, not a universal human parameter; do not collapse distinct populations or preparations without evidence.
+- Keep optional experiment-specific profiles replaceable and clearly scoped. A source-specific reproduction or fitted study preset must never silently become a universal product default.
+- Keep hardware, operating system, locale, language, culture, and external host capabilities behind explicit configuration or interfaces. Discover capabilities rather than assuming one machine or environment.
+- Validate generalization with held-out data and distinct supported contexts; label extrapolation and out-of-distribution behavior instead of implying universal validity.
+
 ## 2. Responsibility boundaries
 
 ### Rust core

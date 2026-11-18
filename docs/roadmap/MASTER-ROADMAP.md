@@ -10,6 +10,7 @@
 - [x] Consolidate current owner requirements, approved technology, brain-only scope, and biological authenticity boundaries.
 - [x] Define the target system architecture and stack boundaries.
 - [x] Define the whole-brain scope catalogue and validation ladder.
+- [x] Accept a permanent project-wide requirement for person-independent, population-generalizable product design, explicit evidence-bounded variation, and neutral interfaces; implementation and validation remain staged work.
 - [x] Establish a main-only workflow with no branch-generating update automation.
 - [x] Add read-only repository policy validation on pushes to `main` and manual dispatch.
 - [x] Remove duplicate, superseded, unreviewed, and temporary project material from the current working tree.
@@ -64,6 +65,9 @@
 - [ ] Implement Rust-native concurrency with explicit ownership, synchronization, interruption, and recovery behavior.
 - [ ] Implement save/restore that preserves live and learned state and safely rejects corrupted or resource-exhausting input.
 - [ ] Define and validate inspectable JSON model definitions separately from runtime and learned state.
+- [ ] Design reusable, typed, person-independent model-definition and parameterization contracts that separate shared mechanisms, evidence-specific profiles, initial conditions, runtime state, learned state, and checkpoints.
+- [ ] Represent supported human population, region, cell-class, and developmental variation with provenance, distributions/ranges, uncertainty, and explicit limits; do not encode a single universal average or study-specific preset as the product default.
+- [ ] Add held-out, cross-cohort and cross-context generalization assays for applicable mechanisms, including out-of-distribution and parameter-boundary tests.
 
 ## P3 — Python-first developer interface and native interoperability
 

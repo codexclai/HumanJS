@@ -8,10 +8,17 @@
 - Project name: HumanJS.
 - Lowercase identifier: humanjs.
 - Short identifier: ajs.
-- Owner preferred name: Thamindu. The current GitHub account login may change; do not use it as the owner preferred name.
+- Product requirements, examples, defaults, and interfaces must not depend on or encode the identity of a particular owner, maintainer, contributor, or end user.
 - Objective: a comprehensive, scientifically defensible computational model of a human brain.
 - Scope is brain-only. HumanJS is not a whole-body simulator, chatbot, external-LLM wrapper, generic AI agent, or claim of consciousness, sentience, human-equivalent intelligence, or biological completeness.
-- External physical, virtual, robotic, simulated, or other hosts may supply peripheral/body/environment signals and receive brain outputs through explicit interfaces. HumanJS does not silently absorb those external systems into its scope.
+- External physical, virtual, robotic, simulated, or other hosts may supply peripheral/body/environment signals and receive brain outputs through explicit interfaces.
+- HumanJS is a reusable, population-generalizable model of human brain mechanisms, not a digital twin or simulation of one named or otherwise particular person. This requirement governs the complete product, runtime, interfaces, data model, research workflow, documentation, tests, examples, and tooling.
+- Generalize across human biological variation, brain regions, cell classes, developmental stages, supported conditions, sensory modalities, tasks, languages, cultures, and compatible hosts wherever evidence permits. Preserve real differences; do not replace heterogeneous human evidence with one supposedly universal or normative average.
+- Separate shared mechanisms from scientifically supported sources of variation. Parameterizations must be explicit, typed, configurable, provenance-tracked, and bounded by their evidence. Record cohort, preparation, anatomical/cell-class scope, sample size, distribution, uncertainty, and unsupported extrapolations where available.
+- Never hard-code a donor, patient, researcher, owner, contributor, end-user identity, individual-specific biography, or personal profile into product behavior, default model definitions, examples, fixtures, tests, or shipped state. Do not treat pseudonymous subject IDs as biological parameters.
+- Individual-specific or patient-specific configurations are outside the default product. They may be considered only as separately approved research inputs with appropriate rights, consent, privacy protections, and explicit validation limits; they must never silently become the default model or define general behavior.
+- Keep platform, hardware, locale, language, cultural context, and host assumptions explicit and replaceable. Use capability discovery and portable interfaces rather than one-device or one-environment assumptions.
+- Test generalization using held-out datasets, distinct cohorts and supported conditions, parameter-range checks, negative controls, and documented out-of-distribution limits. A fit to one study or a single reference configuration is not evidence of population generality. HumanJS does not silently absorb those external systems into its scope.
 
 ## 2. Approved implementation technologies
 

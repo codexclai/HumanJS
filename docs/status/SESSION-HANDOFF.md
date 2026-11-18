@@ -1522,3 +1522,55 @@ Map the six 2022–2025 candidate assets to the paper's released L4 IT electroph
 ### Crosswalk follow-up (2026-11-18)
 
 The public Allen Institute Patch-seq repository was inspected at main commit `a80766e28a480cd151761df6d50de6663987419d`. Its published human ephys feature table exposes AP/F-I traits and cell-class labels but no nucleated-patch K-current fit/area table. The first DANDI NWB asset's root/subject/electrode/device metadata contains no explicit cell-specimen join field; the public IPFX stimulus ontology categorizes these Nuc* series only as generic Test stimuli. No explicit DANDI-to-Patch-seq cell crosswalk was established. Do not use numeric-ID proximity as a join or assign L4 IT subclass labels to the seven candidates. The next research step remains locating public acquisition provenance, a direct cell-recording crosswalk and the paired nucleus images/area data; no authors were contacted.
+
+## Latest handoff — person-independent generalization and Allen crosswalk audit (2026-11-18)
+
+### Verified starting main state
+
+- Canonical repository: `codexclai/HumanJS`, public, default branch `main`.
+- Starting HEAD: `c1b6225fcaea324ea10fc905c7f8f903f57d823b`; recursive tree: 131 entries, non-truncated.
+- Exactly one branch (`main`); zero open issues and zero open pull requests.
+- Exact-head workflow [44204045696](https://github.com/codexclai/HumanJS/actions/runs/44204045696) passed all 37 steps.
+
+### Exact crosswalk follow-up
+
+- Re-fetched the six candidate NWB asset metadata records and extracted their subject/session technical identifiers without copying those values into the repository.
+- Parsed three tables from AllenInstitute/human_patchseq_excitatory at main commit `a80766e28a480cd151761df6d50de6663987419d`: current human metadata (1,527 rows × 51 columns), Patch-seq ID translation (8,657 × 2), and archived patch-seq results (95 × 70).
+- Compared all twelve candidate subject/session identifiers as exact strings across every column of each table. All three tables had zero exact matches. This rules out only these exact joins in these three files; it does not prove there is no crosswalk elsewhere.
+- Direct access to the article's supplementary `media-2.csv` returned an NCBI proof-of-work challenge. Search/extraction responses were inconsistent across identical exact-match attempts and were discarded. No subclass label, cell specimen, patched-cell container, or nucleus image was assigned by inference.
+- The six assets therefore remain nucleated-patch candidates without verified L4 IT subclass mapping. No raw current fit, leak subtraction, current-density normalization, or kinetic fit was attempted.
+
+### Permanent generalization decision
+
+ADR-020 accepts a project-wide, person-independent and population-generalizable product requirement. It applies to all product surfaces and all project files, not only runtime code. HumanJS must preserve supported human biological variation and keep source-specific parameterizations explicit and replaceable; it must not encode a particular individual, donor/patient identity, owner profile, or one study's fit as universal behavior. The human-brain-only scope remains unchanged. One owner-preferred-name entry was removed from canonical requirements; scientific study/cell-class provenance was retained where it is necessary and lawful.
+
+### Changed paths in this continuation
+
+- `docs/OWNER-REQUIREMENTS.md`
+- `docs/PROJECT-INSTRUCTIONS.md`
+- `docs/architecture/SYSTEM-ARCHITECTURE.md`
+- `docs/spec/BRAIN-SCOPE-AND-COMPLETENESS.md`
+- `docs/REPOSITORY-STRUCTURE.md`
+- `docs/decisions/DECISIONS.md`
+- `docs/roadmap/MASTER-ROADMAP.md`
+- `docs/status/STATUS.md`
+- `docs/status/SESSION-HANDOFF.md`
+- `docs/BOOT.md`
+- `docs/operations/GITHUB-SECURITY.md`
+- `docs/policies/REPOSITORY-HYGIENE.md`
+- `README.md`
+- `CONTRIBUTING.md`
+- `research/HUMAN-L4-IT-NUCLEATED-PATCH-K-CURRENT-EVIDENCE.md`
+
+### Verification and limitations
+
+- The starting commit's exact-head workflow passed all 37 steps.
+- All twelve candidate DANDI subject/session identifiers were checked by exact equality against all columns in the three current/archived Allen tables; zero matches were found.
+- The NCBI supplementary CSV was not independently accessible. Its extracted-query responses were contradictory and were not accepted as evidence.
+- Documentation/decision/research changes only. No Rust model equation, conductance, gate, temperature, runtime behavior, or scientific acceptance threshold changed. No biological validation is claimed.
+- The new documentation commit's own exact-head workflow must be checked after push.
+
+### Next concrete steps
+
+1. Continue only with a new reproducible source for the DANDI-to-cell/image crosswalk or raw acquisition calibration; keep the current subclass mapping unresolved until then.
+2. Implement the next generalization stage through real, typed model-definition and parameterization contracts, after inspecting existing interfaces and tests. Preserve the distinction between shared mechanisms, population/cell-class variation, study-specific evidence profiles, and individual runtime state.

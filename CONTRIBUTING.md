@@ -1,6 +1,6 @@
 # Contributing to HumanJS
 
-HumanJS is an early-stage public scientific-software project. Contributions should improve genuine, testable capability and scientific defensibility.
+HumanJS is an early-stage public scientific-software project. Contributions should improve genuine, testable capability and scientific defensibility while keeping the product reusable, person-independent, population-generalizable, and portable across supported contexts.
 
 ## Before proposing a change
 
@@ -13,7 +13,10 @@ HumanJS is an early-stage public scientific-software project. Contributions shou
 
 - Implement actual integrated behavior; do not submit disconnected placeholders or claim biological mechanisms through naming alone.
 - Cite primary research where practical. Distinguish human from animal evidence and measured facts from estimates, model conventions, or hypotheses.
-- State units, assumptions, parameter sources, limitations, and validation boundaries.
+- State units, assumptions, parameter sources, limitations, cohort/anatomical scope, and validation boundaries.
+- Keep contributions person-independent and generalizable. Do not add owner-, contributor-, patient-, donor-, or end-user-specific behavior, identities, or personalized defaults. Use neutral synthetic fixtures and explicit configuration.
+- Preserve scientifically meaningful human heterogeneity; do not present a single cohort, mean, fitted preset, or study-specific model as universally representative.
+- Demonstrate generalization using held-out sources and supported contexts where relevant, and document the evidence and out-of-distribution limits.
 - Include tests for behavior, errors, persistence, resource safety, concurrency, and cross-language boundaries as relevant.
 - Report exact test commands and results. Do not hide failing tests or claim unrun tests passed.
 - Keep CPU behavior correct. GPU changes require device-backed correctness and measured performance before acceleration claims.

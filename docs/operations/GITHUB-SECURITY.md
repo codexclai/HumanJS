@@ -16,7 +16,7 @@
 
 ## Verified branch state
 
-The live GitHub branch listing on 2026-11-18 returned exactly one branch (main); no non-main refs were present. Live HEAD was b87d97e77c50dcc0febc511e829eb6870b1d037c, with a complete 130-entry recursive tree (truncated=false), zero open issues and zero open PRs. Exact-head workflow 44198727162 passed all 37 steps with no failures or skips. The latest verified work includes the historical v1.0 Wilbers K deactivation subset and a follow-up check of the primary article and Dataverse version metadata; exporter/protocol provenance remains unresolved.
+The live GitHub branch listing at the start of the latest continuation on 2026-11-18 returned exactly one branch (main); no non-main refs were present. Live HEAD was c1b6225fcaea324ea10fc905c7f8f903f57d823b, with a complete 131-entry recursive tree (truncated=false), zero open issues and zero open PRs. Exact-head workflow 44204045696 passed all 37 steps. The latest accepted product decision is ADR-020, requiring project-wide person-independent generalization; its implementation is not yet complete. The latest verified work includes the historical v1.0 Wilbers K deactivation subset and a follow-up check of the primary article and Dataverse version metadata; exporter/protocol provenance remains unresolved.
 
 ## Repository and delivery
 

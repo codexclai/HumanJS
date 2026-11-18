@@ -37,7 +37,8 @@ The Python distribution should be a normal installable Python package. A Rust-Py
 - Disposable outputs, build trees, local environments, caches, and scratch data are not tracked.
 - Large binary evidence or generated output requires an explicit storage choice and an in-repository provenance record.
 - HumanJS is the project name; `humanjs` is the lowercase identifier; `ajs` is the short identifier.
-- Use descriptive, stable names and avoid unexplained abbreviations.
+- Use descriptive, stable, person-neutral names and avoid unexplained abbreviations or labels tied to one owner, contributor, patient, donor, or end user.
+- Keep reusable product contracts separate from study-specific source adapters, data provenance, and experimental presets. A study-specific record must not become a universal default merely because it is checked into the repository.
 - Use `.rs`, `.wgsl`, `.py`, `.c`, `.h`, `.cpp`, and `.hpp` for the approved implementation surfaces.
 - Use `.json` for inspectable model/IR data where appropriate.
 - Markdown is the default for docs. Maintain one canonical current document per topic and link to it rather than copying it.

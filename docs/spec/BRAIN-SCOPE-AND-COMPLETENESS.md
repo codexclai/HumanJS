@@ -8,13 +8,17 @@
 
 This specification defines the breadth of the intended HumanJS model and the evidence required before any capability is called implemented or validated. HumanJS is a computational model of a human brain, not a whole-human or whole-body simulator. External biological, physical, digital, virtual, simulated, or robotic hosts may provide the body, peripheral transduction, environment, and effectors through explicit bidirectional interfaces.
 
-The objective is broad generality across contexts, sensory modalities, tasks, languages, cultures, and compatible hosts. It is not a chatbot, external-LLM wrapper, task-specific controller, or claim that the software is conscious, sentient, or equivalent to a human.
+The objective is broad generality across human populations and biological variation, contexts, sensory modalities, tasks, languages, cultures, and compatible hosts. HumanJS is not a model of one named person, an individualized digital twin, a chatbot, external-LLM wrapper, task-specific controller, or claim that the software is conscious, sentient, or equivalent to a human.
+
+Generalization is not achieved by flattening human diversity into a single average. Mechanisms, cell classes, regions, developmental contexts, supported conditions, and population variation must remain distinguishable when evidence supports those distinctions. Any study-specific parameterization must be labeled and replaceable; fit to one cohort or one source model does not establish generality.
 
 ## 2. Meaning of completeness, scalability, and limits
 
 - Pursue the widest scientifically defensible set of neural systems and interactions; do not optimize only one narrow cognitive feature.
 - Remove arbitrary fixed product limits where a resource-derived, configurable, validated design is practical.
 - Derive engineering capacity from the declared model, actual memory/compute, detected hardware, and explicit resource budgets. Make these observable and configurable when safe.
+- Separate reusable mechanism definitions from evidence-specific parameterizations and individual runtime/learned state. Preserve population and cell-class variation rather than hard-coding a single person or a universal average.
+- Require generalization checks on held-out cohorts, distinct supported biological contexts, parameter ranges, and out-of-distribution limits before broad claims are made.
 - Preserve biologically meaningful constraints such as refractory periods, competition, interference, limited attention, fatigue, finite working memory, and homeostatic trade-offs.
 - Never promise literal infinity, unlimited physical resources, unlimited simultaneous executive control, or complete reproduction of the biological brain.
 - Retain a configurable default of 10,000 spiking neuron units as an engineering starting point only. Keep spiking units separate from rate/mean-field units and state variables; this is not a claim about the number of neurons in a human brain.
