@@ -102,18 +102,17 @@ This finding supersedes the broad earlier statement that no public raw human neo
 
 No authors or researchers were contacted. No Rust equation, gate, conductance density, temperature parameter or spike-model parameter changed. ADR-014 remains open; the single-compartment spike-capable model remains exploratory and unaccepted.
 
-## 9. Follow-up: exact identifier search in the public Allen release
+## 9. Follow-up: official supplementary cell table and statistics workbook
 
-The Allen Institute repository `AllenInstitute/human_patchseq_excitatory` was rechecked at main commit `a80766e28a480cd151761df6d50de6663987419d`. Three public tables were parsed locally as CSV, with exact string comparison across every column against the six DANDI candidate subject identifiers and their six DANDI session identifiers:
+The official Europe PMC full-text XML for PMC12803161 exposes the paper's supplementary downloads. The two files were retrieved directly from the Europe PMC file repository rather than through the NCBI browser viewer:
 
-| Public table | Rows | Columns | Exact candidate identifier occurrences |
-|---|---:|---:|---:|
-| `data/human/metadata/20260807/human_metadata.csv` | 1,527 | 51 | 0 |
-| `data/human/transcriptomics/20260722/id_translation_patchseq.csv` | 8,657 | 2 | 0 |
-| `data/human/reference/20260722/patchseq_results_23June2026(removed_post_integration).csv` | 95 | 70 | 0 |
+- [Supplementary cell-level metadata (media-2.csv)](https://europepmc.org/api/fulltextRepo?pmcId=PMC12803161%26type=FILE%26fileName=media-2.csv%26mimeType=text/csv%26version=2%26pmc_pageType=supp%26pmc_domain=biorxiv)
+- [Supplementary statistics workbook (media-3.xlsx)](https://europepmc.org/api/fulltextRepo?pmcId=PMC12803161%26type=FILE%26fileName=media-3.xlsx%26mimeType=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet%26version=2%26pmc_pageType=supp%26pmc_domain=biorxiv)
 
-The checked values included the public participant and session identifiers returned by the six candidate DANDI asset metadata records. No donor or pseudonymous subject values are reproduced here. This exact search establishes only that these three repository tables do not contain those exact candidate values; it does not prove that no crosswalk exists elsewhere.
+The CSV contains 1,491 rows and 14 columns, including `exp_component_name`, `cell_id`, `cell_name`, `patched_cell_container`, `subclass_label_Hierarchical`, and `cluster_label_Hierarchical`. It does not contain a 20× nucleus-image URL field. Each of the six DANDI candidate participant identifiers was compared by exact string equality to the CSV `cell_id` column: zero matches. The six DANDI session identifiers were also checked by exact equality against `cell_id`: zero matches. No row was selected by numeric proximity or other fuzzy matching.
 
-The supplementary `media-2.csv` download linked by the article could not be independently retrieved in this environment: direct requests returned the NCBI browser proof-of-work challenge, while extracted/query responses were inconsistent across repeated exact-match questions. Those non-reproducible answers were discarded and are not used as crosswalk evidence.
+The XLSX contains 16 worksheets (475 KB). Its contents are aggregate statistical outputs, including electrophysiology/morphology subclass comparisons, tests across acute versus culture paradigms, depth regressions, and species comparisons. Every cell in every worksheet was checked for exact equality against the six candidate participant IDs and six session IDs: zero occurrences. The workbook therefore does not supply an alternate direct identifier crosswalk.
 
-**Conclusion:** the currently audited Allen repository tables do not establish a direct mapping from the six DANDI candidates to Patch-seq cell records, L4 IT subclass labels, or nucleus images. Do not assign subclass labels, assume identity from numeric similarity, or treat the publisher's inaccessible supplementary table as verified. Keep all six files as unclassified nucleated-patch candidates until an explicit, reproducible mapping and image/area link is available.
+The Allen repository's three public tables previously audited also remain negative on exact matching: current human metadata (1,527 × 51), Patch-seq ID translation (8,657 × 2), and archived patch-seq results (95 × 70) each contain zero exact occurrences of the twelve candidate participant/session identifiers. The Allen repository was inspected at main commit `a80766e28a480cd151761df6d50de6663987419d`.
+
+**Conclusion:** the actual official cell-level supplement contains subclass and cluster labels, but it does not exactly map any of the six DANDI candidates to those labels. The statistics workbook does not add a match or image mapping. These assets remain unclassified nucleated-patch candidates for L4 IT subclass analysis. Do not assign L4 IT_1–L4 IT_4 labels, infer identity from numeric similarity, or compare them with Figure 4G subclass distributions until a separate explicit and reproducible crosswalk plus nucleus-image/area mapping is available. The prior statement that the supplemental CSV was inaccessible is superseded by this direct retrieval and exact-match audit.

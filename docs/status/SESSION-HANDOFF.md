@@ -1537,8 +1537,9 @@ The public Allen Institute Patch-seq repository was inspected at main commit `a8
 - Re-fetched the six candidate NWB asset metadata records and extracted their subject/session technical identifiers without copying those values into the repository.
 - Parsed three tables from AllenInstitute/human_patchseq_excitatory at main commit `a80766e28a480cd151761df6d50de6663987419d`: current human metadata (1,527 rows × 51 columns), Patch-seq ID translation (8,657 × 2), and archived patch-seq results (95 × 70).
 - Compared all twelve candidate subject/session identifiers as exact strings across every column of each table. All three tables had zero exact matches. This rules out only these exact joins in these three files; it does not prove there is no crosswalk elsewhere.
-- Direct access to the article's supplementary `media-2.csv` returned an NCBI proof-of-work challenge. Search/extraction responses were inconsistent across identical exact-match attempts and were discarded. No subclass label, cell specimen, patched-cell container, or nucleus image was assigned by inference.
-- The six assets therefore remain nucleated-patch candidates without verified L4 IT subclass mapping. No raw current fit, leak subtraction, current-density normalization, or kinetic fit was attempted.
+- Retrieved the official supplementary files directly through the Europe PMC file repository: `media-2.csv` and `media-3.xlsx`. The CSV has 1,491 rows × 14 columns and includes cell_id, experiment-component, patched-cell-container, hierarchical subclass and cluster fields; it has no nucleus-image URL field.
+- Compared all six DANDI participant IDs and six session IDs against the CSV `cell_id` column by exact equality: zero matches. Parsed the 16-sheet statistics workbook and checked every cell for exact equality against all twelve candidate IDs: zero occurrences. Its sheets contain aggregate subclass/condition/species statistics, not an alternate per-recording identifier crosswalk.
+- The supplementary cell table therefore does not map the six candidate NWB assets to L4 IT subclass labels, and the workbook does not add an alternative join. No labels or images were inferred from numeric proximity. No raw current fit, leak subtraction, current-density normalization, or kinetic fit was attempted.
 
 ### Permanent generalization decision
 
@@ -1566,7 +1567,7 @@ ADR-020 accepts a project-wide, person-independent and population-generalizable 
 
 - The starting commit's exact-head workflow passed all 37 steps.
 - All twelve candidate DANDI subject/session identifiers were checked by exact equality against all columns in the three current/archived Allen tables; zero matches were found.
-- The NCBI supplementary CSV was not independently accessible. Its extracted-query responses were contradictory and were not accepted as evidence.
+- The official supplementary CSV and XLSX were retrieved directly via Europe PMC and parsed. Their exact identifier audit is documented in `research/HUMAN-L4-IT-NUCLEATED-PATCH-K-CURRENT-EVIDENCE.md`; neither file establishes a DANDI-to-cell subclass/image join.
 - Documentation/decision/research changes only. No Rust model equation, conductance, gate, temperature, runtime behavior, or scientific acceptance threshold changed. No biological validation is claimed.
 - The new documentation commit's own exact-head workflow must be checked after push.
 
